@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KW CAP Lab 구성원 — 지도교수, 박사과정, 석사과정, 학부연구생, 졸업생 소개">
+  <title>구성원 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html" aria-current="page">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <span class="tagline">People</span>
+      <h1>구성원</h1>
+      <p>기본 프로필은 이모지 아바타로 제공하며, 사진과 이메일은 희망자에 한해 공개합니다.<br>
+         로그인한 구성원은 자신의 카드에서 직접 정보를 수정할 수 있습니다.</p>
+    </div>
+  </div>
+
+  <main id="main">
+    <div class="section" id="people-container">
+      <p style="color:var(--muted);">구성원 정보를 불러오는 중...</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab<br>
+        Department of Industrial Psychology · Kwangwoon University
+      </div>
+      <div>
+        서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>
+        Tel. 02)940-5420
+      </div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js?v=character-avatar"></script>
+  <script>
+    var GROUP_META = {
+      professor: { label: '소속 교수 · Faculty',           cols: 'two' },
+      phd:       { label: '박사과정 · Doctoral Students',   cols: '' },
+      master:    { label: '석사과정 · Master\'s Students',  cols: 'three' },
+      ra:        { label: '학부연구생 · Undergraduate Research Assistants', cols: 'three' },
+      alumni:    { label: '졸업생 · Alumni', cols: 'three' }
+    };
+    var GROUP_ORDER = ['professor', 'phd', 'master', 'ra', 'alumni'];
+
+    function buildPeoplePage() {
+      var session  = CAPAuth.getSession();
+      var members  = CAPData.getMembers();
+      var container = document.getElementById('people-container');
+      var html = '';
+
+      GROUP_ORDER.forEach(function (grp) {
+        var group = members.filter(function (m) {
+          return grp === 'phd' ? (m.group === 'phd' || m.group === 'integrated') : m.group === grp;
+        });
+        if (!group.length && grp !== 'alumni') return;
+        var meta = GROUP_META[grp];
+        var stripClass = 'people-strip' + (meta.cols ? ' ' + meta.cols : '');
+
+        html += '<div class="person-group" id="' + grp + '">';
+        html += '<span class="person-group-label">' + escHtml(meta.label) + '</span>';
+        html += '<div class="' + stripClass + '">';
+
+        if (!group.length && grp === 'alumni') {
+          html += '<article class="person alumni placeholder">' +
+            '<strong>졸업생 정보 추가 예정</strong>' +
+            '<span class="role">학위와 현재 소속을 순차적으로 업데이트합니다.</span>' +
+            '</article>';
+        }
+
+        group.forEach(function (m) {
+          var isSelf   = session && session.userId === m.id;
+          var isAdmin  = session && session.role === 'admin';
+          var canEdit  = isSelf || isAdmin;
+          var pClass   = 'person' + (grp === 'professor' ? ' professor' : '') + (grp === 'alumni' ? ' alumni' : '');
+          var interest = (m.profile.interest || '').replace(/\n/g, '<br>');
+          var emailHtml = (m.profile.showEmail && m.profile.email)
+            ? '<span class="interest"><a href="mailto:' + escHtml(m.profile.email) + '" style="color:var(--navy)">' + escHtml(m.profile.email) + '</a></span>'
+            : '';
+          var avatarChar = m.profile.avatarEmoji || m.avatarChar;
+          var avatarHtml = m.profile.photo
+            ? '<img class="avatar avatar-photo" src="' + escHtml(m.profile.photo) + '" alt="' + escHtml(m.name) + ' 프로필 사진">'
+            : (grp !== 'alumni' && m.profile.characterAvatar && m.profile.characterAvatar.enabled
+              ? CAPAvatar.render(m.profile.characterAvatar, m.name + ' 캐릭터 아바타')
+              : '<div class="avatar" aria-hidden="true">' + escHtml(avatarChar) + '</div>');
+
+          html += '<article class="' + pClass + '">';
+          html += avatarHtml;
+          html += '<strong>' + escHtml(m.name) + '</strong>';
+          if (grp === 'alumni') {
+            html += '<span class="role">' + escHtml(m.profile.position || '학위 추가 예정') + '</span>';
+            html += '<span class="interest">' + escHtml(m.profile.interest || '현재 소속 추가 예정') + '</span>';
+          } else if (m.profile.enName) {
+            html += '<span class="en-name">' + escHtml(m.profile.enName) + '</span>';
+          } else {
+            html += '<span class="en-name" style="color:var(--line)">영문 이름 추가 예정</span>';
+          }
+          if (grp !== 'alumni') {
+            html += '<span class="role">' + escHtml(m.profile.position) + '</span>';
+          }
+          if (interest && grp !== 'alumni') {
+            html += '<span class="interest">' + interest + '</span>';
+          }
+          html += emailHtml;
+          if (canEdit) {
+            html += '<a class="edit-btn" href="member-dashboard.html?id=' + escHtml(m.id) + '">✏ 편집</a>';
+          }
+          html += '</article>';
+        });
+
+        html += '</div></div>';
+      });
+
+      container.innerHTML = html || '<p style="color:var(--muted)">구성원 정보가 없습니다.</p>';
+    }
+
+    document.addEventListener('DOMContentLoaded', buildPeoplePage);
+  </script>
+</body>
+</html>

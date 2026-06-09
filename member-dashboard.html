@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>내 프로필 편집 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="page-wrap" id="dashboard-wrap">
+      <p style="color:var(--muted);">불러오는 중...</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897) · Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js?v=character-avatar"></script>
+  <script>
+    function initDashboard() {
+      try {
+        CAPAuth.requireLogin(true);
+
+        var session = CAPAuth.getSession();
+        if (!session) return;
+        var params  = new URLSearchParams(window.location.search);
+        var targetId = params.get('id') || session.userId;
+
+        // 본인 또는 관리자만 편집 가능
+        if (targetId !== session.userId && !CAPAuth.isAdmin()) {
+          window.location.href = 'people.html';
+          return;
+        }
+
+        var member = CAPData.getMember(targetId);
+        if (!member) {
+          document.getElementById('dashboard-wrap').innerHTML =
+            '<p style="color:var(--red)">구성원 정보를 찾을 수 없습니다.</p>';
+          return;
+        }
+
+        renderDashboard(member);
+      } catch (err) {
+        document.getElementById('dashboard-wrap').innerHTML =
+          '<div class="panel-section"><h3>프로필 편집 화면을 불러오지 못했습니다.</h3>' +
+          '<p style="color:var(--muted);">브라우저를 새로고침한 뒤 다시 시도해 주세요.</p>' +
+          '<p style="color:var(--red);font-size:0.86rem;">' + escHtml(err && err.message ? err.message : err) + '</p></div>';
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initDashboard);
+    } else {
+      initDashboard();
+    }
+
+    function renderDashboard(m) {
+      var wrap = document.getElementById('dashboard-wrap');
+      var p = m.profile;
+      var previewClass = 'profile-preview-card' + (m.group === 'professor' ? ' professor' : '');
+      var isAlumni = m.group === 'alumni';
+      var positionLabel = isAlumni ? '학위' : '직위 / 과정';
+      var interestLabel = isAlumni ? '현재 소속' : '연구 관심사';
+      var positionPlaceholder = isAlumni ? '예: 석사 졸업 · M.A.' : '예: 석사과정 · M.A. Student';
+      var interestPlaceholder = isAlumni ? '예: 브랜드 전략팀 · ABC Company' : '연구 관심사를 입력하세요. 줄바꿈 가능.';
+      var avatarEmoji = p.avatarEmoji || m.avatarChar || m.name.charAt(0);
+      var character = CAPAvatar.normalize(p.characterAvatar);
+      var avatarToolsHtml = isAlumni ? '' :
+            '<div class="emoji-builder">' +
+              '<div class="form-group"><label for="f-avatarEmoji">이모지 아바타</label>' +
+                '<input id="f-avatarEmoji" value="' + escHtml(avatarEmoji) + '" maxlength="8" placeholder="예: 😄">' +
+                '<p class="form-hint">프로필 사진이 없을 때 구성원 카드에 표시됩니다.</p>' +
+              '</div>' +
+              '<div class="emoji-presets" aria-label="이모지 프리셋">' +
+                '<button type="button" onclick="setAvatarEmoji(\'🙂\')" aria-label="웃는 얼굴">🙂</button>' +
+                '<button type="button" onclick="setAvatarEmoji(\'😎\')" aria-label="선글라스 얼굴">😎</button>' +
+                '<button type="button" onclick="setAvatarEmoji(\'🧠\')" aria-label="두뇌">🧠</button>' +
+                '<button type="button" onclick="setAvatarEmoji(\'📚\')" aria-label="책">📚</button>' +
+                '<button type="button" onclick="setAvatarEmoji(\'🔬\')" aria-label="현미경">🔬</button>' +
+                '<button type="button" onclick="setAvatarEmoji(\'✨\')" aria-label="반짝임">✨</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="character-builder">' +
+              '<div class="form-check">' +
+                '<input type="checkbox" id="f-useCharacter"' + (character.enabled ? ' checked' : '') + '>' +
+                '<label for="f-useCharacter">조합형 캐릭터 아바타를 사용합니다.</label>' +
+              '</div>' +
+              '<div class="character-controls">' +
+                '<div class="form-group"><label for="f-charGender">성별</label>' +
+                  '<select id="f-charGender">' +
+                    optionHtml('female', '여성', character.gender) +
+                    optionHtml('male', '남성', character.gender) +
+                  '</select></div>' +
+                '<div class="form-group"><label for="f-charFace">얼굴형</label>' +
+                  '<select id="f-charFace">' +
+                    optionHtml('round', '둥근형', character.face) +
+                    optionHtml('soft', '부드러운형', character.face) +
+                    optionHtml('long', '긴 얼굴형', character.face) +
+                  '</select></div>' +
+                '<div class="form-group"><label for="f-charExpression">표정</label>' +
+                  '<select id="f-charExpression">' +
+                    optionHtml('smile', '웃음', character.expression) +
+                    optionHtml('calm', '차분', character.expression) +
+                    optionHtml('focus', '집중', character.expression) +
+                    optionHtml('confident', '자신감', character.expression) +
+                  '</select></div>' +
+                '<div class="form-group"><label for="f-charBackground">배경색</label>' +
+                  '<select id="f-charBackground">' +
+                    optionHtml('blue', '하늘색', character.background) +
+                    optionHtml('red', '레드', character.background) +
+                    optionHtml('green', '그린', character.background) +
+                    optionHtml('gray', '그레이', character.background) +
+                    optionHtml('navy', '네이비', character.background) +
+                    optionHtml('lavender', '라벤더', character.background) +
+                  '</select></div>' +
+                '<div class="form-group"><label for="f-charAccessory">소품</label>' +
+                  '<select id="f-charAccessory">' +
+                    optionHtml('none', '없음', character.accessory) +
+                    optionHtml('glasses', '안경', character.accessory) +
+                    optionHtml('book', '책', character.accessory) +
+                    optionHtml('microscope', '현미경', character.accessory) +
+                    optionHtml('laptop', '노트북', character.accessory) +
+                  '</select></div>' +
+              '</div>' +
+              '<p class="form-hint">프로필 사진이 없고 이 옵션을 켰을 때 구성원 카드에 표시됩니다.</p>' +
+            '</div>';
+
+      wrap.innerHTML =
+        '<h2>' + escHtml(m.name) + ' 님의 프로필 편집</h2>' +
+        '<p>구성원 페이지에 표시되는 내용을 수정합니다. 왼쪽 미리보기에서 표시 상태를 바로 확인할 수 있습니다.</p>' +
+
+        '<div class="dashboard-layout">' +
+          '<aside class="dashboard-preview" aria-label="프로필 카드 미리보기">' +
+            '<span class="dashboard-kicker">Preview</span>' +
+            '<h3>구성원 카드 미리보기</h3>' +
+            '<article class="' + previewClass + '">' +
+              '<div id="preview-avatar"></div>' +
+              '<strong>' + escHtml(m.name) + '</strong>' +
+              '<span class="en-name" id="preview-enName"></span>' +
+              '<span class="role" id="preview-position"></span>' +
+              '<span class="interest" id="preview-interest"></span>' +
+              '<a class="interest preview-email" id="preview-email" href="#"></a>' +
+            '</article>' +
+          '</aside>' +
+
+          '<section class="dashboard-form panel-section">' +
+            '<h3>프로필 정보</h3>' +
+            '<div class="form-group"><label for="f-photo">프로필 사진</label>' +
+              '<input id="f-photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif">' +
+              '<input id="f-photoData" type="hidden" value="' + escHtml(p.photo || '') + '">' +
+              '<p class="form-hint">PNG, JPG, WebP, GIF 파일을 사용할 수 있습니다. 1MB 이하 이미지를 권장합니다.</p>' +
+              '<button type="button" class="btn-sm" onclick="removeProfilePhoto()">사진 제거</button>' +
+            '</div>' +
+            avatarToolsHtml +
+            '<div class="form-group"><label for="f-enName">영문 이름</label>' +
+            '<input id="f-enName" value="' + escHtml(p.enName || '') + '" placeholder="예: Gildong Hong">' +
+            '</div>' +
+            '<div class="form-group"><label for="f-position">' + positionLabel + '</label>' +
+            '<input id="f-position" value="' + escHtml(p.position || '') + '" placeholder="' + positionPlaceholder + '">' +
+            '</div>' +
+            '<div class="form-group"><label for="f-interest">' + interestLabel + '</label>' +
+              '<textarea id="f-interest" placeholder="' + interestPlaceholder + '">' + escHtml(p.interest || '') + '</textarea>' +
+            '</div>' +
+            '<div class="form-group"><label for="f-email">이메일 주소</label>' +
+              '<input id="f-email" type="email" value="' + escHtml(p.email || '') + '" placeholder="example@kw.ac.kr">' +
+            '</div>' +
+            '<div class="form-check">' +
+              '<input type="checkbox" id="f-showEmail"' + (p.showEmail ? ' checked' : '') + '>' +
+              '<label for="f-showEmail">이메일 주소를 구성원 페이지에 공개합니다.</label>' +
+            '</div>' +
+            '<div class="dashboard-actions">' +
+              '<button class="save-btn" onclick="saveProfile(\'' + escHtml(m.id) + '\')">변경사항 저장</button>' +
+              '<a href="people.html" class="btn-sm">구성원 페이지로</a>' +
+            '</div>' +
+          '</section>' +
+        '</div>';
+
+      bindPreviewEvents();
+      updateProfilePreview();
+    }
+
+    function bindPreviewEvents() {
+      ['f-enName', 'f-position', 'f-interest', 'f-email'].forEach(function (id) {
+        document.getElementById(id).addEventListener('input', updateProfilePreview);
+      });
+      if (document.getElementById('f-avatarEmoji')) {
+        document.getElementById('f-avatarEmoji').addEventListener('input', updateProfilePreview);
+      }
+      ['f-useCharacter', 'f-charGender', 'f-charFace', 'f-charExpression', 'f-charBackground', 'f-charAccessory'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', updateProfilePreview);
+      });
+      document.getElementById('f-showEmail').addEventListener('change', updateProfilePreview);
+      document.getElementById('f-photo').addEventListener('change', handleProfilePhoto);
+    }
+
+    function updateProfilePreview() {
+      var enName = document.getElementById('f-enName').value.trim();
+      var position = document.getElementById('f-position').value.trim();
+      var interest = document.getElementById('f-interest').value.trim();
+      var email = document.getElementById('f-email').value.trim();
+      var showEmail = document.getElementById('f-showEmail').checked;
+      var photo = document.getElementById('f-photoData').value;
+      var emojiEl = document.getElementById('f-avatarEmoji');
+      var avatarEmoji = emojiEl ? emojiEl.value.trim() : '';
+      var character = getCharacterAvatar();
+      var positionFallback = document.querySelector('label[for="f-position"]').textContent + ' 추가 예정';
+      var interestFallback = document.querySelector('label[for="f-interest"]').textContent + ' 추가 예정';
+
+      updateAvatarPreview(photo, avatarEmoji, character);
+      setPreviewText('preview-enName', enName, '영문 이름 추가 예정');
+      setPreviewText('preview-position', position, positionFallback);
+      setPreviewText('preview-interest', interest, interestFallback);
+
+      var emailEl = document.getElementById('preview-email');
+      if (showEmail && email) {
+        emailEl.textContent = email;
+        emailEl.href = 'mailto:' + email;
+        emailEl.hidden = false;
+      } else {
+        emailEl.textContent = '';
+        emailEl.removeAttribute('href');
+        emailEl.hidden = true;
+      }
+    }
+
+    function setPreviewText(id, value, fallback) {
+      var el = document.getElementById(id);
+      el.textContent = value || fallback;
+      el.classList.toggle('is-empty', !value);
+    }
+
+    function updateAvatarPreview(photo, avatarEmoji, character) {
+      var avatar = document.getElementById('preview-avatar');
+      var fallback = document.querySelector('.profile-preview-card strong').textContent.charAt(0);
+      if (photo) {
+        avatar.innerHTML = '<img class="avatar avatar-photo" src="' + escHtml(photo) + '" alt="프로필 사진 미리보기">';
+      } else if (character.enabled) {
+        avatar.innerHTML = CAPAvatar.render(character, '캐릭터 아바타 미리보기');
+      } else {
+        avatar.innerHTML = '<div class="avatar" aria-hidden="true">' + escHtml(avatarEmoji || fallback) + '</div>';
+      }
+    }
+
+    function setAvatarEmoji(value) {
+      if (!document.getElementById('f-avatarEmoji')) return;
+      document.getElementById('f-avatarEmoji').value = value;
+      updateProfilePreview();
+    }
+
+    function handleProfilePhoto(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+      if (allowed.indexOf(file.type) === -1) {
+        alert('PNG, JPG, WebP, GIF 이미지만 업로드할 수 있습니다.');
+        e.target.value = '';
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        alert('프로필 사진은 1MB 이하 파일을 사용해 주세요.');
+        e.target.value = '';
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById('f-photoData').value = reader.result;
+        updateProfilePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeProfilePhoto() {
+      document.getElementById('f-photo').value = '';
+      document.getElementById('f-photoData').value = '';
+      updateProfilePreview();
+    }
+
+    function getCharacterAvatar() {
+      if (!document.getElementById('f-useCharacter')) {
+        return CAPAvatar.normalize({ enabled: false });
+      }
+      return CAPAvatar.normalize({
+        enabled: document.getElementById('f-useCharacter').checked,
+        gender: document.getElementById('f-charGender').value,
+        face: document.getElementById('f-charFace').value,
+        expression: document.getElementById('f-charExpression').value,
+        background: document.getElementById('f-charBackground').value,
+        accessory: document.getElementById('f-charAccessory').value
+      });
+    }
+
+    function optionHtml(value, label, current) {
+      return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + label + '</option>';
+    }
+
+    function saveProfile(id) {
+      var updates = {
+        enName:    document.getElementById('f-enName').value.trim(),
+        position:  document.getElementById('f-position').value.trim(),
+        interest:  document.getElementById('f-interest').value.trim(),
+        email:     document.getElementById('f-email').value.trim(),
+        showEmail: document.getElementById('f-showEmail').checked,
+        photo:     document.getElementById('f-photoData').value,
+        avatarEmoji: document.getElementById('f-avatarEmoji') ? document.getElementById('f-avatarEmoji').value.trim() : '',
+        characterAvatar: getCharacterAvatar()
+      };
+      var ok = CAPData.updateMemberProfile(id, updates);
+      if (ok) {
+        showToast('프로필이 저장되었습니다.');
+        var btn = document.querySelector('.save-btn');
+        btn.textContent = '저장 완료 ✓';
+        btn.classList.add('success');
+        setTimeout(function () {
+          btn.textContent = '변경사항 저장';
+          btn.classList.remove('success');
+        }, 2000);
+      }
+    }
+  </script>
+</body>
+</html>

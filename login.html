@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <strong>광운대학교 소비자광고심리 연구실</strong>
+        <span>KW CAP Lab · 구성원 로그인</span>
+      </div>
+
+      <h2>로그인</h2>
+
+      <div class="auth-error" id="auth-error"></div>
+
+      <form id="login-form" onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label for="input-name">이름</label>
+          <input id="input-name" type="text" placeholder="이름을 입력하세요" autocomplete="name" required>
+        </div>
+        <div class="form-group">
+          <label for="input-sid">학번/교번</label>
+          <input id="input-sid" type="text" placeholder="학번/교번을 입력하세요" autocomplete="username" required>
+          <p class="form-hint">교수님은 관리자 계정 비번을 사용하세요.</p>
+        </div>
+        <button class="button" type="submit" style="width:100%;margin-top:8px;justify-content:center;">
+          로그인
+        </button>
+      </form>
+
+      <p style="text-align:center;margin-top:20px;font-size:0.84rem;color:var(--muted);">
+        <a href="index.html" style="color:var(--navy);font-weight:700;">← 홈으로 돌아가기</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="cap-data.js"></script>
+  <script src="cap-auth.js"></script>
+  <script>
+    // 이미 로그인되어 있으면 홈으로
+    document.addEventListener('DOMContentLoaded', function () {
+      if (CAPAuth.isLoggedIn()) {
+        window.location.href = getRedirectUrl() || 'index.html';
+      }
+    });
+
+    function getRedirectUrl() {
+      var params = new URLSearchParams(window.location.search);
+      return params.get('redirect') || null;
+    }
+
+    function doLogin(e) {
+      e.preventDefault();
+      var name = document.getElementById('input-name').value.trim();
+      var sid  = document.getElementById('input-sid').value.trim();
+      var errEl = document.getElementById('auth-error');
+
+      var result = CAPAuth.login(name, sid);
+      if (result.success) {
+        var redirect = getRedirectUrl();
+        window.location.href = redirect || 'index.html';
+      } else {
+        errEl.textContent = result.error;
+        errEl.classList.add('show');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 패널 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-header {
+      background: var(--navy); color: #fff;
+      padding: 14px 0;
+    }
+    .admin-header-inner {
+      width: min(1180px, calc(100% - 32px)); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .admin-header strong { font-size: 1.05rem; }
+    .admin-header span { font-size: 0.84rem; opacity: 0.7; }
+    .admin-back { color: #fff; opacity: 0.8; font-size: 0.84rem; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="admin-header">
+    <div class="admin-header-inner">
+      <div>
+        <strong>KW CAP Lab 관리자 패널</strong><br>
+        <span id="admin-welcome">관리자</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <a class="admin-back" href="index.html">← 사이트로 돌아가기</a>
+        <button class="btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);"
+                onclick="CAPAuth.logout();window.location.href='index.html';">로그아웃</button>
+      </div>
+    </div>
+  </div>
+
+  <main id="main">
+    <div class="page-wrap">
+      <h2 style="margin-bottom:4px;">관리자 패널</h2>
+      <p>홈페이지 전반의 내용과 구성원을 관리합니다.</p>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('members')">👤 구성원 관리</button>
+        <button class="tab-btn" onclick="switchTab('home')">🏠 홈 문구 편집</button>
+        <button class="tab-btn" onclick="switchTab('research')">🔬 연구 축 편집</button>
+        <button class="tab-btn" onclick="switchTab('publications')">📄 논문/발표 관리</button>
+      </div>
+
+      <!-- ===== Tab 1: Members ===== -->
+      <div id="tab-members" class="tab-panel active">
+        <div class="panel-section">
+          <h3>구성원 목록</h3>
+          <table class="data-table" id="member-table">
+            <thead>
+              <tr>
+                <th>이름</th><th>학번</th><th>역할</th><th>그룹</th><th>마지막 수정</th><th>작업</th>
+              </tr>
+            </thead>
+            <tbody id="member-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="panel-section">
+          <h3>새 구성원 추가</h3>
+          <div class="form-row">
+            <div class="form-group"><label>이름 (한국어)</label><input id="nm-name" placeholder="홍길동"></div>
+            <div class="form-group"><label>학번</label><input id="nm-sid" placeholder="2024XXXXX"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>역할</label>
+              <select id="nm-role">
+                <option value="member">구성원 (member)</option>
+                <option value="admin">관리자 (admin)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>그룹</label>
+              <select id="nm-group">
+                <option value="professor">소속 교수</option>
+                <option value="phd">박사과정</option>
+                <option value="integrated">석·박통합과정</option>
+                <option value="master">석사과정</option>
+                <option value="ra">학부연구생</option>
+                <option value="alumni">졸업생</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>영문 이름</label><input id="nm-enName" placeholder="Gildong Hong"></div>
+            <div class="form-group"><label>아바타 글자 (1자)</label><input id="nm-avatar" placeholder="홍" maxlength="2"></div>
+          </div>
+          <div id="alumni-fields" style="display:none;">
+            <div class="form-row">
+              <div class="form-group"><label>학위</label><input id="nm-degree" placeholder="예: 석사 졸업 · M.A."></div>
+              <div class="form-group"><label>현 소속</label><input id="nm-affiliation" placeholder="예: 브랜드 전략팀 · ABC Company"></div>
+            </div>
+          </div>
+          <button class="save-btn" onclick="addMember()">구성원 추가</button>
+        </div>
+      </div>
+
+      <!-- ===== Tab 2: Home ===== -->
+      <div id="tab-home" class="tab-panel">
+        <div class="panel-section">
+          <h3>홈 Hero 문구 편집</h3>
+          <div class="form-group">
+            <label>Hero 제목 (줄바꿈은 \n)</label>
+            <textarea id="h-title" style="min-height:72px;"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Hero 리드 문장 (한국어)</label>
+            <textarea id="h-lead"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Hero 리드 문장 (영어)</label>
+            <textarea id="h-leadEn"></textarea>
+          </div>
+          <button class="save-btn" onclick="saveHome()">저장</button>
+        </div>
+      </div>
+
+      <!-- ===== Tab 3: Research ===== -->
+      <div id="tab-research" class="tab-panel">
+        <div class="panel-section">
+          <h3>새 연구 축 추가</h3>
+          <div class="form-row">
+            <div class="form-group"><label>제목 (한국어)</label><input id="nr-title" placeholder="새 연구 축"></div>
+            <div class="form-group"><label>English Title</label><input id="nr-en" placeholder="New Research Axis"></div>
+          </div>
+          <div class="form-group"><label>설명문</label><textarea id="nr-desc" placeholder="연구 축 설명"></textarea></div>
+          <div class="form-group"><label>이론 태그 (쉼표로 구분)</label><input id="nr-tags" placeholder="Theory A, Theory B"></div>
+          <button class="save-btn" onclick="addResearchAxisAdmin()">연구 축 추가</button>
+        </div>
+        <div id="axes-edit-container"></div>
+      </div>
+
+      <!-- ===== Tab 4: Publications ===== -->
+      <div id="tab-publications" class="tab-panel">
+        <div class="panel-section">
+          <h3>논문 목록</h3>
+          <table class="data-table" id="articles-table">
+            <thead><tr><th>제목</th><th>저자</th><th>저널 · 연도</th><th>DOI</th><th>삭제</th></tr></thead>
+            <tbody id="articles-tbody"></tbody>
+          </table>
+          <div class="inline-form" style="margin-top:16px;">
+            <h4>논문 추가</h4>
+            <div class="form-row">
+              <div class="form-group"><label>제목</label><input id="pa-title"></div>
+              <div class="form-group"><label>저자</label><input id="pa-authors"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>저널</label><input id="pa-journal"></div>
+              <div class="form-group"><label>연도</label><input id="pa-year"></div>
+            </div>
+            <div class="form-group"><label>DOI / URL</label><input id="pa-doi"></div>
+            <button class="save-btn" onclick="addAdminArticle()">추가</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>학술발표 목록</h3>
+          <table class="data-table" id="pres-table">
+            <thead><tr><th>제목</th><th>발표자</th><th>학회 · 연도</th><th>형식</th><th>삭제</th></tr></thead>
+            <tbody id="pres-tbody"></tbody>
+          </table>
+          <div class="inline-form" style="margin-top:16px;">
+            <h4>학술발표 추가</h4>
+            <div class="form-row">
+              <div class="form-group"><label>제목</label><input id="pp-title"></div>
+              <div class="form-group"><label>발표자</label><input id="pp-presenter"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>학회명</label><input id="pp-venue"></div>
+              <div class="form-group"><label>연도</label><input id="pp-year"></div>
+            </div>
+            <div class="form-group"><label>형식</label>
+              <select id="pp-type"><option>구두 발표</option><option>포스터 발표</option></select>
+            </div>
+            <button class="save-btn" onclick="addAdminPres()">추가</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>수상내역 목록</h3>
+          <table class="data-table" id="awards-table">
+            <thead><tr><th>수상명</th><th>수상자</th><th>기관 · 연도</th><th>설명</th><th>삭제</th></tr></thead>
+            <tbody id="awards-tbody"></tbody>
+          </table>
+          <div class="inline-form" style="margin-top:16px;">
+            <h4>수상내역 추가</h4>
+            <div class="form-row">
+              <div class="form-group"><label>수상명</label><input id="aw-title"></div>
+              <div class="form-group"><label>수상자</label><input id="aw-recipient"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>수여 기관</label><input id="aw-venue"></div>
+              <div class="form-group"><label>연도</label><input id="aw-year"></div>
+            </div>
+            <div class="form-group"><label>설명</label><input id="aw-desc"></div>
+            <button class="save-btn" onclick="addAdminAward()">추가</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js"></script>
+  <script>
+    /* ---- 초기화 ---- */
+    document.addEventListener('DOMContentLoaded', function () {
+      CAPAuth.requireAdmin();
+      var session = CAPAuth.getSession();
+      document.getElementById('admin-welcome').textContent =
+        session ? session.name + ' 님 (관리자)' : '관리자';
+
+      // load all tabs
+      renderMemberTable();
+      loadHomeForm();
+      renderAxesEdit();
+      renderArticlesTable();
+      renderPresTable();
+      renderAwardsTable();
+      updateAlumniFields();
+      document.getElementById('nm-group').addEventListener('change', updateAlumniFields);
+    });
+
+    /* ---- Tab 스위치 ---- */
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+      document.getElementById('tab-' + name).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    /* ---- Tab 1: Members ---- */
+    var GROUP_LABEL = {
+      professor: '소속 교수',
+      phd: '박사과정',
+      integrated: '석·박통합과정',
+      master: '석사과정',
+      ra: '학부연구생',
+      alumni: '졸업생'
+    };
+
+    function renderMemberTable() {
+      var members = CAPData.getMembers();
+      var tbody = document.getElementById('member-tbody');
+      tbody.innerHTML = members.map(function (m) {
+        return '<tr>' +
+          '<td><strong>' + escHtml(m.name) + '</strong></td>' +
+          '<td><input style="border:1px solid var(--line);border-radius:4px;padding:3px 7px;font-size:0.84rem;width:120px" ' +
+               'value="' + escHtml(m.studentId) + '" ' +
+               'onchange="updateStudentId(\'' + escHtml(m.id) + '\',this.value)"></td>' +
+          '<td><span class="role-badge ' + (m.role === 'admin' ? 'role-admin' : 'role-member') + '">' + escHtml(m.role) + '</span>' +
+               '<button class="btn-sm" style="margin-left:6px" onclick="toggleRole(\'' + escHtml(m.id) + '\')">변경</button></td>' +
+          '<td>' + escHtml(GROUP_LABEL[m.group] || m.group) + '</td>' +
+          '<td style="font-size:0.8rem;color:var(--muted)">' + (m.updatedAt ? m.updatedAt.split('T')[0] : '-') + '</td>' +
+          '<td class="action-row">' +
+            '<a class="btn-sm primary" href="member-dashboard.html?id=' + escHtml(m.id) + '">편집</a>' +
+            '<button class="btn-sm danger" onclick="deleteMember(\'' + escHtml(m.id) + '\',\'' + escHtml(m.name) + '\')">삭제</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function updateStudentId(id, val) {
+      CAPData.updateMember(id, { studentId: val.trim() });
+      showToast('학번이 업데이트되었습니다.');
+    }
+
+    function toggleRole(id) {
+      var m = CAPData.getMember(id);
+      if (!m) return;
+      var newRole = m.role === 'admin' ? 'member' : 'admin';
+      if (!confirm(m.name + ' 님의 역할을 ' + newRole + '로 변경하시겠습니까?')) return;
+      CAPData.updateMember(id, { role: newRole });
+      showToast('역할이 변경되었습니다.');
+      renderMemberTable();
+    }
+
+    function deleteMember(id, name) {
+      if (!confirm(name + ' 님을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+      CAPData.removeMember(id);
+      showToast('구성원이 삭제되었습니다.');
+      renderMemberTable();
+    }
+
+    function addMember() {
+      var name = document.getElementById('nm-name').value.trim();
+      var sid  = document.getElementById('nm-sid').value.trim();
+      var group = document.getElementById('nm-group').value;
+      var degree = document.getElementById('nm-degree').value.trim();
+      var affiliation = document.getElementById('nm-affiliation').value.trim();
+      if (!name || (!sid && group !== 'alumni')) { alert('이름과 학번은 필수입니다. 졸업생은 학번 없이 추가할 수 있습니다.'); return; }
+      if (group === 'alumni' && (!degree || !affiliation)) { alert('졸업생은 이름, 학위, 현 소속을 입력해야 합니다.'); return; }
+      var avatarChar = document.getElementById('nm-avatar').value.trim() || name.charAt(0);
+      CAPData.addMember({
+        name: name,
+        studentId: sid,
+        role: group === 'alumni' ? 'member' : document.getElementById('nm-role').value,
+        group: group,
+        avatarChar: avatarChar,
+        profile: {
+          enName: document.getElementById('nm-enName').value.trim(),
+          position: group === 'alumni' ? degree : (group === 'integrated' ? '석·박통합과정 · Integrated M.A.-Ph.D. Student' : ''),
+          interest: group === 'alumni' ? affiliation : '',
+          email: '',
+          showEmail: false
+        }
+      });
+      showToast('구성원이 추가되었습니다.');
+      renderMemberTable();
+      ['nm-name','nm-sid','nm-enName','nm-avatar','nm-degree','nm-affiliation'].forEach(function (id) {
+        document.getElementById(id).value = '';
+      });
+      updateAlumniFields();
+    }
+
+    function updateAlumniFields() {
+      var isAlumni = document.getElementById('nm-group').value === 'alumni';
+      document.getElementById('alumni-fields').style.display = isAlumni ? 'block' : 'none';
+      document.getElementById('nm-sid').placeholder = isAlumni ? '졸업생은 생략 가능' : '2024XXXXX';
+      document.getElementById('nm-enName').disabled = isAlumni;
+      document.getElementById('nm-avatar').disabled = isAlumni;
+    }
+
+    /* ---- Tab 2: Home ---- */
+    function loadHomeForm() {
+      var h = CAPData.getContent().home || {};
+      document.getElementById('h-title').value  = h.heroTitle  || '';
+      document.getElementById('h-lead').value   = h.heroLead   || '';
+      document.getElementById('h-leadEn').value = h.heroLeadEn || '';
+    }
+
+    function saveHome() {
+      CAPData.updateHomeContent({
+        heroTitle:  document.getElementById('h-title').value,
+        heroLead:   document.getElementById('h-lead').value,
+        heroLeadEn: document.getElementById('h-leadEn').value
+      });
+      showToast('홈 문구가 저장되었습니다. index.html을 새로 고침하면 반영됩니다.');
+    }
+
+    /* ---- Tab 3: Research Axes ---- */
+    function renderAxesEdit() {
+      var c = CAPData.getContent();
+      if (!c.research || !c.research.axes) return;
+      var container = document.getElementById('axes-edit-container');
+      container.innerHTML = c.research.axes.map(function (a) {
+        var tagsVal = a.tags.join(', ');
+        return '<div class="panel-section" id="axis-panel-' + escHtml(a.id) + '">' +
+          '<h3>연구 축 ' + a.axisNum + ' — ' + escHtml(a.title) + '</h3>' +
+          '<div class="form-row">' +
+            '<div class="form-group"><label>제목 (한국어)</label>' +
+              '<input id="ax-' + escHtml(a.id) + '-title" value="' + escHtml(a.title) + '"></div>' +
+            '<div class="form-group"><label>English Title</label>' +
+              '<input id="ax-' + escHtml(a.id) + '-en" value="' + escHtml(a.en) + '"></div>' +
+          '</div>' +
+          '<div class="form-group"><label>설명문</label>' +
+            '<textarea id="ax-' + escHtml(a.id) + '-desc">' + escHtml(a.desc) + '</textarea></div>' +
+          '<div class="form-group"><label>이론 태그 (쉼표로 구분)</label>' +
+            '<input id="ax-' + escHtml(a.id) + '-tags" value="' + escHtml(tagsVal) + '"></div>' +
+          '<button class="save-btn" onclick="saveAxis(\'' + escHtml(a.id) + '\')">저장</button>' +
+          '<button class="btn-sm danger" style="margin-left:8px" onclick="deleteAxis(\'' + escHtml(a.id) + '\')">삭제</button>' +
+          '</div>';
+      }).join('');
+    }
+
+    function saveAxis(id) {
+      var tags = document.getElementById('ax-' + id + '-tags').value
+        .split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+      CAPData.updateResearchAxis(id, {
+        title: document.getElementById('ax-' + id + '-title').value.trim(),
+        en:    document.getElementById('ax-' + id + '-en').value.trim(),
+        desc:  document.getElementById('ax-' + id + '-desc').value.trim(),
+        tags:  tags
+      });
+      showToast('연구 축이 저장되었습니다.');
+      renderAxesEdit();
+    }
+
+    function addResearchAxisAdmin() {
+      var title = document.getElementById('nr-title').value.trim();
+      if (!title) { alert('연구 축 제목을 입력하세요.'); return; }
+      var tags = document.getElementById('nr-tags').value
+        .split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+      CAPData.addResearchAxis({
+        title: title,
+        en: document.getElementById('nr-en').value.trim(),
+        desc: document.getElementById('nr-desc').value.trim(),
+        tags: tags
+      });
+      ['nr-title','nr-en','nr-desc','nr-tags'].forEach(function(id){ document.getElementById(id).value=''; });
+      showToast('연구 축이 추가되었습니다.');
+      renderAxesEdit();
+    }
+
+    function deleteAxis(id) {
+      if (!confirm('이 연구 축을 삭제하시겠습니까? 관련 페이지에도 바로 반영됩니다.')) return;
+      CAPData.removeResearchAxis(id);
+      showToast('연구 축이 삭제되었습니다.');
+      renderAxesEdit();
+    }
+
+    /* ---- Tab 4: Publications ---- */
+    function renderArticlesTable() {
+      var articles = CAPData.getArticles();
+      var tbody = document.getElementById('articles-tbody');
+      tbody.innerHTML = articles.map(function (a) {
+        return '<tr>' +
+          '<td>' + escHtml(a.title) + '</td>' +
+          '<td>' + escHtml(a.authors) + '</td>' +
+          '<td>' + escHtml(a.journal) + ' · ' + escHtml(a.year) + '</td>' +
+          '<td>' + (a.doi ? '<a href="' + escHtml(a.doi) + '" target="_blank" style="color:var(--navy)">링크</a>' : '-') + '</td>' +
+          '<td><button class="btn-sm danger" onclick="CAPData.removeArticle(\'' + escHtml(a.id) + '\');renderArticlesTable();showToast(\'삭제되었습니다.\')">삭제</button></td>' +
+          '</tr>';
+      }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">논문 없음</td></tr>';
+    }
+
+    function renderPresTable() {
+      var preses = CAPData.getPresentations();
+      var tbody = document.getElementById('pres-tbody');
+      tbody.innerHTML = preses.map(function (p) {
+        return '<tr>' +
+          '<td>' + escHtml(p.title) + '</td>' +
+          '<td>' + escHtml(p.presenter) + '</td>' +
+          '<td>' + escHtml(p.venue) + ' · ' + escHtml(p.year) + '</td>' +
+          '<td>' + escHtml(p.type) + '</td>' +
+          '<td><button class="btn-sm danger" onclick="CAPData.removePresentation(\'' + escHtml(p.id) + '\');renderPresTable();showToast(\'삭제되었습니다.\')">삭제</button></td>' +
+          '</tr>';
+      }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">학술발표 없음</td></tr>';
+    }
+
+    function renderAwardsTable() {
+      var awards = CAPData.getAwards();
+      var tbody = document.getElementById('awards-tbody');
+      tbody.innerHTML = awards.map(function (a) {
+        return '<tr>' +
+          '<td>' + escHtml(a.title) + '</td>' +
+          '<td>' + escHtml(a.recipient) + '</td>' +
+          '<td>' + escHtml(a.venue) + ' · ' + escHtml(a.year) + '</td>' +
+          '<td>' + escHtml(a.desc || '-') + '</td>' +
+          '<td><button class="btn-sm danger" onclick="CAPData.removeAward(\'' + escHtml(a.id) + '\');renderAwardsTable();showToast(\'삭제되었습니다.\')">삭제</button></td>' +
+          '</tr>';
+      }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">수상내역 없음</td></tr>';
+    }
+
+    function addAdminArticle() {
+      var title = document.getElementById('pa-title').value.trim();
+      if (!title) { alert('제목을 입력하세요.'); return; }
+      CAPData.addArticle({
+        title: title,
+        authors: document.getElementById('pa-authors').value.trim(),
+        journal: document.getElementById('pa-journal').value.trim(),
+        year: document.getElementById('pa-year').value.trim(),
+        doi: document.getElementById('pa-doi').value.trim()
+      });
+      showToast('논문이 추가되었습니다.');
+      renderArticlesTable();
+      ['pa-title','pa-authors','pa-journal','pa-year','pa-doi'].forEach(function(id){ document.getElementById(id).value=''; });
+    }
+
+    function addAdminPres() {
+      var title = document.getElementById('pp-title').value.trim();
+      if (!title) { alert('제목을 입력하세요.'); return; }
+      CAPData.addPresentation({
+        title: title,
+        presenter: document.getElementById('pp-presenter').value.trim(),
+        venue: document.getElementById('pp-venue').value.trim(),
+        year: document.getElementById('pp-year').value.trim(),
+        type: document.getElementById('pp-type').value
+      });
+      showToast('학술발표가 추가되었습니다.');
+      renderPresTable();
+      ['pp-title','pp-presenter','pp-venue','pp-year'].forEach(function(id){ document.getElementById(id).value=''; });
+    }
+
+    function addAdminAward() {
+      var title = document.getElementById('aw-title').value.trim();
+      if (!title) { alert('수상명을 입력하세요.'); return; }
+      CAPData.addAward({
+        title: title,
+        recipient: document.getElementById('aw-recipient').value.trim(),
+        venue: document.getElementById('aw-venue').value.trim(),
+        year: document.getElementById('aw-year').value.trim(),
+        desc: document.getElementById('aw-desc').value.trim()
+      });
+      showToast('수상내역이 추가되었습니다.');
+      renderAwardsTable();
+      ['aw-title','aw-recipient','aw-venue','aw-year','aw-desc'].forEach(function(id){ document.getElementById(id).value=''; });
+    }
+
+  </script>
+</body>
+</html>

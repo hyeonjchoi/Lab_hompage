@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KW CAP Lab 연구 성과 — 논문, 학술발표, 수상내역 목록">
+  <title>연구 성과 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html" aria-current="page">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <span class="tagline">Publications</span>
+      <h1>연구 성과</h1>
+      <p>논문은 DOI와 저널 링크를 우선 제공합니다. 가능한 경우 학교 도서관 사이트와 연동합니다.</p>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- 논문 -->
+    <section class="section" id="articles">
+      <div class="section-head">
+        <div>
+          <span class="tagline">Journal Articles</span>
+          <h2>논문</h2>
+        </div>
+      </div>
+      <div id="article-add-bar"></div>
+      <ul class="publication-list" id="article-list"></ul>
+    </section>
+
+    <!-- 학술발표 -->
+    <section class="section" id="presentations">
+      <div class="section-head">
+        <div>
+          <span class="tagline">Conference Presentations</span>
+          <h2>학술발표</h2>
+        </div>
+      </div>
+      <div id="pres-add-bar"></div>
+      <ul class="publication-list" id="pres-list"></ul>
+    </section>
+
+    <!-- 수상내역 -->
+    <section class="section" id="awards">
+      <div class="section-head">
+        <div>
+          <span class="tagline">Awards</span>
+          <h2>수상내역</h2>
+        </div>
+      </div>
+      <div id="award-add-bar"></div>
+      <ul class="publication-list" id="award-list"></ul>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab<br>
+        Department of Industrial Psychology · Kwangwoon University
+      </div>
+      <div>
+        서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>
+        Tel. 02)940-5420
+      </div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js"></script>
+  <script>
+    var addingArticle = false;
+    var addingPres = false;
+    var addingAward = false;
+
+    function renderArticles() {
+      var isAdmin = CAPAuth.isAdmin();
+      var isLoggedIn = CAPAuth.isLoggedIn();
+      var articles = CAPData.getArticles();
+      var list = document.getElementById('article-list');
+      var bar  = document.getElementById('article-add-bar');
+
+      if (isLoggedIn) {
+        bar.innerHTML = '<div class="add-item-bar">' +
+          '<span>논문을 추가하려면 버튼을 클릭하세요.</span>' +
+          '<button class="btn-sm primary" onclick="toggleArticleForm()">+ 논문 추가</button>' +
+          '</div>' +
+          '<div id="article-form" style="display:none" class="inline-form">' +
+          '<h4>새 논문 추가</h4>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>제목</label><input id="a-title" placeholder="논문 제목"></div>' +
+          '<div class="form-group"><label>저자</label><input id="a-authors" placeholder="저자명 (쉼표 구분)"></div>' +
+          '</div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>저널</label><input id="a-journal" placeholder="저널명"></div>' +
+          '<div class="form-group"><label>연도</label><input id="a-year" placeholder="2024"></div>' +
+          '</div>' +
+          '<div class="form-group"><label>DOI / URL</label><input id="a-doi" placeholder="https://doi.org/..."></div>' +
+          '<button class="save-btn" onclick="saveArticle()">저장</button>' +
+          '<button class="btn-sm" style="margin-left:8px" onclick="toggleArticleForm()">취소</button>' +
+          '</div>';
+      }
+
+      list.innerHTML = articles.length ? articles.map(function (a) {
+        var deleteBtn = isAdmin
+          ? '<button class="btn-sm danger" onclick="deleteArticle(\'' + escHtml(a.id) + '\')" style="margin-top:8px">삭제</button>'
+          : '';
+        return '<li>' +
+          '<b>' + escHtml(a.title) + '</b>' +
+          '<span class="pub-meta">' + escHtml(a.authors) + ' · ' + escHtml(a.journal) + ' · ' + escHtml(a.year) + '</span>' +
+          (a.doi ? '<a class="pub-link" href="' + escHtml(a.doi) + '" target="_blank" rel="noopener">DOI 링크</a>' : '') +
+          deleteBtn +
+          '</li>';
+      }).join('') : '<li style="border-left-color:var(--line)"><b style="color:var(--muted)">논문 데이터를 추가해주세요.</b></li>';
+    }
+
+    function renderPresentations() {
+      var isAdmin = CAPAuth.isAdmin();
+      var isLoggedIn = CAPAuth.isLoggedIn();
+      var preses = CAPData.getPresentations();
+      var list = document.getElementById('pres-list');
+      var bar  = document.getElementById('pres-add-bar');
+
+      if (isLoggedIn) {
+        bar.innerHTML = '<div class="add-item-bar">' +
+          '<span>학술발표를 추가하려면 버튼을 클릭하세요.</span>' +
+          '<button class="btn-sm primary" onclick="togglePresForm()">+ 발표 추가</button>' +
+          '</div>' +
+          '<div id="pres-form" style="display:none" class="inline-form">' +
+          '<h4>새 학술발표 추가</h4>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>발표 제목</label><input id="pr-title" placeholder="발표 제목"></div>' +
+          '<div class="form-group"><label>발표자</label><input id="pr-presenter" placeholder="발표자 이름"></div>' +
+          '</div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>학회명</label><input id="pr-venue" placeholder="학회명"></div>' +
+          '<div class="form-group"><label>연도</label><input id="pr-year" placeholder="2024"></div>' +
+          '</div>' +
+          '<div class="form-group"><label>발표 형식</label>' +
+          '<select id="pr-type"><option>구두 발표</option><option>포스터 발표</option></select>' +
+          '</div>' +
+          '<button class="save-btn" onclick="savePres()">저장</button>' +
+          '<button class="btn-sm" style="margin-left:8px" onclick="togglePresForm()">취소</button>' +
+          '</div>';
+      }
+
+      list.innerHTML = preses.length ? preses.map(function (p) {
+        var deleteBtn = isAdmin
+          ? '<button class="btn-sm danger" onclick="deletePres(\'' + escHtml(p.id) + '\')" style="margin-top:8px">삭제</button>'
+          : '';
+        return '<li>' +
+          '<b>' + escHtml(p.title) + '</b>' +
+          '<span class="pub-meta">' + escHtml(p.presenter) + ' · ' + escHtml(p.venue) + ' · ' + escHtml(p.year) + ' · ' + escHtml(p.type) + '</span>' +
+          deleteBtn +
+          '</li>';
+      }).join('') : '<li style="border-left-color:var(--line)"><b style="color:var(--muted)">학술발표 데이터를 추가해주세요.</b></li>';
+    }
+
+    function renderAwards() {
+      var isAdmin = CAPAuth.isAdmin();
+      var isLoggedIn = CAPAuth.isLoggedIn();
+      var awards = CAPData.getAwards();
+      var list = document.getElementById('award-list');
+      var bar  = document.getElementById('award-add-bar');
+
+      if (isLoggedIn) {
+        bar.innerHTML = '<div class="add-item-bar">' +
+          '<span>수상내역을 추가하려면 버튼을 클릭하세요.</span>' +
+          '<button class="btn-sm primary" onclick="toggleAwardForm()">+ 수상내역 추가</button>' +
+          '</div>' +
+          '<div id="award-form" style="display:none" class="inline-form">' +
+          '<h4>새 수상내역 추가</h4>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>수상명</label><input id="awp-title" placeholder="수상명"></div>' +
+          '<div class="form-group"><label>수상자</label><input id="awp-recipient" placeholder="수상자"></div>' +
+          '</div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>수여 기관</label><input id="awp-venue" placeholder="기관명"></div>' +
+          '<div class="form-group"><label>연도</label><input id="awp-year" placeholder="2026"></div>' +
+          '</div>' +
+          '<div class="form-group"><label>설명</label><input id="awp-desc" placeholder="간단 설명"></div>' +
+          '<button class="save-btn" onclick="saveAward()">저장</button>' +
+          '<button class="btn-sm" style="margin-left:8px" onclick="toggleAwardForm()">취소</button>' +
+          '</div>';
+      }
+
+      list.innerHTML = awards.length ? awards.map(function (a) {
+        var deleteBtn = isAdmin
+          ? '<button class="btn-sm danger" onclick="deleteAward(\'' + escHtml(a.id) + '\')" style="margin-top:8px">삭제</button>'
+          : '';
+        return '<li>' +
+          '<b>' + escHtml(a.title) + '</b>' +
+          '<span class="pub-meta">' + escHtml(a.recipient) + ' · ' + escHtml(a.venue) + ' · ' + escHtml(a.year) + '</span>' +
+          (a.desc ? '<span>' + escHtml(a.desc) + '</span>' : '') +
+          deleteBtn +
+          '</li>';
+      }).join('') : '<li style="border-left-color:var(--line)"><b style="color:var(--muted)">수상내역 데이터를 추가해주세요.</b></li>';
+    }
+
+    function toggleArticleForm() {
+      var f = document.getElementById('article-form');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+    function togglePresForm() {
+      var f = document.getElementById('pres-form');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+    function toggleAwardForm() {
+      var f = document.getElementById('award-form');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveArticle() {
+      var title = document.getElementById('a-title').value.trim();
+      if (!title) { alert('제목을 입력해주세요.'); return; }
+      CAPData.addArticle({
+        title: title,
+        authors: document.getElementById('a-authors').value.trim(),
+        journal: document.getElementById('a-journal').value.trim(),
+        year: document.getElementById('a-year').value.trim(),
+        doi: document.getElementById('a-doi').value.trim()
+      });
+      showToast('논문이 추가되었습니다.');
+      renderArticles();
+    }
+    function deleteArticle(id) {
+      if (!confirm('이 논문을 삭제하시겠습니까?')) return;
+      CAPData.removeArticle(id);
+      renderArticles();
+    }
+
+    function savePres() {
+      var title = document.getElementById('pr-title').value.trim();
+      if (!title) { alert('제목을 입력해주세요.'); return; }
+      CAPData.addPresentation({
+        title: title,
+        presenter: document.getElementById('pr-presenter').value.trim(),
+        venue: document.getElementById('pr-venue').value.trim(),
+        year: document.getElementById('pr-year').value.trim(),
+        type: document.getElementById('pr-type').value
+      });
+      showToast('학술발표가 추가되었습니다.');
+      renderPresentations();
+    }
+    function deletePres(id) {
+      if (!confirm('이 발표를 삭제하시겠습니까?')) return;
+      CAPData.removePresentation(id);
+      renderPresentations();
+    }
+
+    function saveAward() {
+      var title = document.getElementById('awp-title').value.trim();
+      if (!title) { alert('수상명을 입력해주세요.'); return; }
+      CAPData.addAward({
+        title: title,
+        recipient: document.getElementById('awp-recipient').value.trim(),
+        venue: document.getElementById('awp-venue').value.trim(),
+        year: document.getElementById('awp-year').value.trim(),
+        desc: document.getElementById('awp-desc').value.trim()
+      });
+      showToast('수상내역이 추가되었습니다.');
+      renderAwards();
+    }
+    function deleteAward(id) {
+      if (!confirm('이 수상내역을 삭제하시겠습니까?')) return;
+      CAPData.removeAward(id);
+      renderAwards();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      renderArticles();
+      renderPresentations();
+      renderAwards();
+    });
+  </script>
+</body>
+</html>

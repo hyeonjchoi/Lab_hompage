@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KW CAP Lab 진행 연구 — 소비자 판단·광고 반응, 인간-AI 상호작용, 식품 연구, 여성 소비자 경험">
+  <title>진행 연구 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html" aria-current="page">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <div class="page-hero">
+    <div class="page-hero-inner">
+      <span class="tagline">Research Areas</span>
+      <h1>진행 연구</h1>
+      <p>소비자가 광고, 서비스, AI 기반 상호작용에서 어떻게 생각하고 느끼며 행동하는지 탐구합니다.</p>
+    </div>
+  </div>
+
+  <main id="main">
+    <div class="section" id="axes-container">
+      <p style="color:var(--muted);">연구 정보를 불러오는 중...</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab<br>
+        Department of Industrial Psychology · Kwangwoon University
+      </div>
+      <div>
+        서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>
+        Tel. 02)940-5420
+      </div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var isAdmin = CAPAuth.isAdmin();
+      var c = CAPData.getContent();
+      var container = document.getElementById('axes-container');
+      if (!c.research || !c.research.axes) return;
+
+      container.innerHTML = c.research.axes.map(function (a) {
+        var tagsHtml = a.tags.map(function (t) {
+          return '<span>' + escHtml(t) + '</span>';
+        }).join('');
+        var editBtn = isAdmin
+          ? '<a class="edit-btn" href="admin.html#research">✏ 편집 (관리자)</a>'
+          : '';
+        return '<article class="card" style="margin-bottom:20px;padding:32px;">' +
+          '<span class="tagline">Research Axis ' + a.axisNum + '</span>' +
+          '<h2 style="font-size:1.45rem;">' + escHtml(a.title) + '</h2>' +
+          '<span class="en" style="font-size:1rem;margin-bottom:16px;">' + escHtml(a.en) + '</span>' +
+          '<p style="margin-top:16px;max-width:760px;color:#364152;">' + escHtml(a.desc) + '</p>' +
+          '<div class="theory-tags" style="margin-top:20px;">' + tagsHtml + '</div>' +
+          editBtn +
+          '</article>';
+      }).join('');
+    });
+  </script>
+</body>
+</html>

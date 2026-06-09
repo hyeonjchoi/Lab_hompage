@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAP Lab 홈페이지 언어 정책 및 세부 결정 검토</title>
+  <style>
+    :root {
+      --navy: #183A5A;
+      --navy-2: #25506F;
+      --red: #B51F2B;
+      --ink: #1F2933;
+      --muted: #667085;
+      --line: #D9E2EC;
+      --bg: #F6F8FA;
+      --surface: #FFFFFF;
+      --soft-blue: #EAF2F8;
+      --soft-red: #FCE8EA;
+      --soft-green: #E9F7EF;
+      --shadow: 0 14px 36px rgba(24, 58, 90, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 14px 0;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 210px;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 2px solid var(--red);
+      color: var(--navy);
+      background: #fff;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-text strong {
+      display: block;
+      color: var(--navy);
+      font-size: 1rem;
+      line-height: 1.1;
+    }
+
+    .brand-text span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.2;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .nav a {
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: var(--navy);
+      font-size: 0.88rem;
+      text-decoration: none;
+    }
+
+    .nav a:hover {
+      background: var(--soft-blue);
+    }
+
+    .hero {
+      background: linear-gradient(180deg, #FFFFFF 0%, #F6F8FA 100%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-inner {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 44px;
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 72px 0 56px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--red);
+      font-size: 0.84rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      color: var(--navy);
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 780px;
+      font-size: clamp(2.2rem, 4vw, 4.2rem);
+    }
+
+    h2 {
+      font-size: clamp(1.6rem, 2.4vw, 2.35rem);
+    }
+
+    h3 {
+      font-size: 1.14rem;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+      margin: 22px 0 0;
+      color: #364152;
+      font-size: 1.12rem;
+    }
+
+    .hero-copy .en {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 16px;
+      border: 1px solid var(--navy);
+      border-radius: 6px;
+      background: var(--navy);
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .button.secondary {
+      background: white;
+      color: var(--navy);
+    }
+
+    .summary-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .summary-panel header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--navy);
+      color: white;
+    }
+
+    .summary-panel header strong {
+      display: block;
+      font-size: 1.05rem;
+    }
+
+    .summary-panel header span {
+      display: block;
+      margin-top: 4px;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 0.86rem;
+    }
+
+    .summary-list {
+      margin: 0;
+      padding: 18px 20px 20px;
+      list-style: none;
+    }
+
+    .summary-list li {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .summary-list li:last-child {
+      border-bottom: 0;
+    }
+
+    .summary-list b {
+      color: var(--navy);
+      font-size: 0.88rem;
+    }
+
+    .summary-list span {
+      color: #364152;
+      font-size: 0.94rem;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+
+    section {
+      margin-top: 42px;
+    }
+
+    section:first-child {
+      margin-top: 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .section-head p {
+      max-width: 680px;
+      margin: 10px 0 0;
+      color: var(--muted);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--soft-red);
+      color: var(--red);
+      font-size: 0.8rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status.done {
+      background: var(--soft-green);
+      color: #176B43;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card,
+    .decision,
+    .sample {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgba(24, 58, 90, 0.04);
+    }
+
+    .card,
+    .sample {
+      padding: 20px;
+    }
+
+    .card .label,
+    .decision .label,
+    .sample .label {
+      display: inline-flex;
+      margin-bottom: 10px;
+      color: var(--red);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .card p,
+    .sample p {
+      margin: 10px 0 0;
+      color: #364152;
+    }
+
+    .en {
+      color: var(--muted);
+      font-size: 0.92em;
+    }
+
+    .sample-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .sample-nav span {
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 82px;
+      min-height: 50px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--navy);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .sample-nav small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .research-list {
+      display: grid;
+      gap: 12px;
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .research-list li {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--red);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .research-list b {
+      display: block;
+      color: var(--navy);
+    }
+
+    .research-list span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .theory-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .theory-tags span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft-blue);
+      color: var(--navy-2);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .decision {
+      overflow: hidden;
+    }
+
+    .decision header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .decision header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .decision-body {
+      padding: 16px 18px 18px;
+    }
+
+    .recommendation {
+      margin: 0 0 12px;
+      padding: 12px;
+      border-radius: 6px;
+      background: var(--soft-blue);
+      color: #24445C;
+      font-size: 0.94rem;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      color: #364152;
+      font-size: 0.94rem;
+    }
+
+    .box {
+      flex: 0 0 auto;
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-top: 5px;
+      border: 1.5px solid var(--muted);
+      border-radius: 3px;
+      background: #fff;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--navy);
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    td {
+      color: #364152;
+      font-size: 0.94rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .note {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-left: 4px solid var(--red);
+      background: #fff;
+      color: #364152;
+    }
+
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .logo-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgba(24, 58, 90, 0.04);
+    }
+
+    .logo-card figure {
+      margin: 0;
+    }
+
+    .logo-card img {
+      display: block;
+      width: 100%;
+      height: 210px;
+      object-fit: contain;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .logo-card figcaption {
+      min-height: 112px;
+      padding: 14px 16px 16px;
+      border-top: 1px solid var(--line);
+      color: #364152;
+      font-size: 0.9rem;
+    }
+
+    .logo-card figcaption strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--navy);
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      background: var(--navy);
+      color: white;
+    }
+
+    .footer-inner {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 860px) {
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .hero-inner,
+      .grid,
+      .grid.two,
+      .logo-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-inner {
+        padding-top: 48px;
+      }
+
+      .section-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media print {
+      .topbar,
+      .hero-actions {
+        display: none;
+      }
+
+      body {
+        background: white;
+      }
+
+      main,
+      .hero-inner,
+      .footer-inner {
+        width: 100%;
+      }
+
+      .card,
+      .decision,
+      .sample,
+      .summary-panel {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">CAP</div>
+        <div class="brand-text">
+          <strong>KW CAP Lab 검토안</strong>
+          <span>언어 정책 · 콘텐츠 표기 · 세부 결정</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="페이지 내 이동">
+        <a href="#language">언어 정책</a>
+        <a href="#samples">표기 예시</a>
+        <a href="#decisions">결정 사항</a>
+        <a href="#logos">로고 후보</a>
+        <a href="#checklist">확인 목록</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">Review Draft · Korean First, English Parallel</p>
+        <h1>광운대학교 소비자광고심리 연구실 홈페이지 언어 정책 및 세부 결정 검토안</h1>
+        <p class="hero-copy">
+          한국어를 기본 언어로 사용하되, 연구실명·메뉴·연구 키워드·논문 정보는 영문을 함께 병기하는 방향으로 정리한 사전 검토용 화면입니다.
+          <span class="en">This review page proposes a Korean-first bilingual structure for the KW CAP Lab website.</span>
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="#decisions">결정 항목 확인</a>
+          <a class="button secondary" href="#samples">표기 방식 보기</a>
+        </div>
+      </div>
+
+      <aside class="summary-panel" aria-label="권장 방향 요약">
+        <header>
+          <strong>권장 방향 요약</strong>
+          <span>다른 사람들과 먼저 확인할 핵심안</span>
+        </header>
+        <ul class="summary-list">
+          <li>
+            <b>기본 언어</b>
+            <span>한국어</span>
+          </li>
+          <li>
+            <b>영문 병기</b>
+            <span>핵심 문구, 연구 키워드, 메뉴, 논문 정보</span>
+          </li>
+          <li>
+            <b>메뉴 표기</b>
+            <span>한국어 주표기 + 영문 보조표기</span>
+          </li>
+          <li>
+            <b>연구 용어</b>
+            <span>국문 설명 + 영문 학술 용어 병기</span>
+          </li>
+          <li>
+            <b>논문 정보</b>
+            <span>DOI, 저널 링크, 학교 도서관 연동 우선</span>
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <main>
+    <section id="language">
+      <div class="section-head">
+        <div>
+          <h2>1. 사이트 언어 정책 확정안</h2>
+          <p>한국어 사용자가 자연스럽게 읽을 수 있도록 본문은 한국어를 기본으로 두고, 학술 검색성과 국제 방문자를 고려해 핵심 정보는 영문을 병기합니다.</p>
+        </div>
+        <span class="status done">권장 확정</span>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <span class="label">Primary Language</span>
+          <h3>한국어 기본</h3>
+          <p>홈, 연구 소개, 구성원 소개, 지원 안내의 주요 본문은 한국어로 작성합니다. 국내 학생과 학내 관계자가 가장 쉽게 이해할 수 있는 구조입니다.</p>
+        </article>
+
+        <article class="card">
+          <span class="label">English Parallel</span>
+          <h3>영문 병기</h3>
+          <p>전체 문장을 모두 번역하기보다 핵심 문구, 연구 키워드, 메뉴, 논문 정보를 중심으로 영문을 함께 둡니다. 외부 연구자와 국제 검색 유입을 고려한 방식입니다.</p>
+        </article>
+
+        <article class="card">
+          <span class="label">Tone</span>
+          <h3>학술적이되 친근한 톤</h3>
+          <p>과도하게 홍보 문구처럼 쓰기보다 연구실의 주제, 방법, 성과, 참여 경로가 또렷하게 보이도록 정돈된 문체를 사용합니다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="samples">
+      <div class="section-head">
+        <div>
+          <h2>2. 실제 화면 표기 예시</h2>
+          <p>아래 예시는 이후 홈페이지 제작 시 사용할 수 있는 한국어 우선 병기 방식입니다.</p>
+        </div>
+        <span class="status">검토 필요</span>
+      </div>
+
+      <div class="grid two">
+        <article class="sample">
+          <span class="label">Navigation</span>
+          <h3>메뉴 표기 방식</h3>
+          <p>메뉴는 한국어를 먼저 보여주고, 영문은 작은 보조 라벨로 배치합니다.</p>
+          <div class="sample-nav" aria-label="메뉴 표기 예시">
+            <span>홈<small>Home</small></span>
+            <span>구성원<small>People</small></span>
+            <span>진행 연구<small>Research</small></span>
+            <span>연구 성과<small>Publications</small></span>
+            <span>소식<small>News</small></span>
+            <span>지원하기<small>Join Us</small></span>
+          </div>
+        </article>
+
+        <article class="sample">
+          <span class="label">Hero Copy</span>
+          <h3>첫 화면 문구</h3>
+          <p>
+            광운대학교 소비자광고심리 연구실은 광고, 소비자 행동, 식품 관련 의사결정, 여성 소비자 경험 속에서 사람들이 어떻게 생각하고, 느끼고, 행동하는지 연구합니다.
+            <span class="en">KW CAP Lab studies consumer psychology in advertising, consumer behavior, food-related decision-making, and women-focused research contexts.</span>
+          </p>
+        </article>
+      </div>
+
+      <div class="grid two" style="margin-top: 16px;">
+        <article class="sample">
+          <span class="label">Research Areas</span>
+          <h3>연구 주제 표기</h3>
+          <ul class="research-list">
+            <li>
+              <b>소비자 판단과 광고 반응</b>
+              <span>Consumer Judgment & Advertising Response</span>
+              <div class="theory-tags">
+                <span>Regulatory Focus Theory</span>
+                <span>Construal Level Theory</span>
+                <span>Persuasion Knowledge Model</span>
+              </div>
+            </li>
+            <li>
+              <b>인간-AI 서비스 상호작용</b>
+              <span>Human-AI Service Interaction</span>
+              <div class="theory-tags">
+                <span>Algorithm Aversion</span>
+                <span>Anthropomorphism</span>
+                <span>Trust in Automation</span>
+              </div>
+            </li>
+            <li>
+              <b>식품 관련 연구</b>
+              <span>Food-related Consumer Research</span>
+              <div class="theory-tags">
+                <span>Attribution Theory</span>
+                <span>Health Belief Model</span>
+                <span>Food Choice Motives</span>
+              </div>
+            </li>
+            <li>
+              <b>여성에 관한 연구</b>
+              <span>Women, Gender & Consumer Psychology</span>
+              <div class="theory-tags">
+                <span>Social Identity Theory</span>
+                <span>Gender Schema Theory</span>
+                <span>Stereotype Content Model</span>
+              </div>
+            </li>
+          </ul>
+        </article>
+
+        <article class="sample">
+          <span class="label">Join Us</span>
+          <h3>지원 안내 표기</h3>
+          <p>
+            광운대학교 소비자광고심리 연구실은 대학원생 지원 문의와 학부연구생 RA 상시 모집을 구분해 안내합니다. 석사·박사 과정은 대학원 공식 입학 절차를 우선 확인하고, RA는 연구실 개별 문의를 통해 지원합니다.
+            <span class="en">Graduate admissions and undergraduate RA recruitment are guided separately, with official graduate admissions linked through the university and RA inquiries handled by the lab.</span>
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="decisions">
+      <div class="section-head">
+        <div>
+          <h2>3. 세부 결정이 필요한 사안</h2>
+          <p>아래 항목은 홈페이지 제작 전에 지도교수, 구성원, 학교 측과 확인하면 좋은 의사결정 목록입니다.</p>
+        </div>
+        <span class="status">공유 검토용</span>
+      </div>
+
+      <div class="grid two">
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-01</span>
+              <h3>연구실 공식 명칭</h3>
+              <p>홈페이지 첫 화면과 푸터에 들어갈 이름입니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">확정안: 광운대학교 소비자광고심리 연구실<br><span class="en">KW CAP Lab · Kwangwoon University Consumer Advertising Psychology Lab</span></p>
+            <ul class="checklist">
+              <li><span class="box"></span>영문 약칭을 `KW CAP Lab`으로 최종 사용할지 확인</li>
+              <li><span class="box"></span>전체 영문명을 `Kwangwoon University Consumer Advertising Psychology Lab`으로 쓸지 확인</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-02</span>
+              <h3>메뉴명</h3>
+              <p>한국어 메뉴와 영문 보조 표기의 최종 조합입니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">확정안: 홈 / 구성원 / 진행 연구 / 연구 성과 / 소식 / 지원하기</p>
+            <ul class="checklist">
+              <li><span class="box"></span>`연구 성과` 하위 구성을 `논문 / 학술발표`로 운영</li>
+              <li><span class="box"></span>`진행 연구`에서 현재 프로젝트와 연구 주제를 함께 보여줄지 확인</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-03</span>
+              <h3>영문 병기 범위</h3>
+              <p>모든 문장 번역이 필요한지, 핵심 정보만 병기할지 정합니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">확정안: 전체 번역이 아니라 핵심 문구, 연구 키워드, 메뉴, 논문 정보 중심 병기</p>
+            <ul class="checklist">
+              <li><span class="box"></span>국문 본문을 기본으로 유지</li>
+              <li><span class="box"></span>학술 용어와 논문 정보는 영문 표기를 우선 정확하게 관리</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-04</span>
+              <h3>연구 주제 명칭</h3>
+              <p>연구실의 전문성을 보여주는 가장 중요한 문구입니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">수정안: 소비자 판단과 광고 반응, 인간-AI 서비스 상호작용, 식품 관련 연구, 여성에 관한 연구로 구성하고 세부 이론명은 영문 병기</p>
+            <ul class="checklist">
+              <li><span class="box"></span>현재 진행 중인 연구와 공개 가능한 범위 확인</li>
+              <li><span class="box"></span>식품 관련 연구와 여성에 관한 연구의 대표 프로젝트명 확인</li>
+              <li><span class="box"></span>Regulatory Focus Theory, Construal Level Theory, Attribution Theory 등 이론명 표기 확인</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-05</span>
+              <h3>구성원 정보 공개 범위</h3>
+              <p>개인정보와 공개 동의가 필요한 항목입니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">확정안: 기본 프로필은 사진 대신 제작형 이모지 아바타 사용. 이름, 영문 이름, 과정, 연구 관심사를 공개하고 사진과 이메일은 희망자만 공개</p>
+            <ul class="checklist">
+              <li><span class="box"></span>이모지 아바타 스타일 확정</li>
+              <li><span class="box"></span>국문 이름과 영문 이름 표기 방식 확인</li>
+              <li><span class="box"></span>개인 이메일 공개 여부 확인</li>
+              <li><span class="box"></span>희망자 사진 업로드 규격 확인</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-06</span>
+              <h3>연구 성과 및 논문 링크</h3>
+              <p>논문과 학술발표를 구분하고, DOI 및 저널 링크 정책을 확인합니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">확정안: DOI와 저널 링크를 우선 제시하고, 가능한 경우 학교 도서관 사이트로 연동</p>
+            <ul class="checklist">
+              <li><span class="box"></span>논문 리스트 최신본 확보</li>
+              <li><span class="box"></span>논문별 DOI와 저널 원문 링크 확인</li>
+              <li><span class="box"></span>학교 도서관 연동 URL 또는 프록시 방식 확인</li>
+              <li><span class="box"></span>학술발표 목록 공개 범위 확인</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-07</span>
+              <h3>로고와 학교 상징 사용</h3>
+              <p>로고 최종안과 광운대학교 상징 사용 범위를 결정합니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">수정안: 전달된 로고 후보를 모두 검토 목록에 올리고, 구성원 의견 수렴 후 최종 로고 선택</p>
+            <ul class="checklist">
+              <li><span class="box"></span>후보별 선호도 취합</li>
+              <li><span class="box"></span>광운대 공식 로고 사용 가이드 확인</li>
+              <li><span class="box"></span>파비콘, 모바일, 흑백 버전 테스트</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-08</span>
+              <h3>지원 안내 문구</h3>
+              <p>대학원생, 학부연구생, RA 모집 문구를 구분합니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">확정안: 대학원생과 학부연구생 RA 모집을 구분. 석사·박사 과정은 대학원 홈페이지로 연결하고, RA는 상시 모집으로 연구실 개별 문의 안내</p>
+            <ul class="checklist">
+              <li><span class="box"></span>대학원 홈페이지 링크 확인</li>
+              <li><span class="box"></span>RA 상시 모집 안내 문구 확정</li>
+              <li><span class="box"></span>지원 이메일에 포함할 자료 확정</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="decision">
+          <header>
+            <div>
+              <span class="label">D-09</span>
+              <h3>색상 구성</h3>
+              <p>홈페이지 전체 인상을 결정하는 기본 팔레트입니다.</p>
+            </div>
+          </header>
+          <div class="decision-body">
+            <p class="recommendation">확정안: 네이비 - 화이트 - 레드 조합 유지</p>
+            <ul class="checklist">
+              <li><span class="box"></span>네이비는 헤딩과 네비게이션 중심으로 사용</li>
+              <li><span class="box"></span>화이트는 본문 배경과 카드 영역에 사용</li>
+              <li><span class="box"></span>레드는 CTA, 강조선, 상태 표시처럼 제한적으로 사용</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="logos">
+      <div class="section-head">
+        <div>
+          <h2>4. 로고 후보 검토</h2>
+          <p>전달된 로고 후보를 한 화면에서 비교할 수 있도록 정리했습니다. 구성원 의견을 취합한 뒤 최종 로고를 선택합니다.</p>
+        </div>
+        <span class="status">최종 선택 필요</span>
+      </div>
+
+      <div class="logo-grid">
+        <article class="logo-card">
+          <figure>
+            <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/003.png" alt="로고 후보 1">
+            <figcaption>
+              <strong>로고 후보 1</strong>
+              심볼형 로고. 소비자 심리, 인지, 행동 반응을 상징적으로 보여주는 방향입니다.
+            </figcaption>
+          </figure>
+        </article>
+
+        <article class="logo-card">
+          <figure>
+            <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/스크린샷_2025-05-07_오후_3.28.25.png" alt="로고 후보 2">
+            <figcaption>
+              <strong>로고 후보 2</strong>
+              텍스트 계층을 보완한 심볼형 후보. 연구실명과 소속 표기의 균형을 검토합니다.
+            </figcaption>
+          </figure>
+        </article>
+
+        <article class="logo-card">
+          <figure>
+            <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/스크린샷_2025-05-07_오후_2.10.51 1.png" alt="로고 후보 3">
+            <figcaption>
+              <strong>로고 후보 3</strong>
+              인물과 집단성을 강조하는 후보. 연구실 커뮤니티 이미지를 함께 전달합니다.
+            </figcaption>
+          </figure>
+        </article>
+
+        <article class="logo-card">
+          <figure>
+            <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/스크린샷_2025-05-07_오후_1.58.26.png" alt="로고 후보 4">
+            <figcaption>
+              <strong>로고 후보 4</strong>
+              광운대학교 상징성을 강하게 드러내는 후보. 공식 상징 사용 가능 여부 확인이 필요합니다.
+            </figcaption>
+          </figure>
+        </article>
+
+        <article class="logo-card">
+          <figure>
+            <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/스크린샷_2025-05-07_오후_1.42.52.png" alt="로고 후보 5">
+            <figcaption>
+              <strong>로고 후보 5</strong>
+              CAP 워드마크형 후보. 네비게이션, 파비콘, 모바일 환경에서의 가독성을 중점 검토합니다.
+            </figcaption>
+          </figure>
+        </article>
+      </div>
+
+      <div class="note">
+        <strong>검토 기준:</strong>
+        로고는 선호도뿐 아니라 작은 크기에서의 가독성, 흑백 사용성, 모바일 표시, 파비콘 확장성, 광운대학교 상징 사용 가능 여부를 함께 확인합니다.
+      </div>
+    </section>
+
+    <section id="checklist">
+      <div class="section-head">
+        <div>
+          <h2>5. 공유용 확인 목록</h2>
+          <p>회의나 메신저 공유 시 이 표를 기준으로 확인하면 제작 단계로 넘어가기 쉽습니다.</p>
+        </div>
+        <span class="status">다음 단계</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>확인할 내용</th>
+              <th>현재 권장안</th>
+              <th>확인 대상</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>언어</td>
+              <td>한국어 기본 + 영문 병기 방식으로 진행할지</td>
+              <td>핵심 문구, 연구 키워드, 메뉴, 논문 정보 중심 병기</td>
+              <td>지도교수, 제작 담당자</td>
+            </tr>
+            <tr>
+              <td>연구실명</td>
+              <td>국문명, 영문명, KW CAP Lab 약칭 확정</td>
+              <td>광운대학교 소비자광고심리 연구실 / KW CAP Lab</td>
+              <td>지도교수</td>
+            </tr>
+            <tr>
+              <td>메뉴</td>
+              <td>메뉴명을 한국어 중심으로 할지, 영문 중심으로 할지</td>
+              <td>홈 / 구성원 / 진행 연구 / 연구 성과 / 소식 / 지원하기</td>
+              <td>지도교수, 구성원</td>
+            </tr>
+            <tr>
+              <td>연구 주제</td>
+              <td>연구 축과 세부 이론명이 연구실 방향과 맞는지</td>
+              <td>소비자 판단과 광고 반응, 인간-AI, 식품 관련 연구, 여성에 관한 연구</td>
+              <td>지도교수</td>
+            </tr>
+            <tr>
+              <td>구성원</td>
+              <td>이름, 영문 이름, 과정, 연구 관심사, 이모지 아바타 공개 방식</td>
+              <td>사진과 이메일은 희망자만 공개</td>
+              <td>전체 구성원</td>
+            </tr>
+            <tr>
+              <td>연구 성과</td>
+              <td>논문과 학술발표 하위 구성, DOI와 저널 링크 정책</td>
+              <td>DOI와 저널 링크 우선, 학교 도서관 사이트 연동 검토</td>
+              <td>지도교수, 논문 저자</td>
+            </tr>
+            <tr>
+              <td>지원 안내</td>
+              <td>대학원/RA 모집 문구와 문의 절차</td>
+              <td>석사·박사는 대학원 홈페이지 연결, RA는 상시 모집으로 연구실 개별 문의</td>
+              <td>지도교수, 학과 행정</td>
+            </tr>
+            <tr>
+              <td>브랜드</td>
+              <td>전달된 로고 후보 검토 및 최종안 선택</td>
+              <td>후보 전체 비교 후 구성원 의견 수렴</td>
+              <td>지도교수, 학교 가이드 담당</td>
+            </tr>
+            <tr>
+              <td>색상</td>
+              <td>홈페이지 기본 색상 구성</td>
+              <td>네이비 - 화이트 - 레드 유지</td>
+              <td>지도교수, 제작 담당자</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <strong>제작 진행 제안:</strong>
+        이 검토안에서 연구실명, 메뉴명, 연구 주제, 로고 후보 검토 방식이 확인되면, 다음 단계에서는 실제 홈페이지의 `index.html` 초안을 한국어 중심으로 제작하고 Home 화면부터 디자인과 문구를 구체화하는 것이 좋습니다.
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      KW CAP Lab 홈페이지 제작 사전 검토안 · 한국어 기본 / 영문 병기 · 2026년 6월 1일
+    </div>
+  </footer>
+</body>
+</html>

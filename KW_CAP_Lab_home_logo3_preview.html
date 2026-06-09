@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="광운대학교 소비자광고심리 연구실 KW CAP Lab 임시 홈페이지 시안">
+  <title>광운대학교 소비자광고심리 연구실 | KW CAP Lab</title>
+  <style>
+    :root {
+      --navy: #183A5A;
+      --navy-2: #25506F;
+      --red: #B51F2B;
+      --ink: #1F2933;
+      --muted: #667085;
+      --line: #D9E2EC;
+      --bg: #F6F8FA;
+      --surface: #FFFFFF;
+      --blue-soft: #EAF2F8;
+      --red-soft: #FCE8EA;
+      --green-soft: #EAF7EF;
+      --shadow: 0 18px 42px rgba(24, 58, 90, 0.09);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .skip-link {
+      position: absolute;
+      left: 16px;
+      top: -48px;
+      z-index: 100;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: var(--navy);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .skip-link:focus {
+      top: 16px;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(217, 226, 236, 0.9);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-shell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(1180px, calc(100% - 32px));
+      min-height: 76px;
+      margin: 0 auto;
+      gap: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 250px;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 58px;
+      height: 58px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .brand-name {
+      display: grid;
+      gap: 1px;
+    }
+
+    .brand-name strong {
+      color: var(--navy);
+      font-size: 1rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .brand-name span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .nav-links a {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 82px;
+      min-height: 48px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: var(--navy);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .nav-links a:hover {
+      background: var(--blue-soft);
+    }
+
+    .nav-links small {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
+    .nav-links .apply {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .nav-links .apply small {
+      color: rgba(255, 255, 255, 0.76);
+    }
+
+    .hero {
+      min-height: calc(100vh - 76px);
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #FFFFFF 0%, #F7FAFC 70%, #EEF4F8 100%);
+    }
+
+    .hero-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(310px, 0.9fr);
+      align-items: center;
+      width: min(1180px, calc(100% - 32px));
+      min-height: calc(100vh - 76px);
+      margin: 0 auto;
+      padding: 52px 0 48px;
+      gap: 52px;
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--red);
+      font-size: 0.84rem;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      color: var(--navy);
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 820px;
+      font-size: clamp(2.2rem, 5vw, 4.85rem);
+    }
+
+    h2 {
+      font-size: clamp(1.55rem, 2.4vw, 2.35rem);
+    }
+
+    h3 {
+      font-size: 1.12rem;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 24px 0 0;
+      color: #364152;
+      font-size: 1.15rem;
+    }
+
+    .en {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.92em;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 16px;
+      border: 1px solid var(--navy);
+      border-radius: 6px;
+      background: var(--navy);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--navy);
+    }
+
+    .hero-logo-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 20px;
+    }
+
+    .hero-logo {
+      width: min(100%, 430px);
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: 100%;
+      gap: 8px;
+    }
+
+    .fact {
+      min-height: 74px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+    }
+
+    .fact b {
+      display: block;
+      color: var(--navy);
+      font-size: 1.05rem;
+    }
+
+    .fact span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    main {
+      background: var(--bg);
+    }
+
+    .section {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 66px 0;
+    }
+
+    .section + .section {
+      border-top: 1px solid var(--line);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 24px;
+    }
+
+    .section-head p {
+      max-width: 710px;
+      margin: 10px 0 0;
+      color: var(--muted);
+    }
+
+    .tagline {
+      color: var(--red);
+      font-size: 0.8rem;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      min-height: 100%;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgba(24, 58, 90, 0.04);
+    }
+
+    .card p {
+      margin: 12px 0 0;
+      color: #364152;
+    }
+
+    .theory-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .theory-tags span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--navy-2);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .publication-list,
+    .news-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .publication-list li,
+    .news-list li {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--red);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .publication-list b,
+    .news-list b {
+      display: block;
+      color: var(--navy);
+      font-size: 1rem;
+    }
+
+    .publication-list span,
+    .news-list span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .people-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .person {
+      padding: 22px 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+    }
+
+    .avatar {
+      display: grid;
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 14px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: var(--blue-soft);
+      color: var(--navy);
+      font-size: 2.15rem;
+    }
+
+    .person strong {
+      display: block;
+      color: var(--navy);
+      font-size: 1.02rem;
+    }
+
+    .person span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .join-band {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
+      gap: 22px;
+      padding: 28px;
+      border-radius: 8px;
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .join-band h2 {
+      color: #fff;
+    }
+
+    .join-band p,
+    .join-band .en {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .join-actions {
+      display: grid;
+      align-content: center;
+      gap: 10px;
+    }
+
+    .join-action {
+      display: block;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .nav-shell {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 0;
+      }
+
+      .nav-links {
+        justify-content: flex-start;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-inner,
+      .join-band {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .hero-logo {
+        width: min(100%, 360px);
+      }
+
+      .grid,
+      .people-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .brand {
+        min-width: 0;
+      }
+
+      .brand-logo {
+        width: 48px;
+        height: 48px;
+      }
+
+      .nav-links {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .nav-links a {
+        min-width: 0;
+      }
+
+      .hero-inner {
+        padding: 34px 0 42px;
+      }
+
+      .hero-facts,
+      .grid,
+      .grid.two,
+      .people-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .section {
+        padding: 48px 0;
+      }
+
+      .section-head,
+      .footer-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="#top" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <img class="brand-logo" src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/스크린샷_2025-05-07_오후_2.10.51 1.png" alt="">
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>KW CAP Lab</span>
+        </span>
+      </a>
+
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="#top">홈<small>Home</small></a>
+        <a href="#people">구성원<small>People</small></a>
+        <a href="#research">진행 연구<small>Research</small></a>
+        <a href="#publications">연구 성과<small>Publications</small></a>
+        <a href="#news">소식<small>News</small></a>
+        <a class="apply" href="#join">지원하기<small>Join Us</small></a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="top">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">Kwangwoon University · Consumer Advertising Psychology</p>
+        <h1>광고와 소비자 경험 속 마음의 움직임을 연구합니다.</h1>
+        <p class="lead">
+          광운대학교 소비자광고심리 연구실은 광고, 소비자 행동, 식품 관련 의사결정, 여성 소비자 경험 속에서 사람들이 어떻게 생각하고, 느끼고, 행동하는지 연구합니다.
+          <span class="en">KW CAP Lab studies consumer psychology in advertising, consumer behavior, food-related decision-making, and women-focused research contexts.</span>
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="#research">진행 연구 보기</a>
+          <a class="button secondary" href="#join">지원 안내 확인</a>
+        </div>
+      </div>
+
+      <div class="hero-logo-wrap" aria-label="로고 후보 3 적용 예시">
+        <img class="hero-logo" src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/스크린샷_2025-05-07_오후_2.10.51 1.png" alt="KW CAP Lab 로고 후보 3">
+        <div class="hero-facts">
+          <div class="fact">
+            <b>4</b>
+            <span>주요 연구 축</span>
+          </div>
+          <div class="fact">
+            <b>KR+EN</b>
+            <span>한영 병기</span>
+          </div>
+          <div class="fact">
+            <b>RA</b>
+            <span>상시 모집</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main id="main">
+    <section class="section" id="research">
+      <div class="section-head">
+        <div>
+          <span class="tagline">Research Areas</span>
+          <h2>진행 연구</h2>
+          <p>연구 주제는 한국어로 먼저 소개하고, 학술 이론과 핵심 키워드는 영문으로 병기합니다.</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <h3>소비자 판단과 광고 반응</h3>
+          <p>광고 메시지, 브랜드 단서, 설득 커뮤니케이션이 소비자 판단과 태도에 미치는 영향을 연구합니다.</p>
+          <span class="en">Consumer Judgment & Advertising Response</span>
+          <div class="theory-tags">
+            <span>Regulatory Focus Theory</span>
+            <span>Construal Level Theory</span>
+            <span>Persuasion Knowledge Model</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>인간-AI 서비스 상호작용</h3>
+          <p>AI 추천, 자동화 서비스, 디지털 상담 상황에서 소비자의 신뢰와 수용 반응을 분석합니다.</p>
+          <span class="en">Human-AI Service Interaction</span>
+          <div class="theory-tags">
+            <span>Algorithm Aversion</span>
+            <span>Anthropomorphism</span>
+            <span>Trust in Automation</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>식품 관련 연구</h3>
+          <p>식품 선택, 건강 메시지, 제품 정보, 소비 상황이 판단과 행동 의도에 미치는 영향을 다룹니다.</p>
+          <span class="en">Food-related Consumer Research</span>
+          <div class="theory-tags">
+            <span>Attribution Theory</span>
+            <span>Health Belief Model</span>
+            <span>Food Choice Motives</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>여성에 관한 연구</h3>
+          <p>여성 소비자 경험, 젠더 인식, 사회적 정체성과 소비자 심리의 관계를 탐구합니다.</p>
+          <span class="en">Women, Gender & Consumer Psychology</span>
+          <div class="theory-tags">
+            <span>Social Identity Theory</span>
+            <span>Gender Schema Theory</span>
+            <span>Stereotype Content Model</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="people">
+      <div class="section-head">
+        <div>
+          <span class="tagline">People</span>
+          <h2>구성원</h2>
+          <p>기본 프로필은 제작형 이모지 아바타를 사용하고, 사진과 이메일은 희망자에 한해 공개합니다.</p>
+        </div>
+      </div>
+
+      <div class="people-strip">
+        <article class="person">
+          <div class="avatar" aria-hidden="true">교</div>
+          <strong>지도교수 성명</strong>
+          <span>Professor · Principal Investigator</span>
+          <span>광고심리, 소비자 행동</span>
+        </article>
+        <article class="person">
+          <div class="avatar" aria-hidden="true">연</div>
+          <strong>구성원 이름</strong>
+          <span>Graduate Student</span>
+          <span>AI 서비스, 소비자 신뢰</span>
+        </article>
+        <article class="person">
+          <div class="avatar" aria-hidden="true">식</div>
+          <strong>구성원 이름</strong>
+          <span>Graduate Student</span>
+          <span>식품 선택, 건강 메시지</span>
+        </article>
+        <article class="person">
+          <div class="avatar" aria-hidden="true">RA</div>
+          <strong>학부연구생</strong>
+          <span>Research Assistant</span>
+          <span>실험 보조, 자료 정리</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="publications">
+      <div class="section-head">
+        <div>
+          <span class="tagline">Publications</span>
+          <h2>연구 성과</h2>
+          <p>논문과 학술발표를 구분하고, 논문은 DOI와 저널 링크를 우선 제공합니다. 가능한 경우 학교 도서관 사이트와 연동합니다.</p>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <article class="card">
+          <h3>논문</h3>
+          <ul class="publication-list">
+            <li>
+              <b>논문 제목 예시가 이곳에 들어갑니다.</b>
+              <span>저자명. 연도. 저널명. DOI / Journal Link / Library Link</span>
+            </li>
+            <li>
+              <b>식품 관련 소비자 연구 논문 예시</b>
+              <span>Author. Year. Journal. DOI 우선 연결</span>
+            </li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>학술발표</h3>
+          <ul class="publication-list">
+            <li>
+              <b>학회 발표 제목 예시</b>
+              <span>학회명 · 발표일 · 발표자</span>
+            </li>
+            <li>
+              <b>진행 연구 포스터 발표 예시</b>
+              <span>Conference Presentation · Poster Session</span>
+            </li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="news">
+      <div class="section-head">
+        <div>
+          <span class="tagline">News</span>
+          <h2>소식</h2>
+          <p>연구실 활동, 논문 게재, 학회 발표, 수상, RA 모집 관련 소식을 정리합니다.</p>
+        </div>
+      </div>
+
+      <ul class="news-list">
+        <li>
+          <b>학부연구생 RA 상시 모집</b>
+          <span>소비자 심리와 광고 연구에 관심 있는 학부생의 지원을 기다립니다.</span>
+        </li>
+        <li>
+          <b>진행 연구 업데이트</b>
+          <span>식품 관련 소비자 의사결정과 여성 소비자 경험 연구를 진행 중입니다.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section" id="join">
+      <div class="join-band">
+        <div>
+          <span class="tagline">Join Us</span>
+          <h2>지원하기</h2>
+          <p>
+            대학원생 지원과 학부연구생 RA 모집은 구분해서 안내합니다. 석사·박사 과정은 대학원 공식 입학 절차를 우선 확인하고, RA는 연구실 개별 문의를 통해 상시 지원할 수 있습니다.
+            <span class="en">Graduate admissions and undergraduate RA recruitment are guided separately.</span>
+          </p>
+        </div>
+        <div class="join-actions">
+          <a class="join-action" href="#">석사·박사 과정 안내</a>
+          <a class="join-action" href="#">학부연구생 RA 상시 모집</a>
+          <a class="join-action" href="#">연구실 문의</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        KW CAP Lab · Kwangwoon University
+      </div>
+      <div>
+        임시 홈페이지 시안 · 로고 후보 3 적용
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
