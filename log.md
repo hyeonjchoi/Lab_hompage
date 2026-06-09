@@ -431,6 +431,42 @@ python3 -m http.server 8765
 
 ---
 
+## 2026-06-09 — GitHub 푸시 및 GitHub Pages 배포 확인
+
+### 진행 사항
+
+1. **Git 저장소 초기화 및 첫 커밋 생성**
+   - 현재 홈페이지 작업 폴더를 Git 저장소로 초기화
+   - `.gitignore` 추가: `.DS_Store`, `*.log`, `node_modules/` 제외
+   - 첫 커밋 생성: `b4107c0 Initial KW CAP Lab homepage`
+
+2. **GitHub 원격 저장소 연결 및 푸시**
+   - 원격 저장소: `git@github.com:hyeonjchoi/Lab_hompage.git`
+   - 브랜치: `main`
+   - `main` 브랜치를 `origin/main`으로 푸시 완료
+
+3. **GitHub Pages 배포 완료 확인**
+   - 공개 주소: `https://hyeonjchoi.github.io/Lab_hompage/`
+   - 홈 페이지가 `HTTP/2 200`으로 정상 응답하는 것 확인
+   - 배포된 HTML의 제목과 주요 내용이 현행 `index.html`과 일치하는 것 확인
+   - GitHub Pages 응답 기준 `Last-Modified: Tue, 09 Jun 2026 04:19:51 GMT`
+
+### 배포 검증 완료
+
+- 홈: `https://hyeonjchoi.github.io/Lab_hompage/` — 정상 응답
+- CSS: `https://hyeonjchoi.github.io/Lab_hompage/style.css` — 정상 응답
+- 구성원: `https://hyeonjchoi.github.io/Lab_hompage/people.html` — 정상 응답
+- 진행 연구: `https://hyeonjchoi.github.io/Lab_hompage/research.html` — 정상 응답
+- 연구 성과: `https://hyeonjchoi.github.io/Lab_hompage/publications.html` — 정상 응답
+
+### 운영 메모
+
+- `localhost:8765` 주소는 작업자 본인 컴퓨터에서만 열리는 임시 확인용 링크다.
+- 외부 공유는 GitHub Pages 공개 주소를 사용한다.
+- 공동 관리 시 collaborator 초대 후 `main` 직접 수정 대신 브랜치 작업과 Pull Request 검토 흐름을 권장한다.
+
+---
+
 ## 다음 작업자를 위한 진행 규칙
 
 - 새 작업을 시작하기 전에 반드시 이 `log.md`를 먼저 확인한다.
