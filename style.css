@@ -142,6 +142,10 @@ h3 { font-size: 1.12rem; }
 .button.secondary { background: #fff; color: var(--navy); }
 .button.secondary:hover { background: var(--blue-soft); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+.hero-actions .button {
+  width: 158px;
+  white-space: nowrap;
+}
 
 /* ---- Hero (Home page) ---- */
 .hero {
@@ -157,6 +161,10 @@ h3 { font-size: 1.12rem; }
 .hero-content {
   display: flex; flex-direction: column; justify-content: center;
   min-height: calc(100vh - 206px);
+}
+.hero h1,
+.hero .lead {
+  max-width: 100%;
 }
 .hero-panel {
   width: 100%;
