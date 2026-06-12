@@ -50,7 +50,7 @@
         </div>
       </div>
       <div id="article-add-bar"></div>
-      <ul class="publication-list" id="article-list"></ul>
+      <ul class="publication-list year-list" id="article-list"></ul>
     </section>
 
     <!-- 학술발표 -->
@@ -62,7 +62,7 @@
         </div>
       </div>
       <div id="pres-add-bar"></div>
-      <ul class="publication-list" id="pres-list"></ul>
+      <ul class="publication-list year-list" id="pres-list"></ul>
     </section>
 
     <!-- 수상내역 -->
@@ -74,7 +74,7 @@
         </div>
       </div>
       <div id="award-add-bar"></div>
-      <ul class="publication-list" id="award-list"></ul>
+      <ul class="publication-list year-list" id="award-list"></ul>
     </section>
 
   </main>
@@ -99,6 +99,51 @@
     var addingArticle = false;
     var addingPres = false;
     var addingAward = false;
+
+    function getPublicationYear(item) {
+      return item && item.year ? String(item.year).trim() : '연도 미정';
+    }
+
+    function sortByYearDesc(items) {
+      return items.slice().sort(function (a, b) {
+        var ay = parseInt(getPublicationYear(a), 10);
+        var by = parseInt(getPublicationYear(b), 10);
+        if (isNaN(ay) && isNaN(by)) return 0;
+        if (isNaN(ay)) return 1;
+        if (isNaN(by)) return -1;
+        return by - ay;
+      });
+    }
+
+    function groupByPublicationYear(items) {
+      return sortByYearDesc(items).reduce(function (groups, item) {
+        var year = getPublicationYear(item);
+        var group = groups.find(function (g) { return g.year === year; });
+        if (!group) {
+          group = { year: year, items: [] };
+          groups.push(group);
+        }
+        group.items.push(item);
+        return groups;
+      }, []);
+    }
+
+    function renderPublicationEntry(options) {
+      return '<div class="pub-entry">' +
+          '<b>' + escHtml(options.title) + '</b>' +
+          '<span class="pub-meta">' + escHtml(options.meta) + '</span>' +
+          (options.desc ? '<span>' + escHtml(options.desc) + '</span>' : '') +
+          (options.link ? '<a class="pub-link" href="' + escHtml(options.link) + '" target="_blank" rel="noopener">DOI 링크</a>' : '') +
+          (options.action || '') +
+        '</div>';
+    }
+
+    function renderPublicationGroup(year, entries) {
+      return '<li class="publication-year-group">' +
+        '<div class="pub-year">' + escHtml(year) + '</div>' +
+        '<div class="pub-year-items">' + entries.join('') + '</div>' +
+      '</li>';
+    }
 
     function renderArticles() {
       var isAdmin = CAPAuth.isAdmin();
@@ -128,17 +173,19 @@
           '</div>';
       }
 
-      list.innerHTML = articles.length ? articles.map(function (a) {
-        var deleteBtn = isAdmin
-          ? '<button class="btn-sm danger" onclick="deleteArticle(\'' + escHtml(a.id) + '\')" style="margin-top:8px">삭제</button>'
-          : '';
-        return '<li>' +
-          '<b>' + escHtml(a.title) + '</b>' +
-          '<span class="pub-meta">' + escHtml(a.authors) + ' · ' + escHtml(a.journal) + ' · ' + escHtml(a.year) + '</span>' +
-          (a.doi ? '<a class="pub-link" href="' + escHtml(a.doi) + '" target="_blank" rel="noopener">DOI 링크</a>' : '') +
-          deleteBtn +
-          '</li>';
-      }).join('') : '<li style="border-left-color:var(--line)"><b style="color:var(--muted)">논문 데이터를 추가해주세요.</b></li>';
+      list.innerHTML = articles.length ? groupByPublicationYear(articles).map(function (group) {
+        return renderPublicationGroup(group.year, group.items.map(function (a) {
+          var deleteBtn = isAdmin
+            ? '<button class="btn-sm danger" onclick="deleteArticle(\'' + escHtml(a.id) + '\')" style="margin-top:10px">삭제</button>'
+            : '';
+          return renderPublicationEntry({
+            title: a.title,
+            meta: [a.authors, a.journal].filter(Boolean).join(' · '),
+            link: a.doi,
+            action: deleteBtn
+          });
+        }));
+      }).join('') : '<li class="publication-year-group empty"><div class="pub-year">-</div><div class="pub-year-items"><div class="pub-entry"><b style="color:var(--muted)">논문 데이터를 추가해주세요.</b></div></div></li>';
     }
 
     function renderPresentations() {
@@ -171,16 +218,18 @@
           '</div>';
       }
 
-      list.innerHTML = preses.length ? preses.map(function (p) {
-        var deleteBtn = isAdmin
-          ? '<button class="btn-sm danger" onclick="deletePres(\'' + escHtml(p.id) + '\')" style="margin-top:8px">삭제</button>'
-          : '';
-        return '<li>' +
-          '<b>' + escHtml(p.title) + '</b>' +
-          '<span class="pub-meta">' + escHtml(p.presenter) + ' · ' + escHtml(p.venue) + ' · ' + escHtml(p.year) + ' · ' + escHtml(p.type) + '</span>' +
-          deleteBtn +
-          '</li>';
-      }).join('') : '<li style="border-left-color:var(--line)"><b style="color:var(--muted)">학술발표 데이터를 추가해주세요.</b></li>';
+      list.innerHTML = preses.length ? groupByPublicationYear(preses).map(function (group) {
+        return renderPublicationGroup(group.year, group.items.map(function (p) {
+          var deleteBtn = isAdmin
+            ? '<button class="btn-sm danger" onclick="deletePres(\'' + escHtml(p.id) + '\')" style="margin-top:10px">삭제</button>'
+            : '';
+          return renderPublicationEntry({
+            title: p.title,
+            meta: [p.presenter, p.venue, p.type].filter(Boolean).join(' · '),
+            action: deleteBtn
+          });
+        }));
+      }).join('') : '<li class="publication-year-group empty"><div class="pub-year">-</div><div class="pub-year-items"><div class="pub-entry"><b style="color:var(--muted)">학술발표 데이터를 추가해주세요.</b></div></div></li>';
     }
 
     function renderAwards() {
@@ -211,17 +260,19 @@
           '</div>';
       }
 
-      list.innerHTML = awards.length ? awards.map(function (a) {
-        var deleteBtn = isAdmin
-          ? '<button class="btn-sm danger" onclick="deleteAward(\'' + escHtml(a.id) + '\')" style="margin-top:8px">삭제</button>'
-          : '';
-        return '<li>' +
-          '<b>' + escHtml(a.title) + '</b>' +
-          '<span class="pub-meta">' + escHtml(a.recipient) + ' · ' + escHtml(a.venue) + ' · ' + escHtml(a.year) + '</span>' +
-          (a.desc ? '<span>' + escHtml(a.desc) + '</span>' : '') +
-          deleteBtn +
-          '</li>';
-      }).join('') : '<li style="border-left-color:var(--line)"><b style="color:var(--muted)">수상내역 데이터를 추가해주세요.</b></li>';
+      list.innerHTML = awards.length ? groupByPublicationYear(awards).map(function (group) {
+        return renderPublicationGroup(group.year, group.items.map(function (a) {
+          var deleteBtn = isAdmin
+            ? '<button class="btn-sm danger" onclick="deleteAward(\'' + escHtml(a.id) + '\')" style="margin-top:10px">삭제</button>'
+            : '';
+          return renderPublicationEntry({
+            title: a.title,
+            meta: [a.recipient, a.venue].filter(Boolean).join(' · '),
+            desc: a.desc,
+            action: deleteBtn
+          });
+        }));
+      }).join('') : '<li class="publication-year-group empty"><div class="pub-year">-</div><div class="pub-year-items"><div class="pub-entry"><b style="color:var(--muted)">수상내역 데이터를 추가해주세요.</b></div></div></li>';
     }
 
     function toggleArticleForm() {
