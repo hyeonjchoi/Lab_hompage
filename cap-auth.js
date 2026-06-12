@@ -64,16 +64,27 @@ const CAPAuth = {
   /** 모든 페이지 nav의 #nav-auth 요소를 채운다 */
   renderNav() {
     const navAuth = document.getElementById('nav-auth');
-    if (!navAuth) return;
     const session = this.getSession();
+    document.querySelectorAll('.lab-nav-link').forEach(link => {
+      link.hidden = !session;
+    });
+    if (!navAuth) return;
     if (session) {
+      const labPageHref = session.role === 'admin'
+        ? 'lab.html'
+        : 'lab-member.html?id=' + encodeURIComponent(session.userId);
       navAuth.innerHTML =
-        '<span class="nav-user">' +
-          '<span class="nav-user-name">' + escHtml(session.name) + '</span>' +
-          '<a href="member-dashboard.html">내 프로필</a>' +
-          (session.role === 'admin' ? '<a class="nav-admin-link" href="admin.html">관리자</a>' : '') +
-          '<button class="nav-logout" onclick="CAPAuth.logout();window.location.reload();">로그아웃</button>' +
-        '</span>';
+        '<div class="nav-auth-stack">' +
+          '<div class="nav-auth-row">' +
+            '<span class="nav-user-name">' + escHtml(session.name) + '</span>' +
+            '<a href="member-dashboard.html">내 프로필</a>' +
+            '<a href="' + labPageHref + '">내 연구페이지</a>' +
+          '</div>' +
+          '<div class="nav-auth-row secondary">' +
+            (session.role === 'admin' ? '<a class="nav-admin-link" href="admin.html">관리자</a>' : '') +
+            '<button class="nav-logout" onclick="CAPAuth.logout();window.location.reload();">로그아웃</button>' +
+          '</div>' +
+        '</div>';
     } else {
       navAuth.innerHTML = '<a class="nav-login-btn" href="login.html">로그인</a>';
     }

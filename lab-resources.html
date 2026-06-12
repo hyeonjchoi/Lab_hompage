@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KW CAP Lab 공유 소스 전체보기">
+  <title>공유 소스 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+        <a class="lab-nav-link" href="lab.html" hidden>LAB<small>Members</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <main id="main" class="lab-page">
+    <section class="lab-hero">
+      <div>
+        <span class="tagline">Shared Sources</span>
+        <h1>공유 소스 전체보기</h1>
+        <p>연구 자료, 도구, 체크리스트와 참고 링크를 모아 확인합니다.</p>
+      </div>
+      <div class="lab-quick-actions">
+        <a class="btn-sm" href="lab.html">LAB으로 돌아가기</a>
+      </div>
+    </section>
+
+    <section class="lab-board">
+      <div class="lab-page-list" id="resource-page-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897) · Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js?v=lab"></script>
+  <script>
+    var LAB_KEY = 'cap_lab_data';
+
+    document.addEventListener('DOMContentLoaded', function () {
+      CAPAuth.requireLogin(true);
+      renderResourcePage();
+    });
+
+    function renderResourcePage() {
+      var data = loadLabData();
+      var resources = data.resources.slice().sort(sortPinnedThenDate);
+      document.getElementById('resource-page-list').innerHTML = resources.length ? resources.map(function (resource) {
+        return '<article class="lab-page-list-card">' +
+          '<span>' + (resource.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
+          '<strong>' + escHtml(resource.title) + '</strong>' +
+          '<p>' + escHtml(resource.desc || '설명이 없습니다.') + '</p>' +
+          (resource.url ? '<a class="pub-link" href="' + escHtml(resource.url) + '" target="_blank" rel="noopener">자료 열기</a>' : '') +
+        '</article>';
+      }).join('') : '<p class="lab-empty">등록된 공유 소스가 없습니다.</p>';
+    }
+
+    function loadLabData() {
+      var raw = localStorage.getItem(LAB_KEY);
+      var data = raw ? JSON.parse(raw) : {};
+      data.resources = Array.isArray(data.resources) ? data.resources : [];
+      return data;
+    }
+
+    function sortPinnedThenDate(a, b) {
+      if (!!a.important !== !!b.important) return a.important ? -1 : 1;
+      return String(b.createdAt || b.title || '').localeCompare(String(a.createdAt || a.title || ''));
+    }
+  </script>
+</body>
+</html>

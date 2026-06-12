@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KW CAP Lab 개인 연구 진행 페이지">
+  <title>개인 연구 기록 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+        <a class="lab-nav-link" href="lab.html" hidden>LAB<small>Members</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <main id="main" class="lab-page member-lab-page">
+    <section class="lab-hero">
+      <div>
+        <span class="tagline">My Research</span>
+        <h1 id="member-page-title">개인 연구 기록</h1>
+        <p id="member-page-lead">연구 진행 상황, 랩미팅 기록, 개인 메모와 피드백을 확인합니다.</p>
+      </div>
+      <div class="lab-quick-actions">
+        <a class="btn-sm" href="lab.html">LAB으로 돌아가기</a>
+      </div>
+    </section>
+
+    <section class="member-record-grid">
+      <article class="lab-board member-profile-summary">
+        <span class="lab-kicker">Profile</span>
+        <div id="member-profile-card"></div>
+      </article>
+
+      <article class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Goals</span>
+            <h2>연구 목표</h2>
+          </div>
+          <div class="goal-view-toggle" aria-label="목표 표시 방식">
+            <button type="button" class="btn-sm primary" id="goal-add-button" onclick="openGoalForm()">목표 추가</button>
+            <button type="button" class="btn-sm" id="goal-list-button" onclick="setGoalView('list')">리스트보기</button>
+            <button type="button" class="btn-sm" id="goal-calendar-button" onclick="setGoalView('calendar')">일정보기</button>
+          </div>
+        </div>
+        <p class="lab-empty compact" id="goal-readonly-note" hidden>관리자 권한으로는 목표 내역을 확인할 수만 있습니다.</p>
+        <div id="member-goals"></div>
+        <form class="goal-form" id="goal-form" onsubmit="saveMemberGoal(event)" hidden>
+          <div class="form-group">
+            <label for="goal-title">개별 목표</label>
+            <input id="goal-title" required placeholder="예: 실험 자극물 1차 제작">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="goal-status">달성 상태</label>
+              <select id="goal-status">
+                <option value="todo">예정</option>
+                <option value="doing">진행 중</option>
+                <option value="done">완료</option>
+                <option value="hold">보류</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="goal-start-date">시작 날짜</label>
+              <input id="goal-start-date" type="date" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="goal-end-date">종료 날짜</label>
+              <input id="goal-end-date" type="date" required>
+            </div>
+            <div class="form-group">
+              <label for="goal-category">분류</label>
+              <input id="goal-category" placeholder="예: 연구, 수업, 논문">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="goal-memo">메모사항</label>
+            <textarea id="goal-memo" placeholder="필요한 준비물, 확인할 내용, 다음 액션을 적어두세요."></textarea>
+          </div>
+          <div class="goal-form-actions">
+            <button class="btn-sm" type="button" id="goal-cancel-button" onclick="cancelGoalEdit()" hidden>수정 취소</button>
+            <button class="save-btn" type="submit" id="goal-submit-button">목표 저장</button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <section class="member-record-grid">
+      <article class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Meeting Notes</span>
+            <h2>참석 랩미팅 기록</h2>
+          </div>
+        </div>
+        <div class="meeting-minutes-list" id="member-meetings"></div>
+      </article>
+
+      <article class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Memo</span>
+            <h2>메모와 피드백</h2>
+          </div>
+        </div>
+        <form class="member-note-form" onsubmit="saveMemberNote(event)">
+          <div class="form-group">
+            <label for="member-note-type">기록 유형</label>
+            <select id="member-note-type">
+              <option value="memo">개인 메모</option>
+              <option value="feedback">피드백</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="member-note-text">내용</label>
+            <textarea id="member-note-text" required placeholder="연구 아이디어, 다음 액션, 받은 피드백을 적어두세요."></textarea>
+          </div>
+          <button class="save-btn" type="submit">기록 저장</button>
+        </form>
+        <div class="note-list" id="member-note-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897) · Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js?v=lab"></script>
+  <script>
+    var LAB_KEY = 'cap_lab_data';
+    var labData = null;
+    var currentMember = null;
+    var currentSession = null;
+    var isAdminView = false;
+    var activeGoalView = 'list';
+    var editingGoalId = null;
+    var goalPage = 1;
+    var GOAL_PAGE_SIZE = 5;
+    var draggingGoalId = null;
+    var resizingGoal = null;
+    var memberMeetingsPage = 1;
+    var MEMBER_MEETINGS_PAGE_SIZE = 3;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      CAPAuth.requireLogin(true);
+      currentSession = CAPAuth.getSession();
+      var params = new URLSearchParams(window.location.search);
+      var targetId = params.get('id') || (currentSession && currentSession.userId);
+      isAdminView = !!(currentSession && currentSession.role === 'admin' && targetId !== currentSession.userId);
+      if (!currentSession || (targetId !== currentSession.userId && currentSession.role !== 'admin')) {
+        window.location.href = 'lab.html';
+        return;
+      }
+      currentMember = CAPData.getMember(targetId);
+      if (!currentMember) {
+        document.getElementById('main').innerHTML = '<div class="lab-board"><p class="lab-empty">구성원 정보를 찾을 수 없습니다.</p></div>';
+        return;
+      }
+      labData = loadLabData();
+      renderMemberPage();
+    });
+
+    function loadLabData() {
+      var raw = localStorage.getItem(LAB_KEY);
+      var data = raw ? JSON.parse(raw) : {};
+      data.events = Array.isArray(data.events) ? data.events : [];
+      data.minutes = Array.isArray(data.minutes) ? data.minutes : [];
+      data.progress = Array.isArray(data.progress) ? data.progress : [];
+      data.memberNotes = Array.isArray(data.memberNotes) ? data.memberNotes : [];
+      data.memberGoals = Array.isArray(data.memberGoals) ? data.memberGoals : [];
+      data.memberGoals.forEach(function (goal) {
+        goal.startDate = goal.startDate || goal.targetDate || goal.endDate || '';
+        goal.endDate = goal.endDate || goal.targetDate || goal.startDate || '';
+        goal.category = goal.category || '목표';
+      });
+      data.events.forEach(function (event) {
+        event.attendees = Array.isArray(event.attendees) ? event.attendees : [];
+      });
+      return data;
+    }
+
+    function saveLabData() {
+      localStorage.setItem(LAB_KEY, JSON.stringify(labData));
+    }
+
+    function renderMemberPage() {
+      var progress = labData.progress.find(function (item) { return item.memberId === currentMember.id; });
+      document.getElementById('member-page-title').textContent = currentMember.name + ' 연구 기록';
+      document.getElementById('member-page-lead').textContent = isAdminView
+        ? '지도학생의 진행 상황을 확인하고 교수 피드백을 남길 수 있습니다.'
+        : '개인 진행 상황과 랩미팅 기록, 메모와 피드백을 한 곳에서 확인합니다.';
+      document.getElementById('member-profile-card').innerHTML =
+        '<div class="member-profile-avatar">' + escHtml(currentMember.profile.avatarEmoji || currentMember.avatarChar || currentMember.name.charAt(0)) + '</div>' +
+        '<strong>' + escHtml(currentMember.name) + '</strong>' +
+        '<span>' + escHtml(currentMember.profile.position || '직위 추가 예정') + '</span>' +
+        '<p>' + escHtml(progress ? progress.status : '진행상황 추가 예정') + '</p>' +
+        '<p>' + escHtml(progress ? progress.memo : 'LAB 페이지에서 진행상황을 업데이트할 수 있습니다.') + '</p>';
+      renderGoalPermissions();
+      renderNoteForm();
+      renderGoals();
+      renderMeetings();
+      renderNotes();
+    }
+
+    function renderNoteForm() {
+      var typeField = document.getElementById('member-note-type');
+      var textField = document.getElementById('member-note-text');
+      if (isAdminView) {
+        typeField.innerHTML = '<option value="feedback">교수 피드백</option>';
+        textField.placeholder = currentMember.name + ' 학생에게 남길 피드백을 입력하세요.';
+      } else {
+        typeField.innerHTML = '<option value="memo">개인 메모</option><option value="feedback">피드백</option>';
+        textField.placeholder = '연구 아이디어, 다음 액션, 받은 피드백을 적어두세요.';
+      }
+    }
+
+    function renderGoalPermissions() {
+      var form = document.getElementById('goal-form');
+      var note = document.getElementById('goal-readonly-note');
+      var addButton = document.getElementById('goal-add-button');
+      if (form) form.hidden = true;
+      if (note) note.hidden = !isAdminView;
+      if (addButton) addButton.hidden = isAdminView;
+    }
+
+    function setGoalView(view) {
+      activeGoalView = view === 'calendar' ? 'calendar' : 'list';
+      renderGoals();
+    }
+
+    function renderGoals() {
+      var listButton = document.getElementById('goal-list-button');
+      var calendarButton = document.getElementById('goal-calendar-button');
+      if (listButton) listButton.classList.toggle('primary', activeGoalView === 'list');
+      if (calendarButton) calendarButton.classList.toggle('primary', activeGoalView === 'calendar');
+      if (activeGoalView === 'calendar') {
+        renderGoalCalendar();
+      } else {
+        renderGoalList();
+      }
+    }
+
+    function getMemberGoals() {
+      return labData.memberGoals
+        .filter(function (goal) { return goal.memberId === currentMember.id; })
+        .sort(function (a, b) { return String(a.startDate || a.targetDate || '').localeCompare(String(b.startDate || b.targetDate || '')); });
+    }
+
+    function renderGoalList() {
+      var goals = getMemberGoals();
+      var totalPages = Math.max(1, Math.ceil(goals.length / GOAL_PAGE_SIZE));
+      if (goalPage > totalPages) goalPage = totalPages;
+      if (goalPage < 1) goalPage = 1;
+      var start = (goalPage - 1) * GOAL_PAGE_SIZE;
+      var visibleGoals = goals.slice(start, start + GOAL_PAGE_SIZE);
+      document.getElementById('member-goals').innerHTML = goals.length ? '<div class="goal-table-wrap"><table class="goal-table">' +
+        '<thead><tr><th>이름</th><th>상태</th><th>목표 날짜</th><th>메모사항</th><th></th></tr></thead><tbody>' + visibleGoals.map(function (goal) {
+        var statusControl = '<span class="goal-status ' + escHtml(goal.status || 'todo') + '">' + escHtml(goalStatusLabel(goal.status)) + '</span>';
+        var actions = isAdminView ? '' : '<div class="goal-row-actions">' +
+          '<button type="button" class="btn-sm" onclick="editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
+          '<button type="button" class="btn-sm danger" onclick="deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
+        '</div>';
+        return '<tr>' +
+          '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong><span>' + escHtml(goal.category || '목표') + '</span></td>' +
+          '<td class="goal-status-cell">' + statusControl + '</td>' +
+          '<td>' + escHtml(formatGoalDateRange(goal)) + '</td>' +
+          '<td>' + escHtml(goal.memo || '-') + '</td>' +
+          '<td>' + actions + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table></div>' + renderGoalPagination(totalPages, goals.length) : '<p class="lab-empty">아직 등록된 연구 목표가 없습니다.</p>';
+    }
+
+    function renderGoalCalendar() {
+      var goals = getMemberGoals();
+      var today = new Date();
+      var year = today.getFullYear();
+      var month = today.getMonth();
+      var first = new Date(year, month, 1);
+      var firstDay = first.getDay();
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var monthStartKey = formatDateKey(first);
+      var monthEndKey = formatDateKey(new Date(year, month, daysInMonth));
+      var cells = ['<div class="goal-calendar-title">' + year + '년 ' + (month + 1) + '월 목표 일정</div>'];
+      ['일', '월', '화', '수', '목', '금', '토'].forEach(function (label) {
+        cells.push('<div class="calendar-weekday">' + label + '</div>');
+      });
+      for (var blank = 0; blank < firstDay; blank++) {
+        cells.push('<div class="goal-calendar-cell is-empty"></div>');
+      }
+      for (var day = 1; day <= daysInMonth; day++) {
+        var dateKey = formatDateKey(new Date(year, month, day));
+        var dayGoals = goals.filter(function (goal) { return isDateInGoalRange(dateKey, goal); });
+        cells.push('<div class="goal-calendar-cell" ondragover="allowGoalDrop(event)" ondrop="dropGoalOnDate(event,\'' + dateKey + '\')">' +
+          '<div class="calendar-date">' + day + '</div>' +
+          '<div class="goal-calendar-items">' + dayGoals.map(function (goal) {
+            var firstVisibleDate = String(goal.startDate || goal.targetDate || '') < monthStartKey ? monthStartKey : (goal.startDate || goal.targetDate);
+            var isContinuationStart = dateKey > firstVisibleDate && new Date(dateKey).getDay() === 0;
+            if (dateKey !== firstVisibleDate && !isContinuationStart) return '';
+            var weekRemaining = 7 - new Date(dateKey).getDay();
+            var span = Math.min(getGoalVisibleDuration(goal, dateKey, monthEndKey), weekRemaining);
+            return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start" draggable="' + (!isAdminView) + '" onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:' + span + '">' +
+              (isAdminView ? '' : '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>') +
+              '<strong>' + escHtml(goal.title) + '</strong>' +
+              (isAdminView ? '' : '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>') +
+            '</button>';
+          }).join('') + '</div>' +
+        '</div>');
+      }
+      document.getElementById('member-goals').innerHTML = goals.length
+        ? '<div class="goal-calendar">' + cells.join('') + '</div>'
+        : '<p class="lab-empty">일정에 표시할 연구 목표가 없습니다.</p>';
+    }
+
+    function saveMemberGoal(e) {
+      e.preventDefault();
+      if (isAdminView) {
+        showToast('관리자는 목표를 저장할 수 없습니다.');
+        return;
+      }
+      var existing = editingGoalId ? labData.memberGoals.find(function (goal) { return goal.id === editingGoalId && goal.memberId === currentMember.id; }) : null;
+      var startDate = document.getElementById('goal-start-date').value;
+      var endDate = document.getElementById('goal-end-date').value || startDate;
+      if (endDate < startDate) {
+        showToast('종료 날짜는 시작 날짜 이후로 입력해 주세요.');
+        return;
+      }
+      var nextGoal = {
+        id: existing ? existing.id : 'goal_' + Date.now(),
+        memberId: currentMember.id,
+        title: document.getElementById('goal-title').value.trim(),
+        status: document.getElementById('goal-status').value,
+        startDate: startDate,
+        endDate: endDate,
+        targetDate: endDate,
+        category: document.getElementById('goal-category').value.trim() || '목표',
+        memo: document.getElementById('goal-memo').value.trim(),
+        authorId: currentSession ? currentSession.userId : '',
+        authorName: currentSession ? currentSession.name : '',
+        createdAt: existing ? existing.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      if (existing) {
+        Object.assign(existing, nextGoal);
+      } else {
+        labData.memberGoals.push(nextGoal);
+      }
+      saveLabData();
+      resetGoalForm();
+      renderGoals();
+      showToast(existing ? '연구 목표를 수정했습니다.' : '연구 목표를 저장했습니다.');
+    }
+
+    function openGoalForm(forceOpen) {
+      if (isAdminView) return;
+      var form = document.getElementById('goal-form');
+      if (!forceOpen && !form.hidden) {
+        resetGoalForm();
+        return;
+      }
+      form.hidden = false;
+      document.getElementById('goal-title').focus();
+    }
+
+    function showGoalDetail(goalId) {
+      if (isAdminView) return;
+      editGoal(goalId);
+    }
+
+    function editGoal(goalId) {
+      if (isAdminView) return;
+      var goal = labData.memberGoals.find(function (item) { return item.id === goalId && item.memberId === currentMember.id; });
+      if (!goal) return;
+      editingGoalId = goalId;
+      openGoalForm(true);
+      document.getElementById('goal-title').value = goal.title || '';
+      document.getElementById('goal-status').value = goal.status || 'todo';
+      document.getElementById('goal-start-date').value = goal.startDate || goal.targetDate || '';
+      document.getElementById('goal-end-date').value = goal.endDate || goal.targetDate || goal.startDate || '';
+      document.getElementById('goal-category').value = goal.category || '목표';
+      document.getElementById('goal-memo').value = goal.memo || '';
+      document.getElementById('goal-submit-button').textContent = '목표 수정';
+      document.getElementById('goal-cancel-button').hidden = false;
+      document.getElementById('goal-title').focus();
+      document.getElementById('goal-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function cancelGoalEdit() {
+      resetGoalForm();
+    }
+
+    function resetGoalForm() {
+      editingGoalId = null;
+      document.getElementById('goal-title').value = '';
+      document.getElementById('goal-status').value = 'todo';
+      document.getElementById('goal-start-date').value = '';
+      document.getElementById('goal-end-date').value = '';
+      document.getElementById('goal-category').value = '';
+      document.getElementById('goal-memo').value = '';
+      document.getElementById('goal-submit-button').textContent = '목표 저장';
+      document.getElementById('goal-cancel-button').hidden = true;
+      document.getElementById('goal-form').hidden = true;
+    }
+
+    function updateGoalStatus(goalId, status) {
+      if (isAdminView) return;
+      var goal = labData.memberGoals.find(function (item) { return item.id === goalId && item.memberId === currentMember.id; });
+      if (!goal) return;
+      goal.status = status;
+      goal.updatedAt = new Date().toISOString();
+      saveLabData();
+      renderGoals();
+      showToast('목표 상태를 변경했습니다.');
+    }
+
+    function renderGoalPagination(totalPages, totalCount) {
+      if (totalPages <= 1) return '';
+      return '<div class="minutes-pagination" aria-label="목표 페이지 이동">' +
+        '<button type="button" class="btn-sm" onclick="changeGoalPage(-1)"' + (goalPage === 1 ? ' disabled' : '') + '>이전</button>' +
+        '<span>' + goalPage + ' / ' + totalPages + ' · 총 ' + totalCount + '개</span>' +
+        '<button type="button" class="btn-sm" onclick="changeGoalPage(1)"' + (goalPage === totalPages ? ' disabled' : '') + '>다음</button>' +
+      '</div>';
+    }
+
+    function changeGoalPage(delta) {
+      goalPage += delta;
+      renderGoalList();
+    }
+
+    function dragGoal(e, goalId) {
+      if (isAdminView) return;
+      if (resizingGoal) {
+        e.preventDefault();
+        return;
+      }
+      draggingGoalId = goalId;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', goalId);
+    }
+
+    function allowGoalDrop(e) {
+      if (!isAdminView) e.preventDefault();
+    }
+
+    function dropGoalOnDate(e, dateKey) {
+      if (isAdminView) return;
+      e.preventDefault();
+      var goalId = e.dataTransfer.getData('text/plain') || draggingGoalId;
+      var goal = labData.memberGoals.find(function (item) { return item.id === goalId && item.memberId === currentMember.id; });
+      if (!goal) return;
+      var duration = getGoalDuration(goal);
+      goal.startDate = dateKey;
+      goal.endDate = addDaysKey(dateKey, duration - 1);
+      goal.targetDate = goal.endDate;
+      goal.updatedAt = new Date().toISOString();
+      saveLabData();
+      renderGoals();
+      draggingGoalId = null;
+      showToast('목표 기간을 변경했습니다.');
+    }
+
+    function startGoalResize(e, goalId, edge) {
+      if (isAdminView) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var goal = labData.memberGoals.find(function (item) { return item.id === goalId && item.memberId === currentMember.id; });
+      if (!goal) return;
+      resizingGoal = {
+        goalId: goalId,
+        edge: edge,
+        startX: e.clientX,
+        originalStart: goal.startDate || goal.targetDate,
+        originalEnd: goal.endDate || goal.targetDate || goal.startDate
+      };
+      document.body.classList.add('is-resizing-goal');
+      document.addEventListener('mousemove', resizeGoalFromPointer);
+      document.addEventListener('mouseup', finishGoalResize);
+    }
+
+    function resizeGoalFromPointer(e) {
+      if (!resizingGoal) return;
+      var goal = labData.memberGoals.find(function (item) { return item.id === resizingGoal.goalId && item.memberId === currentMember.id; });
+      if (!goal) return;
+      var cell = document.querySelector('.goal-calendar-cell:not(.is-empty)');
+      var cellWidth = cell ? cell.getBoundingClientRect().width : 96;
+      var deltaDays = Math.round((e.clientX - resizingGoal.startX) / Math.max(48, cellWidth));
+      if (resizingGoal.edge === 'start') {
+        var nextStart = addDaysKey(resizingGoal.originalStart, deltaDays);
+        if (nextStart <= resizingGoal.originalEnd) {
+          goal.startDate = nextStart;
+        }
+      } else {
+        var nextEnd = addDaysKey(resizingGoal.originalEnd, deltaDays);
+        if (nextEnd >= resizingGoal.originalStart) {
+          goal.endDate = nextEnd;
+          goal.targetDate = nextEnd;
+        }
+      }
+      renderGoalCalendar();
+    }
+
+    function finishGoalResize() {
+      if (!resizingGoal) return;
+      var goal = labData.memberGoals.find(function (item) { return item.id === resizingGoal.goalId && item.memberId === currentMember.id; });
+      if (goal) {
+        goal.updatedAt = new Date().toISOString();
+        saveLabData();
+        showToast('목표 기간을 조정했습니다.');
+      }
+      resizingGoal = null;
+      document.body.classList.remove('is-resizing-goal');
+      document.removeEventListener('mousemove', resizeGoalFromPointer);
+      document.removeEventListener('mouseup', finishGoalResize);
+      renderGoals();
+    }
+
+    function deleteGoal(goalId) {
+      if (isAdminView) return;
+      var goal = labData.memberGoals.find(function (item) { return item.id === goalId && item.memberId === currentMember.id; });
+      if (!goal) return;
+      if (!window.confirm('이 목표를 삭제할까요?')) return;
+      labData.memberGoals = labData.memberGoals.filter(function (item) { return item.id !== goalId; });
+      if (editingGoalId === goalId) resetGoalForm();
+      saveLabData();
+      renderGoals();
+      showToast('연구 목표를 삭제했습니다.');
+    }
+
+    function goalStatusLabel(status) {
+      return { todo: '예정', doing: '진행 중', done: '완료', hold: '보류' }[status] || '예정';
+    }
+
+    function goalStatusOptions(selected) {
+      selected = selected || 'todo';
+      return ['todo', 'doing', 'done', 'hold'].map(function (status) {
+        return '<option value="' + status + '"' + (status === selected ? ' selected' : '') + '>' + goalStatusLabel(status) + '</option>';
+      }).join('');
+    }
+
+    function formatGoalDateRange(goal) {
+      var start = goal.startDate || goal.targetDate || '';
+      var end = goal.endDate || goal.targetDate || start;
+      if (!start) return '-';
+      return start === end ? formatKoreanDate(start) : formatKoreanDate(start) + ' - ' + formatKoreanDate(end);
+    }
+
+    function isDateInGoalRange(dateKey, goal) {
+      var start = goal.startDate || goal.targetDate;
+      var end = goal.endDate || goal.targetDate || start;
+      return start && dateKey >= start && dateKey <= end;
+    }
+
+    function getGoalDuration(goal) {
+      var start = new Date(goal.startDate || goal.targetDate);
+      var end = new Date(goal.endDate || goal.targetDate || goal.startDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+      return Math.max(1, Math.round((end - start) / 86400000) + 1);
+    }
+
+    function getGoalVisibleDuration(goal, visibleStartKey, monthEndKey) {
+      var endKey = goal.endDate || goal.targetDate || visibleStartKey;
+      var visibleEndKey = endKey > monthEndKey ? monthEndKey : endKey;
+      var start = new Date(visibleStartKey);
+      var end = new Date(visibleEndKey);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+      return Math.max(1, Math.round((end - start) / 86400000) + 1);
+    }
+
+    function addDaysKey(dateKey, days) {
+      var date = new Date(dateKey);
+      date.setDate(date.getDate() + days);
+      return formatDateKey(date);
+    }
+
+    function renderMeetings() {
+      var meetings = labData.events.filter(function (event) {
+        return event.type === 'meeting' && event.attendees.includes(currentMember.id);
+      }).sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+      var totalPages = Math.max(1, Math.ceil(meetings.length / MEMBER_MEETINGS_PAGE_SIZE));
+      if (memberMeetingsPage > totalPages) memberMeetingsPage = totalPages;
+      if (memberMeetingsPage < 1) memberMeetingsPage = 1;
+      var start = (memberMeetingsPage - 1) * MEMBER_MEETINGS_PAGE_SIZE;
+      var visibleMeetings = meetings.slice(start, start + MEMBER_MEETINGS_PAGE_SIZE);
+      document.getElementById('member-meetings').innerHTML = meetings.length ? visibleMeetings.map(function (meeting) {
+        var minutes = labData.minutes.filter(function (item) { return item.eventId === meeting.id || item.meetingDate === meeting.date; });
+        return '<article class="meeting-block">' +
+          '<div class="meeting-block-head plain"><span class="event-type-badge meeting">랩미팅</span>' +
+          '<div><strong>' + escHtml(meeting.title) + '</strong><p>' + escHtml(formatKoreanDate(meeting.date) + ' ' + formatTimeRange(meeting)) + '</p></div></div>' +
+          '<details class="minutes-disclosure"><summary>회의록 펼쳐보기 (' + minutes.length + ')</summary>' +
+          '<div class="minutes-items">' + (minutes.length ? minutes.map(function (item) {
+            return '<div class="minutes-card"><strong>' + escHtml(item.title) + '</strong><p>' + escHtml(item.summary) + '</p></div>';
+          }).join('') : '<p class="lab-empty compact">연결된 회의록이 없습니다.</p>') + '</div></details>' +
+        '</article>';
+      }).join('') + renderMemberMeetingsPagination(totalPages, meetings.length) : '<p class="lab-empty">참석자로 등록된 랩미팅이 없습니다.</p>';
+    }
+
+    function renderMemberMeetingsPagination(totalPages, totalCount) {
+      if (totalPages <= 1) return '';
+      return '<div class="minutes-pagination" aria-label="참석 랩미팅 페이지 이동">' +
+        '<button type="button" class="btn-sm" onclick="changeMemberMeetingsPage(-1)"' + (memberMeetingsPage === 1 ? ' disabled' : '') + '>이전</button>' +
+        '<span>' + memberMeetingsPage + ' / ' + totalPages + ' · 총 ' + totalCount + '개</span>' +
+        '<button type="button" class="btn-sm" onclick="changeMemberMeetingsPage(1)"' + (memberMeetingsPage === totalPages ? ' disabled' : '') + '>다음</button>' +
+      '</div>';
+    }
+
+    function changeMemberMeetingsPage(delta) {
+      memberMeetingsPage += delta;
+      renderMeetings();
+    }
+
+    function renderNotes() {
+      var notes = labData.memberNotes
+        .filter(function (note) { return note.memberId === currentMember.id; })
+        .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); });
+      document.getElementById('member-note-list').innerHTML = notes.length ? notes.map(function (note) {
+        return '<article class="note-card">' +
+          '<span>' + escHtml(noteLabel(note)) + ' · ' + escHtml(formatKoreanDateTime(note.createdAt)) + '</span>' +
+          '<p>' + escHtml(note.text) + '</p>' +
+        '</article>';
+      }).join('') : '<p class="lab-empty">저장된 메모나 피드백이 없습니다.</p>';
+    }
+
+    function noteLabel(note) {
+      var typeLabel = note.type === 'feedback' ? (note.authorRole === 'admin' ? '교수 피드백' : '피드백') : '개인 메모';
+      return note.authorName ? typeLabel + ' · ' + note.authorName : typeLabel;
+    }
+
+    function saveMemberNote(e) {
+      e.preventDefault();
+      labData.memberNotes.push({
+        id: 'note_' + Date.now(),
+        memberId: currentMember.id,
+        type: isAdminView ? 'feedback' : document.getElementById('member-note-type').value,
+        text: document.getElementById('member-note-text').value.trim(),
+        authorId: currentSession ? currentSession.userId : '',
+        authorName: currentSession ? currentSession.name : '',
+        authorRole: currentSession ? currentSession.role : '',
+        createdAt: new Date().toISOString()
+      });
+      saveLabData();
+      document.getElementById('member-note-text').value = '';
+      renderNotes();
+      showToast(isAdminView ? '피드백을 저장했습니다.' : '개인 기록을 저장했습니다.');
+    }
+
+    function formatKoreanDate(value) {
+      if (!value) return '-';
+      var parts = value.split('-');
+      return Number(parts[0]) + '년 ' + Number(parts[1]) + '월 ' + Number(parts[2]) + '일';
+    }
+
+    function formatKoreanDateTime(value) {
+      if (!value) return '-';
+      var date = new Date(value);
+      if (isNaN(date.getTime())) return value;
+      return date.getFullYear() + '년 ' + (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
+    }
+
+    function formatTimeRange(event) {
+      if (!event.startTime && !event.endTime) return '시간 미정';
+      if (event.startTime && event.endTime) return event.startTime + '-' + event.endTime;
+      return event.startTime || event.endTime;
+    }
+
+    function formatDateKey(date) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+  </script>
+</body>
+</html>

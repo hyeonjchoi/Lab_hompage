@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KW CAP Lab 랩미팅 회의록 전체보기">
+  <title>랩미팅 회의록 | KW CAP Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+        <a class="lab-nav-link" href="lab.html" hidden>LAB<small>Members</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <main id="main" class="lab-page">
+    <section class="lab-hero">
+      <div>
+        <span class="tagline">Meeting Notes</span>
+        <h1>랩미팅 회의록 전체보기</h1>
+        <p>최근 60일 안에 저장된 랩미팅 회의록을 최신순으로 확인합니다.</p>
+      </div>
+      <div class="lab-quick-actions">
+        <a class="btn-sm" href="lab.html">LAB으로 돌아가기</a>
+      </div>
+    </section>
+
+    <section class="lab-board">
+      <p class="lab-retention-note">회의록은 60일 동안 저장되며, 60일이 지난 기록은 자동 삭제됩니다.</p>
+      <div class="meeting-minutes-list" id="minutes-page-list"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897) · Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js?v=lab"></script>
+  <script>
+    var LAB_KEY = 'cap_lab_data';
+    var MINUTES_RETENTION_DAYS = 60;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      CAPAuth.requireLogin(true);
+      renderMinutesPage();
+    });
+
+    function renderMinutesPage() {
+      var data = loadLabData();
+      var minutes = data.minutes.slice().sort(function (a, b) {
+        return String(b.createdAt || b.meetingDate || '').localeCompare(String(a.createdAt || a.meetingDate || ''));
+      });
+      document.getElementById('minutes-page-list').innerHTML = minutes.length ? minutes.map(function (item) {
+        var meeting = data.events.find(function (event) {
+          return event.id === item.eventId || event.date === item.meetingDate;
+        }) || {};
+        var attendees = getAttendeeNames(meeting.attendees);
+        return '<article class="meeting-block">' +
+          '<div class="meeting-block-head plain">' +
+            '<span class="event-type-badge meeting">랩미팅</span>' +
+            '<div><strong>' + escHtml(item.title) + '</strong><p>' + escHtml(formatKoreanDate(item.meetingDate || meeting.date) + (meeting.id ? ' · ' + formatTimeRange(meeting) : '')) + '</p>' +
+            '<p class="meeting-attendees">' + escHtml(attendees || '참석자 추가 예정') + '</p></div>' +
+          '</div>' +
+          '<details class="minutes-disclosure">' +
+            '<summary>회의록 펼쳐보기</summary>' +
+            '<div class="minutes-items"><div class="minutes-card">' +
+              '<span>' + escHtml(item.createdBy || '구성원') + ' · ' + escHtml(formatKoreanDateTime(item.createdAt)) + '</span>' +
+              '<p>' + escHtml(item.summary || '내용이 없습니다.') + '</p>' +
+            '</div></div>' +
+          '</details>' +
+        '</article>';
+      }).join('') : '<p class="lab-empty">최근 60일 안에 저장된 회의록이 없습니다.</p>';
+    }
+
+    function loadLabData() {
+      var raw = localStorage.getItem(LAB_KEY);
+      var data = raw ? JSON.parse(raw) : {};
+      data.events = Array.isArray(data.events) ? data.events : [];
+      data.minutes = pruneExpiredMinutes(Array.isArray(data.minutes) ? data.minutes : []);
+      localStorage.setItem(LAB_KEY, JSON.stringify(data));
+      return data;
+    }
+
+    function pruneExpiredMinutes(minutes) {
+      var cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - MINUTES_RETENTION_DAYS);
+      cutoff.setHours(0, 0, 0, 0);
+      return minutes.filter(function (item) {
+        var basis = item.createdAt || item.meetingDate;
+        if (!basis) return true;
+        var date = new Date(basis);
+        if (isNaN(date.getTime())) return true;
+        date.setHours(0, 0, 0, 0);
+        return date >= cutoff;
+      });
+    }
+
+    function getAttendeeNames(ids) {
+      if (!Array.isArray(ids) || !ids.length) return '';
+      return ids.map(function (id) {
+        var member = CAPData.getMember(id);
+        return member ? member.name : '';
+      }).filter(Boolean).join(', ');
+    }
+
+    function formatKoreanDate(value) {
+      if (!value) return '-';
+      var parts = value.split('-');
+      return Number(parts[0]) + '년 ' + Number(parts[1]) + '월 ' + Number(parts[2]) + '일';
+    }
+
+    function formatKoreanDateTime(value) {
+      if (!value) return '-';
+      var date = new Date(value);
+      if (isNaN(date.getTime())) return value;
+      return date.getFullYear() + '년 ' + (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
+    }
+
+    function formatTimeRange(event) {
+      if (!event.startTime && !event.endTime) return '시간 미정';
+      if (event.startTime && event.endTime) return event.startTime + '-' + event.endTime;
+      return event.startTime || event.endTime;
+    }
+  </script>
+</body>
+</html>
