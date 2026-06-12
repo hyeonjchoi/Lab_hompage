@@ -57,7 +57,7 @@ const CAP_DEFAULTS = {
     {
       id: 'choi-hj',
       name: '최현정',
-      studentId: '',
+      studentId: '2022122708',
       role: 'member',
       group: 'phd',
       avatarChar: '최',
@@ -269,9 +269,25 @@ const CAP_DEFAULTS = {
 function capInitData() {
   if (!localStorage.getItem('cap_members')) {
     localStorage.setItem('cap_members', JSON.stringify(CAP_DEFAULTS.members));
+  } else {
+    capApplyMemberCredentialMigrations();
   }
   if (!localStorage.getItem('cap_content')) {
     localStorage.setItem('cap_content', JSON.stringify(CAP_DEFAULTS.content));
+  }
+}
+
+function capApplyMemberCredentialMigrations() {
+  const members = JSON.parse(localStorage.getItem('cap_members') || '[]');
+  let changed = false;
+  members.forEach(member => {
+    if (member.id === 'choi-hj' && !member.studentId) {
+      member.studentId = '2022122708';
+      changed = true;
+    }
+  });
+  if (changed) {
+    localStorage.setItem('cap_members', JSON.stringify(members));
   }
 }
 
