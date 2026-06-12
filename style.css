@@ -124,6 +124,13 @@ a { color: inherit; text-decoration: none; }
 .nav-links .lab-nav-link[aria-current="page"] small {
   color: rgba(255, 255, 255, 0.78);
 }
+.nav-toggle {
+  display: none;
+  min-height: 38px; padding: 6px 12px;
+  border: 1px solid var(--navy); border-radius: 6px;
+  background: #fff; color: var(--navy);
+  font-family: inherit; font-weight: 900; cursor: pointer;
+}
 
 /* ---- Typography ---- */
 h1, h2, h3 {
@@ -1033,6 +1040,10 @@ main { background: var(--bg); }
 .calendar-cell.is-today {
   box-shadow: inset 0 0 0 2px var(--navy);
 }
+.calendar-cell.is-selected {
+  background: #F8FBFD;
+  box-shadow: inset 0 0 0 2px var(--red);
+}
 .calendar-date {
   display: inline-grid; place-items: center; width: 25px; height: 25px;
   border-radius: 50%; color: var(--navy); font-weight: 900; font-size: 0.82rem;
@@ -1066,6 +1077,31 @@ main { background: var(--bg); }
 }
 .calendar-chip:active {
   cursor: grabbing;
+}
+.calendar-day-detail {
+  margin-top: 14px; padding: 14px;
+  border: 1px solid var(--line); border-radius: 8px; background: #fff;
+}
+.calendar-day-detail-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--line);
+}
+.calendar-day-detail-head strong { color: var(--navy); }
+.calendar-day-detail-head span { color: var(--muted); font-size: 0.82rem; font-weight: 800; }
+.calendar-day-list {
+  display: grid; gap: 8px; margin-top: 10px;
+}
+.calendar-day-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center;
+  width: 100%; padding: 10px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--bg);
+  font-family: inherit; text-align: left; cursor: pointer;
+}
+.calendar-day-item strong {
+  color: var(--navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.calendar-day-item small {
+  grid-column: 2; color: var(--muted); font-size: 0.78rem; line-height: 1.4;
 }
 .lab-list {
   display: grid; gap: 10px;
@@ -1596,6 +1632,29 @@ main { background: var(--bg); }
 .member-note-form .save-btn {
   margin-top: 0;
 }
+.member-note-actions,
+.note-card-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+}
+.note-card-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.note-check {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--navy); font-size: 0.78rem; font-weight: 900; white-space: nowrap;
+}
+.note-check input {
+  width: 16px; height: 16px; accent-color: var(--navy);
+}
+.note-card.is-done {
+  background: #F8FBFD;
+}
+.note-card.is-done p {
+  color: var(--muted);
+}
+.note-card-actions {
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line);
+}
 
 /* ========================================
    Responsive
@@ -1648,15 +1707,29 @@ main { background: var(--bg); }
 }
 
 @media (max-width: 640px) {
-  .brand { min-width: 0; }
+  .site-header { position: sticky; }
+  .nav-shell {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center; gap: 10px; min-height: auto; padding: 10px 0;
+  }
+  .brand { min-width: 0; grid-column: 1; gap: 9px; }
+  .brand-mark { width: 38px; height: 38px; }
   .brand-name strong { font-size: 0.92rem; }
   .brand-name span { font-size: 0.64rem; }
   .brand-logo { width: 48px; height: 48px; }
+  .nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    grid-column: 2; justify-self: end;
+  }
   .nav-links {
-    width: 100%; display: grid;
+    grid-column: 1 / -1; width: 100%; display: none;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+  .nav-shell.nav-open .nav-links { display: grid; }
   .nav-links a { min-width: 0; }
+  .nav-auth { grid-column: 1 / -1; }
+  .nav-shell:not(.nav-open) .nav-auth { display: none; }
+  .nav-shell.nav-open .nav-auth { display: flex; }
   .nav-login-btn {
     width: 100%; min-height: 40px;
   }
@@ -1705,10 +1778,22 @@ main { background: var(--bg); }
   .reservation-copy, .lab-visual { padding: 22px; }
   .reservation-actions .button { width: 100%; }
   .lab-page { padding: 34px 0 52px; }
-  .lab-summary-grid,
   .progress-grid,
   .member-check-grid {
     grid-template-columns: 1fr;
+  }
+  .lab-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .lab-summary-card {
+    min-height: 104px; padding: 12px;
+  }
+  .lab-summary-card strong {
+    margin-top: 5px; font-size: 1.15rem;
+  }
+  .lab-summary-card p {
+    margin-top: 5px; font-size: 0.76rem; line-height: 1.35;
   }
   .lab-page .lab-board {
     padding: 18px;
@@ -1727,10 +1812,34 @@ main { background: var(--bg); }
     width: 100%; justify-content: flex-start;
   }
   .calendar-cell {
-    min-height: 92px; padding: 5px;
+    min-height: 58px; padding: 5px;
+  }
+  .calendar-date {
+    width: 22px; height: 22px; font-size: 0.76rem;
+  }
+  .calendar-events {
+    display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px;
   }
   .calendar-chip {
-    min-height: 24px; padding: 3px 5px; font-size: 0.68rem;
+    width: 8px; min-height: 8px; height: 8px; padding: 0; border-radius: 50%;
+  }
+  .calendar-chip span { display: none; }
+  .calendar-day-detail { padding: 12px; }
+  .calendar-day-item {
+    grid-template-columns: 1fr; gap: 5px;
+  }
+  .calendar-day-item small { grid-column: 1; }
+  .note-card-head {
+    align-items: flex-start; flex-direction: column; gap: 6px;
+  }
+  .member-note-actions,
+  .note-card-actions {
+    align-items: stretch; flex-direction: column;
+  }
+  .member-note-actions .btn-sm,
+  .member-note-actions .save-btn,
+  .note-card-actions .btn-sm {
+    width: 100%;
   }
   .event-detail-list div {
     grid-template-columns: 1fr; gap: 4px;

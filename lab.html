@@ -100,6 +100,7 @@
           </div>
         </div>
         <div class="lab-calendar" id="lab-calendar" aria-label="월간 일정 캘린더"></div>
+        <div class="calendar-day-detail" id="calendar-day-detail" aria-live="polite"></div>
       </section>
 
       <aside class="lab-side-stack" aria-label="LAB 보조 정보">
@@ -224,6 +225,7 @@
     var calendarCursor = new Date();
     var activeDrawerType = null;
     var selectedMeetingId = null;
+    var selectedCalendarDate = formatDateKey(new Date());
     var activeEventId = null;
     var editingEventId = null;
     var editingContentId = null;
@@ -448,15 +450,16 @@
         var date = new Date(year, month, day);
         var dateKey = formatDateKey(date);
         var isToday = dateKey === formatDateKey(new Date());
+        var isSelected = dateKey === selectedCalendarDate;
         var events = labData.events
           .filter(function (event) { return event.date === dateKey; })
           .sort(sortByDateTime);
         cells.push(
-          '<div class="calendar-cell' + (isToday ? ' is-today' : '') + '" ondragover="allowEventDrop(event)" ondrop="dropEventOnDate(event,\'' + dateKey + '\')">' +
+          '<div class="calendar-cell' + (isToday ? ' is-today' : '') + (isSelected ? ' is-selected' : '') + '" onclick="selectCalendarDate(\'' + dateKey + '\')" ondragover="allowEventDrop(event)" ondrop="dropEventOnDate(event,\'' + dateKey + '\')">' +
             '<div class="calendar-date">' + day + '</div>' +
             '<div class="calendar-events">' +
               events.map(function (event) {
-                return '<button type="button" draggable="true" class="calendar-chip ' + escHtml(EVENT_TYPES[event.type].className) + '" onclick="openEventModal(\'' + escHtml(event.id) + '\')" ondragstart="dragEvent(event,\'' + escHtml(event.id) + '\')">' +
+                return '<button type="button" draggable="true" class="calendar-chip ' + escHtml(EVENT_TYPES[event.type].className) + '" onclick="event.stopPropagation();openEventModal(\'' + escHtml(event.id) + '\')" ondragstart="dragEvent(event,\'' + escHtml(event.id) + '\')">' +
                   '<span>' + escHtml(event.title) + '</span>' +
                 '</button>';
               }).join('') +
@@ -466,6 +469,33 @@
       }
 
       document.getElementById('lab-calendar').innerHTML = cells.join('');
+      renderSelectedDateEvents();
+    }
+
+    function selectCalendarDate(dateKey) {
+      selectedCalendarDate = dateKey;
+      renderCalendar();
+    }
+
+    function renderSelectedDateEvents() {
+      var wrap = document.getElementById('calendar-day-detail');
+      if (!wrap) return;
+      var events = labData.events
+        .filter(function (event) { return event.date === selectedCalendarDate; })
+        .sort(sortByDateTime);
+      wrap.innerHTML =
+        '<div class="calendar-day-detail-head">' +
+          '<strong>' + escHtml(formatKoreanDate(selectedCalendarDate)) + '</strong>' +
+          '<span>' + events.length + '개 일정</span>' +
+        '</div>' +
+        (events.length ? '<div class="calendar-day-list">' + events.map(function (event) {
+          var type = EVENT_TYPES[event.type] || EVENT_TYPES.meeting;
+          return '<button type="button" class="calendar-day-item" onclick="openEventModal(\'' + escHtml(event.id) + '\')">' +
+            '<span class="event-type-badge ' + escHtml(type.className) + '">' + escHtml(type.label) + '</span>' +
+            '<strong>' + escHtml(event.title) + '</strong>' +
+            '<small>' + escHtml(formatTimeRange(event)) + (event.memo ? ' · ' + escHtml(event.memo) : '') + '</small>' +
+          '</button>';
+        }).join('') + '</div>' : '<p class="lab-empty compact">선택한 날짜에 등록된 일정이 없습니다.</p>');
     }
 
     function renderNotices() {

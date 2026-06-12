@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v4';
+const CACHE_NAME = 'kw-cap-lab-v5';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [

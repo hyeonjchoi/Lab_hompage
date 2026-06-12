@@ -185,5 +185,24 @@ function showToast(msg, duration) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  setupMobileNav();
   CAPAuth.renderNav();
 });
+
+function setupMobileNav() {
+  const shell = document.querySelector('.nav-shell');
+  const nav = document.querySelector('.nav-links');
+  if (!shell || !nav || shell.querySelector('.nav-toggle')) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'nav-toggle';
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-label', '메뉴 열기');
+  button.textContent = '메뉴';
+  button.addEventListener('click', function () {
+    const isOpen = shell.classList.toggle('nav-open');
+    button.setAttribute('aria-expanded', String(isOpen));
+    button.setAttribute('aria-label', isOpen ? '메뉴 닫기' : '메뉴 열기');
+  });
+  shell.insertBefore(button, nav);
+}
