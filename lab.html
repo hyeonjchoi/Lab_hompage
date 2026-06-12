@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="KW CAP Lab 구성원 전용 LAB 페이지">
   <title>LAB | KW CAP Lab</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#183A5A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CAP Lab">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -220,6 +226,7 @@
     var selectedMeetingId = null;
     var activeEventId = null;
     var editingEventId = null;
+    var editingContentId = null;
     var draggingEventId = null;
     var adminProgressMode = false;
     var minutesPage = 1;
@@ -653,10 +660,30 @@
       document.getElementById('content-modal-type').className = 'event-type-badge ' + (isNotice ? 'meeting' : 'conference');
       document.getElementById('content-modal-type').textContent = (item.important ? '중요 · ' : '') + (isNotice ? '공지사항' : '공유 소스');
       document.getElementById('content-modal-title').textContent = item.title;
-      document.getElementById('content-modal-body').innerHTML = isNotice
+      var detailHtml = isNotice
         ? '<dl class="event-detail-list"><div><dt>날짜</dt><dd>' + escHtml(formatKoreanDate(item.date)) + '</dd></div><div><dt>내용</dt><dd>' + escHtml(item.summary || '내용이 없습니다.') + '</dd></div></dl>'
         : '<dl class="event-detail-list"><div><dt>태그</dt><dd>' + escHtml(item.tags || '참고 자료') + '</dd></div><div><dt>URL</dt><dd>' + (item.url ? '<a href="' + escHtml(item.url) + '" target="_blank" rel="noopener">' + escHtml(item.url) + '</a>' : 'URL이 없습니다.') + '</dd></div><div><dt>설명</dt><dd>' + escHtml(item.desc || '설명이 없습니다.') + '</dd></div></dl>';
+      document.getElementById('content-modal-body').innerHTML = detailHtml +
+        '<div class="event-modal-actions">' +
+          '<button type="button" class="btn-sm" onclick="openLabDrawer(\'' + type + '\',\'' + escHtml(id) + '\')">수정</button>' +
+          '<button type="button" class="btn-sm danger" onclick="deleteContentItem(\'' + type + '\',\'' + escHtml(id) + '\')">삭제</button>' +
+        '</div>';
       document.getElementById('content-modal').hidden = false;
+    }
+
+    function deleteContentItem(type, id) {
+      var isNotice = type === 'notice';
+      var label = isNotice ? '공지사항' : '공유 자료';
+      if (!confirm(label + '을 삭제할까요?')) return;
+      if (isNotice) {
+        labData.notices = labData.notices.filter(function (item) { return item.id !== id; });
+      } else {
+        labData.resources = labData.resources.filter(function (item) { return item.id !== id; });
+      }
+      saveLabData();
+      closeContentModal();
+      renderLabPage();
+      showToast(label + '을 삭제했습니다.');
     }
 
     function closeContentModal() {
@@ -673,13 +700,15 @@
     function openLabDrawer(type, editId) {
       activeDrawerType = type;
       editingEventId = type === 'event' ? (editId || null) : null;
+      editingContentId = (type === 'notice' || type === 'resource') ? (editId || null) : null;
       var titleMap = {
         event: editingEventId ? '일정 수정' : '일정 추가',
         minutes: '회의록 추가',
-        notice: '공지 추가',
-        resource: '공유 자료 추가',
+        notice: editingContentId ? '공지 수정' : '공지 추가',
+        resource: editingContentId ? '공유 자료 수정' : '공유 자료 추가',
         progress: '진행상황 업데이트'
       };
+      closeContentModal();
       document.getElementById('drawer-title').textContent = titleMap[type] || '작성';
       document.getElementById('drawer-kicker').textContent = 'LAB Write';
       document.getElementById('lab-drawer-form').innerHTML = getDrawerForm(type);
@@ -696,6 +725,7 @@
       document.getElementById('lab-drawer-shade').hidden = true;
       activeDrawerType = null;
       editingEventId = null;
+      editingContentId = null;
     }
 
     function getDrawerForm(type) {
@@ -727,19 +757,21 @@
           drawerActions('회의록 저장');
       }
       if (type === 'notice') {
-        return '<div class="form-group"><label for="lab-notice-title">공지 제목</label><input id="lab-notice-title" required></div>' +
-          '<div class="form-group"><label for="lab-notice-date">공지 날짜</label><input id="lab-notice-date" type="date" required></div>' +
-          '<div class="form-check"><input type="checkbox" id="lab-notice-important"><label for="lab-notice-important">중요 공지로 표시합니다.</label></div>' +
-          '<div class="form-group"><label for="lab-notice-summary">공지 내용</label><textarea id="lab-notice-summary" required></textarea></div>' +
-          drawerActions('공지 저장');
+        var notice = editingContentId ? labData.notices.find(function (item) { return item.id === editingContentId; }) : null;
+        return '<div class="form-group"><label for="lab-notice-title">공지 제목</label><input id="lab-notice-title" required value="' + escHtml(notice ? notice.title : '') + '"></div>' +
+          '<div class="form-group"><label for="lab-notice-date">공지 날짜</label><input id="lab-notice-date" type="date" required value="' + escHtml(notice ? notice.date : '') + '"></div>' +
+          '<div class="form-check"><input type="checkbox" id="lab-notice-important"' + (notice && notice.important ? ' checked' : '') + '><label for="lab-notice-important">중요 공지로 표시합니다.</label></div>' +
+          '<div class="form-group"><label for="lab-notice-summary">공지 내용</label><textarea id="lab-notice-summary" required>' + escHtml(notice ? notice.summary : '') + '</textarea></div>' +
+          drawerActions(editingContentId ? '공지 수정' : '공지 저장');
       }
       if (type === 'resource') {
-        return '<div class="form-group"><label for="lab-resource-title">자료 제목</label><input id="lab-resource-title" required></div>' +
-          '<div class="form-group"><label for="lab-resource-url">URL</label><input id="lab-resource-url" type="url" required placeholder="https://..."></div>' +
-          '<div class="form-group"><label for="lab-resource-tags">태그</label><input id="lab-resource-tags" placeholder="예: 논문, 분석코드"></div>' +
-          '<div class="form-check"><input type="checkbox" id="lab-resource-important"><label for="lab-resource-important">중요 자료로 표시합니다.</label></div>' +
-          '<div class="form-group"><label for="lab-resource-desc">설명</label><textarea id="lab-resource-desc"></textarea></div>' +
-          drawerActions('자료 저장');
+        var resource = editingContentId ? labData.resources.find(function (item) { return item.id === editingContentId; }) : null;
+        return '<div class="form-group"><label for="lab-resource-title">자료 제목</label><input id="lab-resource-title" required value="' + escHtml(resource ? resource.title : '') + '"></div>' +
+          '<div class="form-group"><label for="lab-resource-url">URL</label><input id="lab-resource-url" type="url" required placeholder="https://..." value="' + escHtml(resource ? resource.url : '') + '"></div>' +
+          '<div class="form-group"><label for="lab-resource-tags">태그</label><input id="lab-resource-tags" placeholder="예: 논문, 분석코드" value="' + escHtml(resource ? resource.tags : '') + '"></div>' +
+          '<div class="form-check"><input type="checkbox" id="lab-resource-important"' + (resource && resource.important ? ' checked' : '') + '><label for="lab-resource-important">중요 자료로 표시합니다.</label></div>' +
+          '<div class="form-group"><label for="lab-resource-desc">설명</label><textarea id="lab-resource-desc">' + escHtml(resource ? resource.desc : '') + '</textarea></div>' +
+          drawerActions(editingContentId ? '자료 수정' : '자료 저장');
       }
       var session = CAPAuth.getSession();
       var me = session ? CAPData.getMember(session.userId) : null;
@@ -821,22 +853,36 @@
           createdAt: new Date().toISOString()
         });
       } else if (activeDrawerType === 'notice') {
-        labData.notices.push({
-          id: 'notice_' + Date.now(),
+        var existingNotice = editingContentId ? labData.notices.find(function (item) { return item.id === editingContentId; }) : null;
+        var nextNotice = {
+          id: existingNotice ? existingNotice.id : 'notice_' + Date.now(),
           title: document.getElementById('lab-notice-title').value.trim(),
           date: document.getElementById('lab-notice-date').value,
           important: document.getElementById('lab-notice-important').checked,
-          summary: document.getElementById('lab-notice-summary').value.trim()
-        });
+          summary: document.getElementById('lab-notice-summary').value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+        if (existingNotice) {
+          Object.assign(existingNotice, nextNotice);
+        } else {
+          labData.notices.push(nextNotice);
+        }
       } else if (activeDrawerType === 'resource') {
-        labData.resources.push({
-          id: 'resource_' + Date.now(),
+        var existingResource = editingContentId ? labData.resources.find(function (item) { return item.id === editingContentId; }) : null;
+        var nextResource = {
+          id: existingResource ? existingResource.id : 'resource_' + Date.now(),
           title: document.getElementById('lab-resource-title').value.trim(),
           url: document.getElementById('lab-resource-url').value.trim(),
           tags: document.getElementById('lab-resource-tags').value.trim(),
           important: document.getElementById('lab-resource-important').checked,
-          desc: document.getElementById('lab-resource-desc').value.trim()
-        });
+          desc: document.getElementById('lab-resource-desc').value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+        if (existingResource) {
+          Object.assign(existingResource, nextResource);
+        } else {
+          labData.resources.push(nextResource);
+        }
       } else if (activeDrawerType === 'progress') {
         var memberId = session ? session.userId : '';
         if (!memberId) {
@@ -954,5 +1000,6 @@
       return event.startTime || event.endTime;
     }
   </script>
+  <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
 </body>
 </html>

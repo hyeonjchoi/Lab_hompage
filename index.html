@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="광운대학교 소비자광고심리 연구실 KW CAP Lab — 광고, 소비자 행동, AI 서비스, 식품 연구, 여성 소비자 경험을 연구합니다.">
   <title>광운대학교 소비자광고심리 연구실 | KW CAP Lab</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#183A5A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CAP Lab">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css?v=hero-width">
 </head>
 <body>
@@ -169,5 +175,6 @@
 
     });
   </script>
+  <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
 </body>
 </html>

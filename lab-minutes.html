@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="KW CAP Lab 랩미팅 회의록 전체보기">
   <title>랩미팅 회의록 | KW CAP Lab</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#183A5A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CAP Lab">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -148,5 +154,6 @@
       return event.startTime || event.endTime;
     }
   </script>
+  <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
 </body>
 </html>

@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="광운대학교 산업심리학과 학생 전용 실험실습실 예약 안내">
   <title>실험실 예약 | KW CAP Lab</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#183A5A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CAP Lab">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -106,5 +112,6 @@
 
   <script src="cap-data.js"></script>
   <script src="cap-auth.js"></script>
+  <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
 </body>
 </html>

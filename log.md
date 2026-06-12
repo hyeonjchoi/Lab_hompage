@@ -467,6 +467,101 @@ python3 -m http.server 8765
 
 ---
 
+---
+
+## 2026-06-12 — PWA(모바일 홈화면 추가) 준비 및 Supabase 설계
+
+### 진행 사항
+
+1. **PWA 기반 모바일 앱 준비 완료**
+   - 현행 홈페이지를 React Native 앱으로 재작성하는 방향이 아닌, 기존 웹 코드를 그대로 활용하는 **PWA(Progressive Web App)** 방식으로 결정
+   - iOS·Android 모두 Safari/Chrome의 "홈화면에 추가" 기능으로 앱처럼 설치 가능
+   - GitHub Pages(HTTPS) 위에서 즉시 동작
+
+2. **생성 파일**
+
+   | 파일 | 역할 |
+   |------|------|
+   | `manifest.json` | 앱 이름·아이콘·시작URL·테마색 정의 |
+   | `sw.js` | 서비스 워커 — 정적 에셋 캐싱, 오프라인 지원 |
+   | `icons/icon-192.png` | Android 홈화면 아이콘 (192×192) |
+   | `icons/icon-512.png` | Android 스플래시·고해상도 (512×512) |
+   | `icons/apple-touch-icon.png` | iOS 홈화면 아이콘 (180×180) |
+   | `icons/favicon-32.png` | 브라우저 탭 파비콘 (32×32) |
+   | `supabase-client.js` | Supabase 초기화 + Auth/DB 헬퍼 함수 |
+   | `supabase-schema.sql` | Supabase 데이터베이스 스키마 (7개 테이블 + RLS) |
+
+3. **전체 HTML 14개 파일 PWA 메타태그 일괄 추가**
+   - `<link rel="manifest">`, `theme-color`, `apple-mobile-web-app-*` 메타태그 삽입
+   - `</body>` 직전에 서비스 워커 등록 스크립트 삽입
+   - 대상: index, people, research, publications, reservation, join, login, lab, lab-member, lab-minutes, lab-notices, lab-resources, admin, member-dashboard
+
+4. **Supabase 스키마 설계 완료**
+   - 7개 테이블: `members`, `lab_events`, `meeting_minutes`, `notices`, `resources`, `member_goals`, `member_notes`
+   - Row Level Security: 교수(professor)와 일반 구성원 권한 분리
+   - 회의록 60일 보관 규칙 반영
+   - `updated_at` 자동 갱신 트리거 포함
+
+### 메모
+
+- 아이콘(`icons/`)은 현재 KW·CAP 픽셀 아트 임시 버전이다. 정식 아이콘 PNG 파일로 교체 시 동일 파일명으로 덮어쓰면 된다.
+- 현행 `cap-auth.js` / `cap-data.js`는 아직 localStorage 기반이다. Supabase 연동 후 `supabase-client.js`의 `CapAuth` / `CapDB` 헬퍼로 교체 예정.
+
+---
+
+## 이후 예정 작업
+
+### 1. Supabase 연동 (우선순위 높음)
+
+현재 사이트는 `localStorage` 기반이라 기기 간 데이터 공유가 불가능하다.  
+Supabase 연동으로 실제 멀티유저 환경을 구성한다.
+
+**단계별 진행 계획:**
+
+| 단계 | 내용 |
+|------|------|
+| ① 프로젝트 생성 | supabase.com → New Project 생성, 지역: Northeast Asia(Seoul) 권장 |
+| ② SQL 실행 | 대시보드 SQL Editor에 `supabase-schema.sql` 전체 붙여넣기 → Run |
+| ③ 키 입력 | `supabase-client.js` 상단 `SUPABASE_URL` · `SUPABASE_ANON_KEY` 입력 |
+| ④ Auth 교체 | `login.html` + `cap-auth.js`의 localStorage 로그인 → Supabase Auth 방식으로 교체 |
+| ⑤ 데이터 교체 | `cap-data.js`의 localStorage CRUD → `supabase-client.js`의 `CapDB` 헬퍼 호출로 교체 |
+| ⑥ 공동작업자 설정 | Supabase 대시보드 Organization → Settings → Team에서 교수님 계정 초대 |
+
+**Supabase 공동작업자 권한:**
+- **Owner**: 교수님 — 프로젝트 전체 관리
+- **Administrator**: 서버 담당 대학원생 — SQL 스키마 수정·API 키 확인
+- **일반 구성원**: Supabase 대시보드 접근 불필요, RLS 정책으로 데이터 권한 관리
+
+**주의사항:**
+- Supabase Free 플랜: 팀원 최대 2명 (Owner 포함), Pro 플랜($25/월)은 무제한
+- `supabase-client.js`의 `SUPABASE_ANON_KEY`는 공개 저장소에 올려도 안전한 공개 키이나, `service_role` 키는 절대 커밋하지 않는다
+
+---
+
+### 2. 디자인 및 레이아웃 시안 검토
+
+현재 `design-proposals.html`, `design-proposals-v2.html`, `layout-proposals.html`, `proposal-1~8.html`, `layout-1~4.html` 등 다수의 시안 파일이 존재한다.  
+각 시안의 컨셉과 현행 사이트와의 차이를 검토하고 최종 디자인 방향을 결정할 예정이다.
+
+**검토 대상 파일:**
+
+| 파일 | 내용 |
+|------|------|
+| `design-proposals.html` | 디자인 시안 1차 묶음 |
+| `design-proposals-v2.html` | 디자인 시안 2차(개선) 묶음 |
+| `layout-proposals.html` | 레이아웃 비교 묶음 |
+| `proposal-1~8.html` | 개별 시안 8종 |
+| `layout-1~4.html` | 레이아웃 변형 4종 |
+
+**검토 시 확인할 항목:**
+- 현행 네이비-화이트-레드 색상 체계 유지 여부
+- 모바일(PWA) 환경에서의 가독성 및 터치 UX
+- 헤더·히어로·카드 레이아웃의 변화 방향
+- 로고 위치·크기·브랜딩 노출 방식
+- 시안 중 채택할 요소와 폐기할 요소 선별
+
+---
+
 ## 다음 작업자를 위한 진행 규칙
 
 - 새 작업을 시작하기 전에 반드시 이 `log.md`를 먼저 확인한다.

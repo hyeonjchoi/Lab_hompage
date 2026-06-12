@@ -1,0 +1,53 @@
+{
+  "name": "KW CAP Lab",
+  "short_name": "CAP Lab",
+  "description": "광운대학교 소비자광고심리 연구실",
+  "lang": "ko",
+  "start_url": "/Lab_hompage/",
+  "scope": "/Lab_hompage/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#183A5A",
+  "theme_color": "#183A5A",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icons/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "LAB 연구실",
+      "short_name": "LAB",
+      "description": "구성원 전용 LAB 페이지",
+      "url": "/Lab_hompage/lab.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "실험실 예약",
+      "short_name": "예약",
+      "description": "실험실 예약 바로가기",
+      "url": "/Lab_hompage/reservation.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
