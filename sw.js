@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v5';
+const CACHE_NAME = 'kw-cap-lab-v6';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [
@@ -11,6 +11,7 @@ const PRECACHE_ASSETS = [
   'login.html',
   'style.css',
   'cap-auth.js',
+  'cap-notifications.js',
   'cap-data.js',
   'manifest.json',
   'icons/icon-192.png',
@@ -24,6 +25,22 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(PRECACHE_ASSETS))
       .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = event.notification.data && event.notification.data.url
+    ? event.notification.data.url
+    : 'lab.html';
+  const url = new URL(targetUrl, self.registration.scope).href;
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if ('focus' in client && client.url === url) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
   );
 });
 

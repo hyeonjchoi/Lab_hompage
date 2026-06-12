@@ -52,6 +52,8 @@
       </div>
     </section>
 
+    <section class="lab-board notification-center" id="notification-center" aria-label="알림 센터"></section>
+
     <section class="lab-summary-grid" aria-label="LAB 요약">
       <article class="lab-summary-card">
         <span>오늘 일정</span>
@@ -219,6 +221,7 @@
 
   <script src="cap-data.js?v=axes-awards"></script>
   <script src="cap-auth.js?v=lab"></script>
+  <script src="cap-notifications.js?v=lab-alerts"></script>
   <script>
     var LAB_KEY = 'cap_lab_data';
     var labData = null;
@@ -399,6 +402,7 @@
       renderMinutes();
       renderProgress();
       populateMeetingSelectIfOpen();
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
     }
 
     function renderSummary() {
@@ -937,6 +941,7 @@
       saveLabData();
       closeLabDrawer();
       renderLabPage();
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
       showToast('LAB 페이지에 저장했습니다.');
     }
 
@@ -958,6 +963,7 @@
         event.date = dateKey;
         saveLabData();
         renderLabPage();
+        if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
         showToast('일정 날짜를 변경했습니다.');
       }
       draggingEventId = null;

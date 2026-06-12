@@ -50,6 +50,8 @@
       </div>
     </section>
 
+    <section class="lab-board notification-center" id="notification-center" aria-label="알림 센터"></section>
+
     <section class="member-record-grid">
       <article class="lab-board member-profile-summary">
         <span class="lab-kicker">Profile</span>
@@ -164,6 +166,7 @@
 
   <script src="cap-data.js?v=axes-awards"></script>
   <script src="cap-auth.js?v=lab"></script>
+  <script src="cap-notifications.js?v=lab-alerts"></script>
   <script>
     var LAB_KEY = 'cap_lab_data';
     var labData = null;
@@ -243,6 +246,7 @@
       renderGoals();
       renderMeetings();
       renderNotes();
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'member', memberId: currentMember.id });
     }
 
     function renderNoteForm() {
@@ -390,6 +394,7 @@
       saveLabData();
       resetGoalForm();
       renderGoals();
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'member', memberId: currentMember.id });
       showToast(existing ? '연구 목표를 수정했습니다.' : '연구 목표를 저장했습니다.');
     }
 
@@ -704,6 +709,7 @@
       saveLabData();
       resetNoteForm();
       renderNotes();
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'member', memberId: currentMember.id });
       showToast(existing ? '기록을 수정했습니다.' : (isAdminView ? '피드백을 저장했습니다.' : '개인 기록을 저장했습니다.'));
     }
 
@@ -726,6 +732,7 @@
       saveLabData();
       resetNoteForm();
       renderNotes();
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'member', memberId: currentMember.id });
       showToast('기록을 삭제했습니다.');
     }
 
@@ -736,6 +743,7 @@
       note.updatedAt = new Date().toISOString();
       saveLabData();
       renderNotes();
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'member', memberId: currentMember.id });
     }
 
     function cancelNoteEdit() {

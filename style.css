@@ -928,6 +928,29 @@ main { background: var(--bg); }
   display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px;
   max-width: 520px;
 }
+.notification-center {
+  margin-bottom: 18px;
+}
+.notification-actions {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.notification-list {
+  display: grid; gap: 8px;
+}
+.notification-item {
+  display: grid; gap: 4px;
+  padding: 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: #fff;
+}
+.notification-item span {
+  color: var(--red); font-size: 0.72rem; font-weight: 900;
+}
+.notification-item strong {
+  color: var(--navy); line-height: 1.35;
+}
+.notification-item small {
+  color: var(--muted); line-height: 1.45;
+}
 .lab-summary-grid {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px; margin-bottom: 18px;
