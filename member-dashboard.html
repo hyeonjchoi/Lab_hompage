@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CAP Lab">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=magazine-v1-4-dashboard">
 </head>
 <body>
   <a class="skip-link" href="#main">본문으로 이동</a>
@@ -166,8 +166,11 @@
             '</div>';
 
       wrap.innerHTML =
-        '<h2>' + escHtml(m.name) + ' 님의 프로필 편집</h2>' +
-        '<p>구성원 페이지에 표시되는 내용을 수정합니다. 왼쪽 미리보기에서 표시 상태를 바로 확인할 수 있습니다.</p>' +
+        '<section class="dashboard-hero">' +
+          '<span class="tagline">Profile Editor</span>' +
+          '<h1>' + escHtml(m.name) + ' 님의 프로필 편집</h1>' +
+          '<p>구성원 페이지에 표시되는 내용을 수정합니다. 왼쪽 미리보기에서 표시 상태를 바로 확인할 수 있습니다.</p>' +
+        '</section>' +
 
         '<div class="dashboard-layout">' +
           '<aside class="dashboard-preview" aria-label="프로필 카드 미리보기">' +

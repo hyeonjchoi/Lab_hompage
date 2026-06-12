@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CAP Lab">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=hero-width">
+  <link rel="stylesheet" href="style.css?v=magazine-v1-4-navfix">
 </head>
 <body>
   <a class="skip-link" href="#main">본문으로 이동</a>
@@ -40,32 +40,61 @@
 
   <!-- Hero -->
   <section class="hero">
+    <div class="hero-bg-pattern" aria-hidden="true"></div>
     <div class="hero-inner">
-      <div class="hero-content">
-        <p class="eyebrow">Kwangwoon University · Consumer Advertising Psychology</p>
+      <div class="hero-content hero-left">
+        <div class="mag-label">
+          <span class="mag-label-line" aria-hidden="true"></span>
+          <p class="mag-label-text">Consumer Advertising Psychology · Kwangwoon University</p>
+        </div>
         <h1 id="hero-title">광고와 소비자 경험 속<br>마음의 움직임을 연구합니다.</h1>
+        <div class="hero-rule" aria-hidden="true"></div>
         <p class="lead" id="hero-lead">
           광운대학교 소비자광고심리 연구실은 광고 반응, 소비자 판단, AI 서비스 상호작용, 식품 관련 의사결정, 여성 소비자 경험을 연구합니다.
           <span class="en" id="hero-lead-en">KW CAP Lab investigates how consumers think, feel, and act in advertising, service, and AI-mediated contexts.</span>
         </p>
-        <div class="hero-panel" aria-label="연구실 주요 정보">
-          <div class="hero-tags">
-            <span>소비자 판단 &amp; 광고 반응</span>
-            <span>인간-AI 서비스 상호작용</span>
-            <span>식품 관련 연구</span>
-            <span>여성 소비자 경험</span>
-          </div>
-          <div class="hero-facts">
-            <div class="fact"><b id="hero-axis-count">4</b><span>연구 축</span></div>
-            <div class="fact"><b id="hero-member-count">10</b><span>구성원</span></div>
-            <div class="fact"><b>RA</b><span>상시 모집</span></div>
-          </div>
+        <div class="hero-tags">
+          <span>소비자 판단 &amp; 광고 반응</span>
+          <span>인간-AI 서비스 상호작용</span>
+          <span>식품 관련 연구</span>
+          <span>여성 소비자 경험</span>
         </div>
         <div class="hero-actions">
-          <a class="button" href="research.html">진행 연구 보기</a>
-          <a class="button secondary" href="join.html">연구실 지원하기</a>
+          <a class="button btn-block primary" href="research.html">진행 연구 보기</a>
+          <a class="button btn-block secondary" href="join.html">연구실 지원하기</a>
         </div>
       </div>
+
+      <aside class="hero-right" aria-label="연구실 주요 정보">
+        <div class="mag-circle">
+          <div class="mag-circle-inner">
+            <span class="mag-circle-label">Research Lab</span>
+            <span class="mag-circle-title">KW<br>CAP<br>Lab</span>
+          </div>
+          <div class="mag-circle-accent">
+            <b id="hero-axis-count">4</b>
+            <span>연구축</span>
+          </div>
+        </div>
+        <div class="mag-stats">
+          <div class="mag-stat">
+            <b id="hero-member-count">10</b>
+            <span>구성원</span>
+          </div>
+          <div class="mag-stat">
+            <b>RA</b>
+            <span>상시 모집</span>
+          </div>
+          <div class="mag-stat">
+            <b>KW</b>
+            <span>광운대학교</span>
+          </div>
+          <div class="mag-stat">
+            <b>CAP</b>
+            <span>소비자광고심리</span>
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
 
@@ -99,7 +128,7 @@
     <!-- Join Band -->
     <section class="section">
       <div class="join-band">
-        <div>
+        <div class="join-text">
           <span class="tagline">Join Us</span>
           <h2>함께 연구할 분을 기다립니다</h2>
           <p>
@@ -135,6 +164,10 @@
   <script src="cap-auth.js"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
+    function escHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
       var c = CAPData.getContent();
 
