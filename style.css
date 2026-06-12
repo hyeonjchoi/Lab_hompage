@@ -648,12 +648,25 @@ main { background: var(--bg); }
   text-decoration: underline; text-underline-offset: 2px; font-size: 0.8rem;
 }
 .nav-user a:hover { color: var(--navy-2); }
-.nav-logout {
+.nav-logout,
+.nav-notification {
+  display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--line); background: none; cursor: pointer;
   padding: 4px 10px; border-radius: 4px; font-size: 0.78rem;
   color: var(--muted); font-family: inherit;
 }
-.nav-logout:hover { background: var(--bg); }
+.nav-logout:hover,
+.nav-notification:hover { background: var(--bg); }
+.nav-notification {
+  color: var(--navy); font-weight: 800;
+}
+.nav-notification:disabled {
+  opacity: 0.55; cursor: not-allowed;
+}
+.admin-header .nav-notification {
+  color: #fff; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1);
+}
+.admin-header .nav-notification:hover { background: rgba(255,255,255,0.18); }
 .nav-admin-link {
   display: inline-flex; align-items: center;
   padding: 4px 10px; border-radius: 4px;
@@ -927,29 +940,6 @@ main { background: var(--bg); }
 .lab-quick-actions {
   display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px;
   max-width: 520px;
-}
-.notification-center {
-  margin-bottom: 18px;
-}
-.notification-actions {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-}
-.notification-list {
-  display: grid; gap: 8px;
-}
-.notification-item {
-  display: grid; gap: 4px;
-  padding: 12px; border: 1px solid var(--line); border-radius: 8px;
-  background: #fff;
-}
-.notification-item span {
-  color: var(--red); font-size: 0.72rem; font-weight: 900;
-}
-.notification-item strong {
-  color: var(--navy); line-height: 1.35;
-}
-.notification-item small {
-  color: var(--muted); line-height: 1.45;
 }
 .lab-summary-grid {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1761,6 +1751,7 @@ main { background: var(--bg); }
   }
   .nav-auth-row a,
   .nav-auth-row.secondary a,
+  .nav-notification,
   .nav-logout {
     flex: 1 1 auto; justify-content: center;
   }

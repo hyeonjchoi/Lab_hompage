@@ -82,6 +82,7 @@ const CAPAuth = {
           '</div>' +
           '<div class="nav-auth-row secondary">' +
             (session.role === 'admin' ? '<a class="nav-admin-link" href="admin.html">관리자</a>' : '') +
+            (window.CAPNotifications ? '<button class="nav-notification" type="button" onclick="CAPNotifications.toggle()">' + escHtml(CAPNotifications.getNavLabel()) + '</button>' : '') +
             '<button class="nav-logout" onclick="CAPAuth.logout();window.location.reload();">로그아웃</button>' +
           '</div>' +
         '</div>';

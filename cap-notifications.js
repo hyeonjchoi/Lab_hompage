@@ -49,7 +49,7 @@ const CAPNotifications = {
   async enable() {
     if (!this.isSupported()) {
       showToast('이 브라우저는 알림을 지원하지 않습니다.');
-      this.renderPanel();
+      this.renderNavButton();
       return;
     }
     const permission = await Notification.requestPermission();
@@ -63,15 +63,39 @@ const CAPNotifications = {
     } else {
       showToast('알림 권한이 허용되지 않았습니다.');
     }
-    this.renderPanel();
+    this.renderNavButton();
   },
 
   disable() {
     const settings = this.getSettings();
     settings.enabled = false;
     this.saveSettings(settings);
-    this.renderPanel();
+    this.renderNavButton();
     showToast('알림을 껐습니다.');
+  },
+
+  toggle() {
+    const settings = this.getSettings();
+    if (settings.enabled && this.isSupported() && Notification.permission === 'granted') {
+      this.disable();
+      return;
+    }
+    this.enable();
+  },
+
+  getNavLabel() {
+    if (!this.isSupported()) return '알림 불가';
+    const settings = this.getSettings();
+    if (Notification.permission === 'denied') return '알림 차단됨';
+    return settings.enabled && Notification.permission === 'granted' ? '알림 끄기' : '알림 허용';
+  },
+
+  renderNavButton() {
+    if (window.CAPAuth && CAPAuth.renderNav) CAPAuth.renderNav();
+    document.querySelectorAll('.nav-notification').forEach(button => {
+      button.textContent = this.getNavLabel();
+      button.disabled = !this.isSupported();
+    });
   },
 
   async sendTest() {
@@ -90,7 +114,7 @@ const CAPNotifications = {
   init(labData, options) {
     this.labData = labData || this.readLabData();
     this.options = options || {};
-    this.renderPanel();
+    this.renderNavButton();
     this.scanAndNotify();
   },
 
@@ -104,42 +128,6 @@ const CAPNotifications = {
     } catch (err) {
       return { events: [], memberGoals: [], memberNotes: [] };
     }
-  },
-
-  renderPanel() {
-    const panel = document.getElementById('notification-center');
-    if (!panel) return;
-    const settings = this.getSettings();
-    const supported = this.isSupported();
-    const permission = supported ? Notification.permission : 'unsupported';
-    const reminders = this.buildReminderList({ includeFuture: true }).slice(0, 5);
-    const statusText = !supported
-      ? '이 브라우저에서는 알림을 사용할 수 없습니다.'
-      : permission === 'granted' && settings.enabled
-        ? '알림 켜짐'
-        : permission === 'denied'
-          ? '브라우저에서 알림이 차단되어 있습니다.'
-          : '알림 꺼짐';
-
-    panel.innerHTML =
-      '<div class="lab-panel-head compact">' +
-        '<div><span class="lab-kicker">Notifications</span><h2>알림 센터</h2><p class="lab-panel-sub">' + escHtml(statusText) + '</p></div>' +
-        '<div class="notification-actions">' +
-          (settings.enabled && permission === 'granted'
-            ? '<button type="button" class="btn-sm" onclick="CAPNotifications.disable()">끄기</button>'
-            : '<button type="button" class="btn-sm primary" onclick="CAPNotifications.enable()">알림 허용</button>') +
-          '<button type="button" class="btn-sm" onclick="CAPNotifications.sendTest()">테스트</button>' +
-        '</div>' +
-      '</div>' +
-      '<div class="notification-list">' +
-        (reminders.length ? reminders.map(function (item) {
-          return '<a class="notification-item" href="' + escHtml(item.url || 'lab.html') + '">' +
-            '<span>' + escHtml(item.kind) + '</span>' +
-            '<strong>' + escHtml(item.title) + '</strong>' +
-            '<small>' + escHtml(item.body) + '</small>' +
-          '</a>';
-        }).join('') : '<p class="lab-empty compact">예정된 알림이 없습니다.</p>') +
-      '</div>';
   },
 
   async scanAndNotify() {
@@ -258,3 +246,7 @@ const CAPNotifications = {
 };
 
 window.CAPNotifications = CAPNotifications;
+
+document.addEventListener('DOMContentLoaded', function () {
+  CAPNotifications.renderNavButton();
+});
