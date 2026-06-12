@@ -68,6 +68,9 @@ const CAPAuth = {
     document.querySelectorAll('.lab-nav-link').forEach(link => {
       link.hidden = !session;
     });
+    document.querySelectorAll('.mobile-login-link').forEach(link => {
+      link.hidden = !!session;
+    });
     if (!navAuth) return;
     if (session) {
       const labPageHref = session.role === 'admin'

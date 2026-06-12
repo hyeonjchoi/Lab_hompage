@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v1';
+const CACHE_NAME = 'kw-cap-lab-v3';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [
@@ -45,6 +45,25 @@ self.addEventListener('fetch', event => {
   // Supabase API 요청: 항상 네트워크 우선 (캐시 안 함)
   if (url.hostname.includes('supabase.co')) {
     event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // 자주 바뀌는 화면/인증 파일은 모바일 캐시가 오래 남지 않도록 네트워크 우선
+  if (
+    event.request.method === 'GET' &&
+    (url.pathname.endsWith('.html') ||
+      url.pathname.endsWith('.css') ||
+      url.pathname.endsWith('.js'))
+  ) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
     return;
   }
 
