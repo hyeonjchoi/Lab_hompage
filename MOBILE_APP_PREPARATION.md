@@ -183,6 +183,33 @@ The current browser data should be converted into app data models.
 - `authorName`
 - `createdAt`
 
+### NotificationSubscription
+
+- `id`
+- `userId`
+- `deviceId`
+- `platform`: `ios`, `android`, `web`
+- `pushSubscription`
+- `enabled`
+- `eventReminderEnabled`
+- `goalReminderEnabled`
+- `feedbackEnabled`
+- `noticeEnabled`
+- `importantNoticeEnabled`
+- `createdAt`
+- `updatedAt`
+
+### NotificationLog
+
+- `id`
+- `userId`
+- `type`: `event`, `goal`, `feedback`, `notice`, `important_notice`
+- `sourceId`
+- `title`
+- `body`
+- `sentAt`
+- `readAt`
+
 ## Storage Migration
 
 Current web storage keys:
@@ -290,6 +317,8 @@ Recommended backend options:
 - Add auth.
 - Add admin/student permissions.
 - Add 60-day minutes cleanup.
+- Add server-side push notification delivery for feedback, meetings, goal deadlines, and notices.
+- Add immediate push notifications for important notices.
 
 ### Phase 6: Release Prep
 
@@ -309,10 +338,32 @@ Recommended backend options:
   - date formatting rules
 - Create an `/app` or `/mobile` directory for the Expo project.
 - Convert current LAB data assumptions into typed interfaces.
+- When starting Supabase integration, include push notification tables, notification logs, and server/Edge Function delivery in the first backend scope.
 
 ## Open Decisions
 
 - Should the mobile app be login-only, or include public homepage content too?
 - Should data sync across devices immediately, or is a local prototype acceptable first?
 - Should professor/admin functions be available in the first mobile release?
-- Should push notifications be added for upcoming lab meetings and goal deadlines?
+- Should push notifications be added for upcoming lab meetings, goal deadlines, professor feedback, and notices?
+- Should `중요` notices always push immediately to all members, or should professors choose recipient groups?
+
+## Push Notification Requirements
+
+The current web implementation has local PWA reminders, but real multi-user mobile notifications require backend support. When Supabase is implemented, this must be treated as a separate required workstream, not a small UI-only change.
+
+Required notification triggers:
+
+- Upcoming meeting or lab event reminders.
+- Meeting or lab event creation/update notifications for attendees.
+- Professor feedback added to a member page.
+- Goal deadline reminders before the end date.
+- New notice notifications.
+- Immediate notifications for new `중요` notices.
+
+Expected behavior:
+
+- If a professor or another authorized user adds feedback to a student page, the student should receive a push notification on their phone immediately.
+- If an important notice is posted, target members should receive a push notification immediately.
+- Notification delivery should be based on Supabase data changes and stored push subscriptions, not on each device's local storage.
+- Notification logs should prevent duplicate sends and allow read/handled status tracking later.
