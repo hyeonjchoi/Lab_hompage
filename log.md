@@ -722,3 +722,33 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 - 현행 사이트의 기준 파일은 멀티페이지 구조(`index.html` + 공유 `style.css`)이며, 구버전 단일 파일(`KW_CAP_Lab_home_logo3_preview.html`)은 참고용으로만 보존한다.
 - 데이터 수정은 `admin.html`을 통해 진행하고, 코드 수정이 필요한 경우에만 파일을 직접 편집한다.
 - 로컬 서버 실행: `python3 -m http.server 8765` (랩홈페이지 디렉터리에서)
+
+---
+
+## 2026-06-13 — 홈페이지 전역 단어 잘림 방지 규칙 적용
+
+### 사용자 요청
+
+- PC 화면과 모바일 화면 모두에서 문구가 단어 중간에서 줄바꿈되지 않도록 전역 규칙을 적용한다.
+- 예시: `소비자의 태도 형성과 행동 의도에 미치는 영향을 다양한 맥락에서 연구합니다.`가 `연 / 구합니다.`처럼 단어 중간에서 분리되면 안 된다.
+- 적용 후 푸시와 GitHub Pages 배포까지 완료한다.
+
+### 적용 내용
+
+- `style.css`의 `body`에 한국어 어절 단위 줄바꿈을 위한 전역 타이포그래피 규칙을 추가했다.
+  - `word-break: keep-all`
+  - `overflow-wrap: normal`
+  - `line-break: strict`
+  - `hyphens: none`
+- 기존에 단어 중간 줄바꿈을 유발할 수 있던 `overflow-wrap: anywhere`를 운영 페이지 주요 본문 영역에서 제거했다.
+  - 연구 성과 제목
+  - 프로필 미리보기 관심사
+  - 일정 상세 설명
+- 배포된 레이아웃 시안에서도 같은 원칙이 유지되도록 `layout-styles.css`에 동일한 전역 규칙을 추가했다.
+- 브라우저와 서비스워커 캐시 반영을 위해 CSS 버전 문자열을 `style.css?v=magazine-v1-5-wordbreak`로 갱신하고, `sw.js` 캐시명을 `kw-cap-lab-v11`로 올렸다.
+
+### 검증 및 배포
+
+- 로컬에서 `style.css`와 `layout-styles.css` 문법 및 관련 줄바꿈 규칙을 확인했다.
+- 운영 HTML 파일들이 새 CSS 버전을 참조하도록 갱신했다.
+- 이후 Git 커밋, 원격 `main` 푸시, GitHub Pages 배포 확인을 진행한다.
