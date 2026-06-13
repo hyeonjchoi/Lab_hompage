@@ -23,6 +23,30 @@
     .admin-header strong { font-size: 1.05rem; }
     .admin-header span { font-size: 0.84rem; opacity: 0.7; }
     .admin-back { color: #fff; opacity: 0.8; font-size: 0.84rem; text-decoration: underline; }
+    .page-editor-grid {
+      display: grid;
+      gap: 18px;
+    }
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .style-grid .form-group { margin-bottom: 0; }
+    .style-grid input[type="color"] {
+      min-height: 42px;
+      padding: 4px;
+    }
+    .style-preview {
+      margin-top: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+    }
+    @media (max-width: 900px) {
+      .style-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body>
@@ -50,6 +74,7 @@
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('members')">👤 구성원 관리</button>
         <button class="tab-btn" onclick="switchTab('home')">🏠 홈 문구 편집</button>
+        <button class="tab-btn" onclick="switchTab('pages')">📝 페이지 문구/서식</button>
         <button class="tab-btn" onclick="switchTab('research')">🔬 연구 축 편집</button>
         <button class="tab-btn" onclick="switchTab('publications')">📄 논문/발표 관리</button>
       </div>
@@ -123,6 +148,15 @@
             <textarea id="h-leadEn"></textarea>
           </div>
           <button class="save-btn" onclick="saveHome()">저장</button>
+        </div>
+      </div>
+
+      <!-- ===== Tab 3: Page Meta ===== -->
+      <div id="tab-pages" class="tab-panel">
+        <div class="panel-section">
+          <h3>페이지 제목 · 안내문구 · 서식 편집</h3>
+          <p style="color:var(--muted);margin-top:0;">홈 화면을 제외한 주요 페이지의 상단 제목과 안내문구를 수정합니다. 줄바꿈은 안내문구 입력창에서 그대로 반영됩니다.</p>
+          <div id="page-meta-editor" class="page-editor-grid"></div>
         </div>
       </div>
 
@@ -212,7 +246,7 @@
     </div>
   </main>
 
-  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-data.js?v=page-meta-v1"></script>
   <script src="cap-auth.js"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
@@ -226,6 +260,7 @@
       // load all tabs
       renderMemberTable();
       loadHomeForm();
+      renderPageMetaEditor();
       renderAxesEdit();
       renderArticlesTable();
       renderPresTable();
@@ -349,6 +384,123 @@
         heroLeadEn: document.getElementById('h-leadEn').value
       });
       showToast('홈 문구가 저장되었습니다. index.html을 새로 고침하면 반영됩니다.');
+    }
+
+    /* ---- Tab 3: Page Meta ---- */
+    var PAGE_META_CONFIG = [
+      { id: 'people', label: '구성원', url: 'people.html' },
+      { id: 'research', label: '진행 연구', url: 'research.html' },
+      { id: 'publications', label: '연구 성과', url: 'publications.html' },
+      { id: 'reservation', label: '실험실 예약', url: 'reservation.html' },
+      { id: 'join', label: '지원하기', url: 'join.html' }
+    ];
+
+    function cleanColor(value, fallback) {
+      return /^#[0-9a-fA-F]{6}$/.test(value || '') ? value : fallback;
+    }
+
+    function cleanSize(value) {
+      value = String(value || '').trim();
+      return /^\d{0,2}(\.\d{1,2})?$/.test(value) ? value : '';
+    }
+
+    function renderPageMetaEditor() {
+      var editor = document.getElementById('page-meta-editor');
+      editor.innerHTML = PAGE_META_CONFIG.map(function (page) {
+        var meta = CAPData.getPageMeta(page.id);
+        var titleStyle = meta.titleStyle || {};
+        var descStyle = meta.descriptionStyle || {};
+        return '<article class="inline-form" id="page-editor-' + page.id + '">' +
+          '<h4>' + escHtml(page.label) + ' <a href="' + escHtml(page.url) + '" target="_blank" style="font-size:0.78rem;color:var(--navy);margin-left:8px;">페이지 보기</a></h4>' +
+          '<div class="form-row">' +
+            '<div class="form-group"><label>상단 라벨</label><input id="pm-' + page.id + '-eyebrow" value="' + escHtml(meta.eyebrow || '') + '"></div>' +
+            '<div class="form-group"><label>페이지 제목</label><input id="pm-' + page.id + '-title" value="' + escHtml(meta.title || '') + '"></div>' +
+          '</div>' +
+          '<div class="form-group"><label>안내문구</label><textarea id="pm-' + page.id + '-description">' + escHtml(meta.description || '') + '</textarea></div>' +
+          '<h4 style="margin-top:14px;">제목 서식</h4>' +
+          renderStyleControls(page.id, 'title', titleStyle, '#FFFFFF') +
+          '<h4 style="margin-top:14px;">안내문구 서식</h4>' +
+          renderStyleControls(page.id, 'desc', descStyle, '#D9E2EC') +
+          '<div class="style-preview">' +
+            '<span class="tagline">' + escHtml(meta.eyebrow || '') + '</span>' +
+            '<h2 style="' + styleToInline(titleStyle) + '">' + escHtml(meta.title || '') + '</h2>' +
+            '<p style="' + styleToInline(descStyle) + '">' + escHtml(meta.description || '').replace(/\n/g, '<br>') + '</p>' +
+          '</div>' +
+          '<button class="save-btn" onclick="savePageMeta(\'' + page.id + '\')">저장</button>' +
+          '<button class="btn-sm" style="margin-left:8px" onclick="resetPageMeta(\'' + page.id + '\')">기본값 복원</button>' +
+          '</article>';
+      }).join('');
+    }
+
+    function renderStyleControls(pageId, target, style, fallbackColor) {
+      var prefix = 'pm-' + pageId + '-' + target;
+      var color = cleanColor(style.color, fallbackColor);
+      var size = String(style.fontSize || '').replace('rem', '');
+      return '<div class="style-grid">' +
+        '<div class="form-group"><label>색상</label><input type="color" id="' + prefix + '-color" value="' + color + '"></div>' +
+        '<div class="form-group"><label>크기(rem)</label><input id="' + prefix + '-size" placeholder="기본값" value="' + escHtml(size) + '"></div>' +
+        '<div class="form-group"><label>굵기</label><select id="' + prefix + '-weight">' +
+          optionHtml('400', '보통', style.fontWeight) +
+          optionHtml('700', '굵게', style.fontWeight) +
+          optionHtml('800', '매우 굵게', style.fontWeight) +
+          optionHtml('900', '최대 굵기', style.fontWeight || (target === 'title' ? '900' : '400')) +
+        '</select></div>' +
+        '<div class="form-group"><label>기울기</label><select id="' + prefix + '-style">' +
+          optionHtml('normal', '보통', style.fontStyle || 'normal') +
+          optionHtml('italic', '기울임', style.fontStyle) +
+        '</select></div>' +
+        '<div class="form-group"><label>정렬</label><select id="' + prefix + '-align">' +
+          optionHtml('left', '왼쪽', style.textAlign || 'left') +
+          optionHtml('center', '가운데', style.textAlign) +
+          optionHtml('right', '오른쪽', style.textAlign) +
+        '</select></div>' +
+      '</div>';
+    }
+
+    function optionHtml(value, label, selectedValue) {
+      return '<option value="' + value + '"' + (String(selectedValue) === value ? ' selected' : '') + '>' + label + '</option>';
+    }
+
+    function readStyle(pageId, target, fallbackColor) {
+      var prefix = 'pm-' + pageId + '-' + target;
+      var size = cleanSize(document.getElementById(prefix + '-size').value);
+      return {
+        color: cleanColor(document.getElementById(prefix + '-color').value, fallbackColor),
+        fontSize: size ? size + 'rem' : '',
+        fontWeight: document.getElementById(prefix + '-weight').value,
+        fontStyle: document.getElementById(prefix + '-style').value,
+        textAlign: document.getElementById(prefix + '-align').value
+      };
+    }
+
+    function styleToInline(style) {
+      var allowed = [];
+      if (style.color) allowed.push('color:' + cleanColor(style.color, '#FFFFFF'));
+      if (style.fontSize) allowed.push('font-size:' + style.fontSize);
+      if (style.fontWeight) allowed.push('font-weight:' + style.fontWeight);
+      if (style.fontStyle) allowed.push('font-style:' + style.fontStyle);
+      if (style.textAlign) allowed.push('text-align:' + style.textAlign);
+      return allowed.join(';');
+    }
+
+    function savePageMeta(pageId) {
+      CAPData.updatePageMeta(pageId, {
+        eyebrow: document.getElementById('pm-' + pageId + '-eyebrow').value.trim(),
+        title: document.getElementById('pm-' + pageId + '-title').value.trim(),
+        description: document.getElementById('pm-' + pageId + '-description').value.trim(),
+        titleStyle: readStyle(pageId, 'title', '#FFFFFF'),
+        descriptionStyle: readStyle(pageId, 'desc', '#D9E2EC')
+      });
+      showToast('페이지 문구와 서식이 저장되었습니다.');
+      renderPageMetaEditor();
+    }
+
+    function resetPageMeta(pageId) {
+      if (!confirm('이 페이지의 제목, 안내문구, 서식을 기본값으로 되돌릴까요?')) return;
+      var defaults = CAP_DEFAULTS.content.pages[pageId];
+      CAPData.updatePageMeta(pageId, JSON.parse(JSON.stringify(defaults)));
+      showToast('기본값으로 복원되었습니다.');
+      renderPageMetaEditor();
     }
 
     /* ---- Tab 3: Research Axes ---- */

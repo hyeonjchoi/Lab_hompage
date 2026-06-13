@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[레이아웃 4] Story Timeline — KW CAP Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="layout-styles.css">
+</head>
+<body>
+  <div class="proposal-banner">
+    <span><strong>[레이아웃 4] Story Timeline</strong> — 현재 홈페이지 디자인 기반, 이미지 중심 도입 + 연구 여정 타임라인 구성</span>
+    <a href="layout-proposals.html">← 레이아웃 목록</a>
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="#">
+        <span class="brand-mark"><small>KW</small><b>CAP</b></span>
+        <span class="brand-name"><strong>광운대학교 소비자광고심리 연구실</strong><span>Kwangwoon University Consumer Advertising Psychology Lab</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#" aria-current="page">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero-timeline">
+    <div class="inner">
+      <div class="story-visual">
+        <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/image.png" alt="소비자광고심리 연구실 시각 참고 이미지">
+        <div class="caption-strip">광고 반응, AI 서비스, 식품 선택, 젠더 경험을 잇는 소비자 심리 연구</div>
+      </div>
+      <div class="story-copy">
+        <span class="eyebrow">Research Journey</span>
+        <h1>하나의 질문에서<br><span class="red-word">연구와 지원</span>까지 이어지는 흐름</h1>
+        <p class="lead">방문자가 연구실의 관심사, 연구 축, 최근 성과, 지원 안내를 순서대로 이해하도록 구성한 스토리형 레이아웃입니다.<span class="en">A narrative homepage flow from lab identity to research areas, publications, and joining information.</span></p>
+        <div class="timeline">
+          <div class="timeline-item"><strong>01. 질문을 제시합니다</strong><span>소비자는 광고와 서비스 환경에서 어떻게 판단하고 행동할까요?</span></div>
+          <div class="timeline-item"><strong>02. 연구 축으로 연결합니다</strong><span><span data-axis-count>4</span>개의 연구 축을 따라 관심 주제를 찾아갑니다.</span></div>
+          <div class="timeline-item"><strong>03. 성과와 사람을 보여줍니다</strong><span>최근 연구 성과와 <span data-member-count>10</span>명의 구성원을 자연스럽게 소개합니다.</span></div>
+        </div>
+        <div class="actions" style="margin-top:34px;"><a class="btn primary" href="research.html">연구 여정 보기</a><a class="btn secondary" href="join.html">함께하기</a></div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="section-head">
+        <div><span class="eyebrow">Research Areas</span><h2>관심 주제에서 출발하는 연구 축</h2></div>
+        <a class="more-link" href="research.html">전체 보기 -></a>
+      </div>
+      <div class="research-grid" data-research-grid></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div><span class="eyebrow">Publications</span><h2>최근 연구 성과</h2></div>
+        <a class="more-link" href="publications.html">전체 보기 -></a>
+      </div>
+      <div class="pub-list" data-publications></div>
+    </section>
+
+    <section class="wide-cta">
+      <div class="section">
+        <div><span class="eyebrow">Join Us</span><h2>연구 질문을 함께 확장할 대학원생과 RA를 기다립니다.</h2></div>
+        <div class="actions"><a class="btn primary" href="join.html#graduate">과정 안내</a><a class="btn secondary" href="join.html#contact">문의하기</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="footer-inner"><div><strong>광운대학교 소비자광고심리 연구실</strong>Kwangwoon University Consumer Advertising Psychology Lab</div><div>서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>Tel. 02)940-5420</div></div></footer>
+  <script src="cap-data.js?v=layout"></script>
+  <script src="layout-script.js"></script>
+</body>
+</html>

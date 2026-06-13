@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>디자인 시안 v2 — KW CAP Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy:  #183A5A;
+      --red:   #B51F2B;
+      --ink:   #1F2933;
+      --muted: #667085;
+      --line:  #D9E2EC;
+      --bg:    #F6F8FA;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+      font-family: "Noto Sans KR","Apple SD Gothic Neo",Arial,sans-serif; line-height: 1.65; }
+    a { color: inherit; text-decoration: none; }
+
+    .index-header {
+      background: var(--navy); padding: 0;
+      border-bottom: 3px solid var(--red);
+    }
+    .index-header-inner {
+      width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 20px 0;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .index-title h1 { margin: 0; font-size: 1.25rem; font-weight: 900; color: #fff; }
+    .index-title p { margin: 4px 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+    .header-links { display: flex; gap: 10px; flex-shrink: 0; }
+    .header-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.75); font-size: 0.8rem; font-weight: 700;
+      transition: background 0.12s;
+    }
+    .header-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .header-link.active { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.35); }
+
+    /* 선택 배경 설명 */
+    .context-bar {
+      background: #fff; border-bottom: 1px solid var(--line);
+    }
+    .context-inner {
+      width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 20px 0;
+      display: flex; align-items: flex-start; gap: 24px;
+    }
+    .context-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 4px;
+      background: #FEF2F2; color: var(--red); font-size: 0.75rem; font-weight: 800;
+      border: 1px solid #FECACA; white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+    }
+    .context-text { font-size: 0.88rem; color: var(--muted); line-height: 1.7; }
+    .context-text strong { color: var(--ink); }
+
+    /* 변경 사항 뱃지 */
+    .diff-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 3px;
+      font-size: 0.72rem; font-weight: 800; vertical-align: middle;
+    }
+    .diff-new { background: #D1FAE5; color: #065F46; }
+    .diff-changed { background: #FEF3C7; color: #92400E; }
+
+    /* 시안 그리드 */
+    .proposals-grid {
+      width: min(1120px, calc(100% - 40px));
+      margin: 36px auto 0;
+      display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 20px;
+    }
+    .proposal-card {
+      background: #fff; border: 1px solid var(--line); border-radius: 10px;
+      overflow: hidden; box-shadow: 0 6px 24px rgba(24,58,90,0.06);
+      display: flex; flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .proposal-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(24,58,90,0.1); }
+
+    /* 컬러 프리뷰 바 */
+    .preview-bar {
+      height: 130px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .preview-content {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      z-index: 2; position: relative; padding: 16px;
+    }
+    .preview-icon { font-size: 1.8rem; }
+    .preview-name { font-size: 0.8rem; font-weight: 700; }
+    /* 컬러 스워치 행 */
+    .preview-swatches { display: flex; gap: 6px; }
+    .swatch { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+
+    /* 카드 본문 */
+    .card-body { padding: 20px 22px; display: flex; flex-direction: column; flex: 1; }
+    .card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .card-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 4px;
+      font-size: 0.82rem; font-weight: 900; flex-shrink: 0;
+    }
+    .card-title-group { flex: 1; }
+    .card-title { font-size: 1.06rem; font-weight: 900; color: var(--navy); margin: 0 0 2px; }
+    .card-subtitle { font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* 하이라이트 차이점 */
+    .card-diffs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+
+    .palette-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .palette-label { font-size: 0.7rem; color: var(--muted); font-weight: 700; min-width: 36px; }
+
+    .card-desc { font-size: 0.88rem; color: #364152; line-height: 1.72; margin: 0 0 16px; flex: 1; }
+
+    .view-btn {
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px 20px; border-radius: 6px;
+      font-weight: 800; font-size: 0.9rem; transition: all 0.15s;
+    }
+    .view-btn::after { content: ' →'; }
+
+    /* 시안별 색상 */
+    .c5 .preview-bar { background: linear-gradient(135deg, #F9FAFB 0%, #E5E7EB 100%); }
+    .c5 .preview-name { color: #374151; }
+    .c5 .card-num { background: rgba(24,58,90,0.08); color: var(--navy); }
+    .c5 .view-btn { background: var(--navy); color: #fff; }
+    .c5 .view-btn:hover { background: #25506F; }
+
+    .c6 .preview-bar { background: linear-gradient(135deg, #0D1117 0%, #1F2937 100%); }
+    .c6 .preview-name { color: #F0C040; }
+    .c6 .card-num { background: rgba(212,160,23,0.12); color: #D4A017; }
+    .c6 .view-btn { background: #0D1117; color: #D4A017; border: 1px solid rgba(212,160,23,0.3); }
+    .c6 .view-btn:hover { background: #1F2937; }
+
+    .c7 .preview-bar { background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #F1F5F9 100%); }
+    .c7 .preview-name { color: #10B981; }
+    .c7 .card-num { background: rgba(5,150,105,0.1); color: #059669; }
+    .c7 .view-btn { background: #1E293B; color: #10B981; border: 1px solid rgba(16,185,129,0.3); }
+    .c7 .view-btn:hover { background: #334155; }
+
+    .c8 .preview-bar { background: linear-gradient(135deg, #EFF6FF 0%, #1746A2 60%, #1746A2 100%); }
+    .c8 .preview-name { color: #fff; }
+    .c8 .card-num { background: rgba(23,70,162,0.1); color: #1746A2; }
+    .c8 .view-btn { background: #1746A2; color: #fff; }
+    .c8 .view-btn:hover { background: #1D4ED8; }
+
+    /* v1 참고 섹션 */
+    .v1-ref {
+      width: min(1120px, calc(100% - 40px));
+      margin: 36px auto 0; padding: 20px 24px;
+      background: #fff; border: 1px solid var(--line); border-radius: 8px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .v1-ref-text { font-size: 0.88rem; color: var(--muted); }
+    .v1-ref-text strong { color: var(--navy); }
+    .v1-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 4px;
+      border: 1px solid var(--line); color: var(--navy);
+      font-size: 0.82rem; font-weight: 800; white-space: nowrap;
+      transition: background 0.12s;
+    }
+    .v1-link:hover { background: var(--bg); }
+
+    /* 선택 가이드 */
+    .guide-note {
+      width: min(1120px, calc(100% - 40px));
+      margin: 20px auto 64px; padding: 22px 26px;
+      background: #FFF8E7; border: 1px solid #FDE68A;
+      border-left: 4px solid #F59E0B; border-radius: 6px;
+      font-size: 0.87rem; color: #78350F; line-height: 1.9;
+    }
+    .guide-note strong { color: #451A03; }
+
+    @media (max-width: 768px) {
+      .proposals-grid { grid-template-columns: 1fr; }
+      .index-header-inner { flex-direction: column; align-items: flex-start; }
+      .context-inner { flex-direction: column; }
+      .v1-ref { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="index-header">
+    <div class="index-header-inner">
+      <div class="index-title">
+        <h1>KW CAP Lab · 디자인 시안 v2</h1>
+        <p>시안 1·4 기반 후속 제안 4종 — 매거진·에디토리얼 스타일, 전체 페이지 적용</p>
+      </div>
+      <div class="header-links">
+        <a class="header-link" href="design-proposals.html">v1 시안 보기</a>
+        <a class="header-link active" href="#">v2 시안 (현재)</a>
+        <a class="header-link" href="index.html">← 현재 홈</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="context-bar">
+    <div class="context-inner">
+      <span class="context-tag">v2 신규</span>
+      <p class="context-text">
+        <strong>v1 시안 1(뉴럴 다크) · 시안 4(매거진 편집)를 기반으로</strong> 후속 4종을 제작했습니다.
+        이번 v2는 <strong>히어로 배너만이 아닌 전체 페이지</strong>에 동일한 디자인 언어를 적용해 한 페이지가 어떤 느낌인지 확인할 수 있습니다.
+        연구 카드 · 논문 목록 · Join CTA · 푸터까지 일관된 스타일로 구성했습니다.
+      </p>
+    </div>
+  </div>
+
+  <div class="proposals-grid">
+
+    <!-- v2-1 밝은 매거진 -->
+    <div class="proposal-card c5">
+      <div class="preview-bar">
+        <div class="preview-content">
+          <div class="preview-icon" style="color:#183A5A">◫</div>
+          <div class="preview-name">밝은 매거진 · Magazine Light</div>
+          <div class="preview-swatches">
+            <div class="swatch" style="background:#FFFFFF;border-color:#D9E2EC;"></div>
+            <div class="swatch" style="background:#183A5A;border-color:#fff;"></div>
+            <div class="swatch" style="background:#B51F2B;border-color:#fff;"></div>
+            <div class="swatch" style="background:#F9FAFB;border-color:#E5E7EB;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-num">v2-1</span>
+          <div class="card-title-group">
+            <div class="card-title">밝은 매거진</div>
+            <div class="card-subtitle">Magazine Light · 기존 색상 유지</div>
+          </div>
+        </div>
+        <div class="card-diffs">
+          <span class="diff-badge diff-new">밝은 배경</span>
+          <span class="diff-badge diff-new">전체 페이지 통일</span>
+          <span class="diff-badge diff-changed">섹션 번호 01/02</span>
+          <span class="diff-badge diff-changed">연구카드 격자형</span>
+        </div>
+        <div class="palette-row">
+          <span class="palette-label">색상</span>
+          <div class="swatch" style="background:#FFFFFF;border:1.5px solid #ccc;"></div>
+          <div class="swatch" style="background:#183A5A;border-color:transparent;"></div>
+          <div class="swatch" style="background:#B51F2B;border-color:transparent;"></div>
+        </div>
+        <p class="card-desc">
+          제안-4의 매거진 편집 레이아웃을 순백 배경에 적용. 기존 네이비+레드 색상을 100% 유지하면서 밝고 깔끔한 전체 페이지 경험을 제공합니다. 섹션 번호(01/02)와 굵은 구분선으로 학술지 같은 편집 미학이 흐릅니다.
+        </p>
+        <a class="view-btn" href="proposal-5.html">시안 v2-1 전체 보기</a>
+      </div>
+    </div>
+
+    <!-- v2-2 다크 골드 -->
+    <div class="proposal-card c6">
+      <div class="preview-bar">
+        <div class="preview-content">
+          <div class="preview-icon" style="color:#D4A017">◆</div>
+          <div class="preview-name">다크 골드 에디토리얼</div>
+          <div class="preview-swatches">
+            <div class="swatch" style="background:#0D1117;border-color:#D4A017;"></div>
+            <div class="swatch" style="background:#1F2937;border-color:rgba(255,255,255,0.2);"></div>
+            <div class="swatch" style="background:#D4A017;border-color:rgba(255,255,255,0.3);"></div>
+            <div class="swatch" style="background:#F0C040;border-color:rgba(255,255,255,0.2);"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-num">v2-2</span>
+          <div class="card-title-group">
+            <div class="card-title">다크 골드 에디토리얼</div>
+            <div class="card-subtitle">Dark Gold Editorial · 전체 다크</div>
+          </div>
+        </div>
+        <div class="card-diffs">
+          <span class="diff-badge diff-new">전체 다크 모드</span>
+          <span class="diff-badge diff-new">골드 강조색</span>
+          <span class="diff-badge diff-changed">프리미엄 분위기</span>
+          <span class="diff-badge diff-changed">레드→골드 교체</span>
+        </div>
+        <div class="palette-row">
+          <span class="palette-label">색상</span>
+          <div class="swatch" style="background:#0D1117;border:1.5px solid rgba(212,160,23,0.5);"></div>
+          <div class="swatch" style="background:#1F2937;border-color:transparent;"></div>
+          <div class="swatch" style="background:#D4A017;border-color:transparent;"></div>
+        </div>
+        <p class="card-desc">
+          시안 1의 다크 분위기 + 시안 4의 편집 레이아웃을 결합, 강조색만 레드→골드로 교체. 히어로부터 카드·논문·CTA·푸터까지 모두 다크 배경으로 통일해 고급 학술 저널 같은 프리미엄 인상을 줍니다.
+        </p>
+        <a class="view-btn" href="proposal-6.html">시안 v2-2 전체 보기</a>
+      </div>
+    </div>
+
+    <!-- v2-3 슬레이트 에메랄드 -->
+    <div class="proposal-card c7">
+      <div class="preview-bar">
+        <div class="preview-content">
+          <div class="preview-icon" style="color:#10B981">◉</div>
+          <div class="preview-name">슬레이트 에메랄드</div>
+          <div class="preview-swatches">
+            <div class="swatch" style="background:#0F172A;border-color:rgba(16,185,129,0.4);"></div>
+            <div class="swatch" style="background:#1E293B;border-color:rgba(255,255,255,0.15);"></div>
+            <div class="swatch" style="background:#059669;border-color:rgba(255,255,255,0.2);"></div>
+            <div class="swatch" style="background:#F1F5F9;border-color:#CBD5E1;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-num">v2-3</span>
+          <div class="card-title-group">
+            <div class="card-title">슬레이트 에메랄드</div>
+            <div class="card-subtitle">Slate Emerald · 다크 히어로 + 밝은 본문</div>
+          </div>
+        </div>
+        <div class="card-diffs">
+          <span class="diff-badge diff-new">히어로만 다크</span>
+          <span class="diff-badge diff-new">에메랄드 강조</span>
+          <span class="diff-badge diff-changed">본문은 밝은 배경</span>
+          <span class="diff-badge diff-changed">강한 명암 대비</span>
+        </div>
+        <div class="palette-row">
+          <span class="palette-label">색상</span>
+          <div class="swatch" style="background:#1E293B;border:1.5px solid rgba(5,150,105,0.5);"></div>
+          <div class="swatch" style="background:#059669;border-color:transparent;"></div>
+          <div class="swatch" style="background:#F1F5F9;border:1.5px solid #CBD5E1;"></div>
+        </div>
+        <p class="card-desc">
+          다크 슬레이트 히어로 → 밝은 라이트 슬레이트 본문으로 전환하는 명암 대비 디자인. 에메랄드 그린 강조색이 신선한 인상을 주며, "어두운 임팩트 + 읽기 편한 본문"의 균형을 잡습니다.
+        </p>
+        <a class="view-btn" href="proposal-7.html">시안 v2-3 전체 보기</a>
+      </div>
+    </div>
+
+    <!-- v2-4 코발트 매거진 -->
+    <div class="proposal-card c8">
+      <div class="preview-bar">
+        <div class="preview-content">
+          <div class="preview-icon" style="color:#fff">◧</div>
+          <div class="preview-name" style="color:#BFDBFE;">코발트 매거진</div>
+          <div class="preview-swatches">
+            <div class="swatch" style="background:#EFF6FF;border-color:#BFDBFE;"></div>
+            <div class="swatch" style="background:#1746A2;border-color:rgba(255,255,255,0.3);"></div>
+            <div class="swatch" style="background:#E55934;border-color:rgba(255,255,255,0.3);"></div>
+            <div class="swatch" style="background:#fff;border-color:rgba(255,255,255,0.2);"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-num">v2-4</span>
+          <div class="card-title-group">
+            <div class="card-title">코발트 매거진</div>
+            <div class="card-subtitle">Cobalt Magazine · 밝은 블루 계열</div>
+          </div>
+        </div>
+        <div class="card-diffs">
+          <span class="diff-badge diff-new">밝은 블루 배경</span>
+          <span class="diff-badge diff-new">코럴 포인트</span>
+          <span class="diff-badge diff-changed">네이비→코발트</span>
+          <span class="diff-badge diff-changed">레드→코럴</span>
+        </div>
+        <div class="palette-row">
+          <span class="palette-label">색상</span>
+          <div class="swatch" style="background:#EFF6FF;border:1.5px solid #BFDBFE;"></div>
+          <div class="swatch" style="background:#1746A2;border-color:transparent;"></div>
+          <div class="swatch" style="background:#E55934;border-color:transparent;"></div>
+        </div>
+        <p class="card-desc">
+          시안 4의 매거진 레이아웃을 밝고 현대적인 코발트 블루 계열로 재해석. 히어로 오른쪽에 코발트 패널이 분할돼 강렬한 편집 구도를 만들고, 코럴(산호색) 포인트가 활기를 더합니다.
+        </p>
+        <a class="view-btn" href="proposal-8.html">시안 v2-4 전체 보기</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="v1-ref">
+    <p class="v1-ref-text"><strong>v1 시안도 함께 비교하고 싶다면</strong> — v1에서는 4가지 독립된 방향성(신경·온기·미니멀·편집)을 제안했습니다.</p>
+    <a class="v1-link" href="design-proposals.html">v1 시안 4종 보기 →</a>
+  </div>
+
+  <div class="guide-note">
+    <strong>v2 선택 가이드</strong><br>
+    • <strong>v2-1 (밝은 매거진)</strong> — 기존 네이비+레드를 유지하면서 밝고 깔끔한 전체 페이지. 가장 안정적인 "업그레이드"<br>
+    • <strong>v2-2 (다크 골드)</strong> — 전체 다크 처리 + 골드 강조로 프리미엄 학술 저널 느낌. 강렬한 첫인상 원할 때<br>
+    • <strong>v2-3 (슬레이트 에메랄드)</strong> — 히어로만 어둡고 본문은 밝은 구성. 임팩트와 가독성을 동시에 원할 때<br>
+    • <strong>v2-4 (코발트 매거진)</strong> — 밝고 현대적인 블루+코럴 조합. 색상을 새롭게 바꾸고 싶을 때<br><br>
+    모든 시안은 실제 연구 데이터(cap-data.js)가 연동됩니다. 요소 조합·색상 조정·레이아웃 변경도 가능합니다.
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>디자인 시안 비교 — KW CAP Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #183A5A;
+      --navy-2: #25506F;
+      --red: #B51F2B;
+      --ink: #1F2933;
+      --muted: #667085;
+      --line: #D9E2EC;
+      --bg: #F6F8FA;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      line-height: 1.65;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ---- 헤더 ---- */
+    .index-header {
+      background: var(--navy);
+      padding: 20px 0;
+      border-bottom: 3px solid var(--red);
+    }
+    .index-header-inner {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+    }
+    .index-title { color: #fff; }
+    .index-title h1 { margin: 0; font-size: 1.3rem; font-weight: 900; color: #fff; }
+    .index-title p { margin: 4px 0 0; font-size: 0.82rem; color: rgba(255,255,255,0.55); }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.8); font-size: 0.82rem; font-weight: 700;
+      transition: background 0.15s;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* ---- 인트로 ---- */
+    .intro {
+      width: min(1100px, calc(100% - 32px));
+      margin: 48px auto 0;
+      padding: 28px 32px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .intro h2 { margin: 0 0 10px; font-size: 1.1rem; color: var(--navy); }
+    .intro p { margin: 0; color: var(--muted); font-size: 0.94rem; line-height: 1.8; }
+    .intro ul {
+      margin: 12px 0 0; padding-left: 20px;
+      color: var(--muted); font-size: 0.9rem; line-height: 2;
+    }
+
+    /* ---- 시안 그리드 ---- */
+    .proposals-grid {
+      width: min(1100px, calc(100% - 32px));
+      margin: 36px auto 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .proposal-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(24,58,90,0.06);
+      transition: box-shadow 0.2s, transform 0.2s;
+      display: flex; flex-direction: column;
+    }
+    .proposal-card:hover {
+      box-shadow: 0 16px 48px rgba(24,58,90,0.12);
+      transform: translateY(-2px);
+    }
+
+    /* 미리보기 색상 블록 */
+    .preview-thumb {
+      height: 140px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; position: relative; overflow: hidden;
+    }
+    .preview-placeholder {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; padding: 16px;
+    }
+    .preview-placeholder-icon { font-size: 2rem; }
+    .preview-placeholder-text { font-size: 0.78rem; font-weight: 700; opacity: 0.7; }
+
+    /* 카드 정보 영역 */
+    .card-body {
+      padding: 22px 24px;
+      display: flex; flex-direction: column; flex: 1;
+    }
+    .card-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 6px;
+      font-size: 0.78rem; font-weight: 900;
+      margin-bottom: 12px; flex-shrink: 0;
+    }
+    .card-title { font-size: 1.08rem; font-weight: 900; color: var(--navy); margin: 0 0 4px; }
+    .card-subtitle { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .card-desc { font-size: 0.9rem; color: #364152; line-height: 1.7; margin: 0 0 16px; flex: 1; }
+
+    /* 색상 팔레트 */
+    .palette-wrap { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .palette-row { display: flex; align-items: center; gap: 8px; }
+    .palette-label { font-size: 0.7rem; color: var(--muted); font-weight: 700; min-width: 42px; }
+    .swatch {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid rgba(0,0,0,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      flex-shrink: 0;
+    }
+
+    /* 특징 태그 */
+    .feature-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 16px; }
+    .feature-tag {
+      padding: 3px 9px; border-radius: 4px;
+      font-size: 0.72rem; font-weight: 700;
+      background: var(--bg); border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    /* 보기 버튼 */
+    .view-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; border-radius: 8px;
+      font-weight: 800; font-size: 0.9rem;
+      transition: all 0.15s; cursor: pointer;
+    }
+    .view-btn::after { content: '→'; }
+
+    /* 시안별 색상 */
+    .card-1 .preview-thumb { background: linear-gradient(135deg, #0B1829 0%, #0F2540 50%, #1A3A5C 100%); }
+    .card-1 .card-num { background: rgba(0,212,255,0.12); color: #00D4FF; }
+    .card-1 .view-btn { background: #0F2540; color: #00D4FF; border: 1px solid rgba(0,212,255,0.3); }
+    .card-1 .view-btn:hover { background: #183A5A; }
+
+    .card-2 .preview-thumb { background: linear-gradient(135deg, #FFFAF5 0%, #F5EBE0 50%, #EEE0D0 100%); }
+    .card-2 .card-num { background: rgba(196,98,45,0.12); color: #C4622D; }
+    .card-2 .view-btn { background: #C4622D; color: #fff; }
+    .card-2 .view-btn:hover { background: #A0521E; }
+
+    .card-3 .preview-thumb { background: radial-gradient(circle at 30% 30%, #EFF6FF 0%, #DBEAFE 50%, #BFDBFE 100%); }
+    .card-3 .card-num { background: rgba(37,99,235,0.1); color: #2563EB; }
+    .card-3 .view-btn { background: #111827; color: #fff; }
+    .card-3 .view-btn:hover { background: #000; }
+
+    .card-4 .preview-thumb { background: linear-gradient(135deg, #0F2540 0%, #183A5A 50%, #25506F 100%); }
+    .card-4 .card-num { background: rgba(181,31,43,0.12); color: #B51F2B; }
+    .card-4 .view-btn { background: #183A5A; color: #fff; }
+    .card-4 .view-btn:hover { background: #25506F; }
+
+    /* 미리보기 장식 */
+    .preview-dots {
+      display: flex; gap: 5px; margin-top: 6px;
+    }
+    .preview-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+    /* 비교 노트 */
+    .compare-note {
+      width: min(1100px, calc(100% - 32px));
+      margin: 24px auto 64px;
+      padding: 24px 28px;
+      background: #fff8e1;
+      border: 1px solid #ffcc02;
+      border-left: 4px solid #f59e0b;
+      border-radius: 8px;
+      font-size: 0.88rem; color: #78350f; line-height: 1.9;
+    }
+    .compare-note strong { color: #451a03; }
+
+    @media (max-width: 768px) {
+      .proposals-grid { grid-template-columns: 1fr; }
+      .index-header-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="index-header">
+    <div class="index-header-inner">
+      <div class="index-title">
+        <h1>KW CAP Lab · 디자인 시안 비교</h1>
+        <p>홈페이지 리디자인 4가지 제안 — 원하는 방향을 선택하거나 조합하세요</p>
+      </div>
+      <a class="back-btn" href="index.html">← 현재 홈페이지로</a>
+    </div>
+  </header>
+
+  <div class="intro">
+    <h2>이 페이지 사용 방법</h2>
+    <p>4가지 디자인 시안을 비교할 수 있습니다. 각 시안 카드의 <strong>"시안 보기"</strong> 버튼을 클릭하면 실제 크기의 완성 페이지를 확인할 수 있습니다.</p>
+    <ul>
+      <li>각 시안은 완전히 독립된 홈페이지 디자인 — 실제 연구 데이터가 연결됩니다</li>
+      <li>마음에 드는 시안을 고르거나, 여러 시안의 요소를 조합한 최종안도 제작 가능합니다</li>
+      <li>색상·폰트·레이아웃 개별 조정도 모두 가능합니다</li>
+    </ul>
+  </div>
+
+  <div class="proposals-grid">
+
+    <!-- 시안 1 -->
+    <div class="proposal-card card-1">
+      <div class="preview-thumb">
+        <div class="preview-placeholder">
+          <div class="preview-placeholder-icon" style="color:#00D4FF">◉</div>
+          <div class="preview-placeholder-text" style="color:rgba(0,212,255,0.8)">신경·인지 / Neural Cognition</div>
+          <div class="preview-dots">
+            <div class="preview-dot" style="background:#00D4FF;opacity:0.8;"></div>
+            <div class="preview-dot" style="background:#00B8E0;opacity:0.6;"></div>
+            <div class="preview-dot" style="background:#1E3A5F;border:1px solid rgba(0,212,255,0.4);"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <span class="card-num">01</span>
+        <div class="card-title">신경·인지</div>
+        <div class="card-subtitle">Neural Cognition</div>
+        <div class="palette-wrap">
+          <div class="palette-row">
+            <span class="palette-label">배경</span>
+            <div class="swatch" style="background:#0B1829;" title="딥 다크 네이비"></div>
+            <div class="swatch" style="background:#0F2540;" title="다크 네이비"></div>
+            <div class="swatch" style="background:#1A4A6E;" title="미드 네이비"></div>
+          </div>
+          <div class="palette-row">
+            <span class="palette-label">강조</span>
+            <div class="swatch" style="background:#00D4FF;" title="시안"></div>
+            <div class="swatch" style="background:#00B8E0;" title="딥 시안"></div>
+          </div>
+        </div>
+        <div class="feature-tags">
+          <span class="feature-tag">뉴럴 네트워크 패턴</span>
+          <span class="feature-tag">글로우 버튼</span>
+          <span class="feature-tag">유리 패널</span>
+          <span class="feature-tag">풀스크린 다크 히어로</span>
+        </div>
+        <p class="card-desc">인지심리학·뇌과학의 시각적 은유. 딥 다크 배경 위에 SVG 뉴럴 네트워크 패턴이 흐르고, 유리 모피즘 패널이 정보를 담습니다. 첨단 연구실의 강렬한 인상을 줍니다.</p>
+        <a class="view-btn" href="proposal-1.html">시안 1 보기</a>
+      </div>
+    </div>
+
+    <!-- 시안 2 -->
+    <div class="proposal-card card-2">
+      <div class="preview-thumb">
+        <div class="preview-placeholder">
+          <div class="preview-placeholder-icon" style="color:#C4622D">◎</div>
+          <div class="preview-placeholder-text" style="color:rgba(196,98,45,0.9)">인간·온기 / Human Warmth</div>
+          <div class="preview-dots">
+            <div class="preview-dot" style="background:#C4622D;"></div>
+            <div class="preview-dot" style="background:#6B8F71;"></div>
+            <div class="preview-dot" style="background:#FFFAF5;border:1px solid #E5D5C3;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <span class="card-num">02</span>
+        <div class="card-title">인간·온기</div>
+        <div class="card-subtitle">Human Warmth</div>
+        <div class="palette-wrap">
+          <div class="palette-row">
+            <span class="palette-label">배경</span>
+            <div class="swatch" style="background:#FFFAF5;border:1px solid #E5D5C3;" title="크림 화이트"></div>
+            <div class="swatch" style="background:#F5EBE0;" title="웜 베이지"></div>
+          </div>
+          <div class="palette-row">
+            <span class="palette-label">강조</span>
+            <div class="swatch" style="background:#C4622D;" title="테라코타"></div>
+            <div class="swatch" style="background:#6B8F71;" title="세이지 그린"></div>
+          </div>
+        </div>
+        <div class="feature-tags">
+          <span class="feature-tag">좌우 분할 히어로</span>
+          <span class="feature-tag">SVG 추상 일러스트</span>
+          <span class="feature-tag">알약형 버튼</span>
+          <span class="feature-tag">테라코타+세이지</span>
+        </div>
+        <p class="card-desc">사람 중심 심리학의 따뜻한 이미지. 왼쪽 텍스트와 오른쪽 추상 SVG 일러스트레이션이 균형을 이룹니다. 친근하고 접근하기 쉬운 연구실 분위기를 연출합니다.</p>
+        <a class="view-btn" href="proposal-2.html">시안 2 보기</a>
+      </div>
+    </div>
+
+    <!-- 시안 3 -->
+    <div class="proposal-card card-3">
+      <div class="preview-thumb">
+        <div class="preview-placeholder">
+          <div class="preview-placeholder-icon" style="color:#2563EB">◈</div>
+          <div class="preview-placeholder-text" style="color:rgba(37,99,235,0.8)">데이터·미니멀 / Data Minimal</div>
+          <div class="preview-dots">
+            <div class="preview-dot" style="background:#2563EB;"></div>
+            <div class="preview-dot" style="background:#111827;"></div>
+            <div class="preview-dot" style="background:#BFDBFE;border:1px solid #93C5FD;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <span class="card-num">03</span>
+        <div class="card-title">데이터·미니멀</div>
+        <div class="card-subtitle">Data Minimal</div>
+        <div class="palette-wrap">
+          <div class="palette-row">
+            <span class="palette-label">배경</span>
+            <div class="swatch" style="background:#FFFFFF;border:1px solid #E5E7EB;" title="순백"></div>
+            <div class="swatch" style="background:#BFDBFE;" title="라이트 블루"></div>
+          </div>
+          <div class="palette-row">
+            <span class="palette-label">강조</span>
+            <div class="swatch" style="background:#2563EB;" title="일렉트릭 블루"></div>
+            <div class="swatch" style="background:#111827;" title="거의 검정"></div>
+          </div>
+        </div>
+        <div class="feature-tags">
+          <span class="feature-tag">점 그리드 배경</span>
+          <span class="feature-tag">대형 통계 수치</span>
+          <span class="feature-tag">직각 버튼</span>
+          <span class="feature-tag">섹션 번호 01/02/03</span>
+        </div>
+        <p class="card-desc">사회과학 데이터 연구의 엄밀함을 표현. 점 그리드 배경 위에 대형 타이포그래피가 강조되고, 통계 수치가 시각적 포인트가 됩니다. 현대적이고 깔끔한 학술 웹사이트 느낌입니다.</p>
+        <a class="view-btn" href="proposal-3.html">시안 3 보기</a>
+      </div>
+    </div>
+
+    <!-- 시안 4 -->
+    <div class="proposal-card card-4">
+      <div class="preview-thumb">
+        <div class="preview-placeholder">
+          <div class="preview-placeholder-icon" style="color:#B51F2B">◆</div>
+          <div class="preview-placeholder-text" style="color:rgba(181,31,43,0.8)">매거진·편집 / Magazine Editorial</div>
+          <div class="preview-dots">
+            <div class="preview-dot" style="background:#183A5A;"></div>
+            <div class="preview-dot" style="background:#B51F2B;"></div>
+            <div class="preview-dot" style="background:#FAFAF8;border:1px solid #D9E2EC;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <span class="card-num">04</span>
+        <div class="card-title">매거진·편집</div>
+        <div class="card-subtitle">Magazine Editorial</div>
+        <div class="palette-wrap">
+          <div class="palette-row">
+            <span class="palette-label">기존 유지</span>
+            <div class="swatch" style="background:#183A5A;" title="네이비"></div>
+            <div class="swatch" style="background:#B51F2B;" title="레드"></div>
+            <div class="swatch" style="background:#0F2540;" title="딥 네이비"></div>
+          </div>
+          <div class="palette-row">
+            <span class="palette-label">보조</span>
+            <div class="swatch" style="background:#FAFAF8;border:1px solid #D9E2EC;" title="오프화이트"></div>
+            <div class="swatch" style="background:#25506F;" title="네이비 2"></div>
+          </div>
+        </div>
+        <div class="feature-tags">
+          <span class="feature-tag">기존 색상 100% 유지</span>
+          <span class="feature-tag">좌우 분할 히어로</span>
+          <span class="feature-tag">원형 통계 배지</span>
+          <span class="feature-tag">기하학 패턴 배경</span>
+        </div>
+        <p class="card-desc">학술 매거진 표지 스타일. 기존 네이비+레드 브랜드 색상을 완전히 유지하면서, 어두운 배경과 오른쪽 원형 통계 배지로 강렬한 첫인상을 만듭니다. 가장 안정적인 변화입니다.</p>
+        <a class="view-btn" href="proposal-4.html">시안 4 보기</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="compare-note">
+    <strong>선택 가이드</strong><br>
+    • <strong>시안 1 (신경·인지)</strong> — 첨단 연구의 강렬한 인상, 인지심리학 테마가 강함. 다크모드 선호 시 추천<br>
+    • <strong>시안 2 (인간·온기)</strong> — 접근하기 쉽고 따뜻한 느낌, 소비자·젠더 연구 이미지에 잘 맞음. 밝은 새 색상 원할 때<br>
+    • <strong>시안 3 (데이터·미니멀)</strong> — 가장 깔끔하고 현대적, 데이터·수치 연구의 엄밀함 강조. 블루 단색 테마<br>
+    • <strong>시안 4 (매거진·편집)</strong> — 현재 브랜드 색상 유지, 가장 안정적인 변화. 기존 분위기 살리되 홈페이지다운 임팩트 추가<br><br>
+    여러 시안의 요소를 조합하거나, 폰트·색상·레이아웃을 추가 조정하는 것도 가능합니다.
+  </div>
+
+</body>
+</html>

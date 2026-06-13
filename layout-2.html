@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[레이아웃 2] Newsroom — KW CAP Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="layout-styles.css">
+</head>
+<body>
+  <div class="proposal-banner">
+    <span><strong>[레이아웃 2] Newsroom</strong> — 현재 홈페이지 디자인 기반, 메인 기사형 히어로 + 사이드 뉴스 카드 구성</span>
+    <a href="layout-proposals.html">← 레이아웃 목록</a>
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="#">
+        <span class="brand-mark"><small>KW</small><b>CAP</b></span>
+        <span class="brand-name"><strong>광운대학교 소비자광고심리 연구실</strong><span>Kwangwoon University Consumer Advertising Psychology Lab</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#" aria-current="page">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero-newsroom">
+    <div class="inner">
+      <span class="eyebrow">Lab Front Page</span>
+      <h1>소비자 심리를 읽는 연구,<br><span class="red-word">광고와 AI 서비스</span>의 다음 질문으로 이어집니다.</h1>
+      <div class="news-grid">
+        <article class="lead-story">
+          <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/image 2.png" alt="홈페이지 레이아웃 참고 이미지">
+          <span class="eyebrow">Featured Research</span>
+          <h2>소비자의 판단, 신뢰, 태도 변화가 만들어지는 순간을 연구합니다.</h2>
+          <p>광고 메시지와 AI 서비스, 식품 정보, 젠더 경험을 가로지르며 실제 소비 상황 속 심리 과정을 분석합니다.</p>
+        </article>
+        <div class="news-side">
+          <article class="news-tile"><strong>Research Axes</strong><h3><span data-axis-count>4</span>개의 연구 축으로 홈페이지 탐색을 시작합니다</h3><p>진행 연구를 카드형 뉴스처럼 빠르게 훑을 수 있습니다.</p></article>
+          <article class="news-tile"><strong>Join Us</strong><h3>대학원생과 학부연구생 RA 모집 정보를 전면에 배치</h3><p>지원자에게 필요한 행동 버튼을 첫 화면에서 바로 제공합니다.</p></article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="two-column-flow">
+        <div>
+          <div class="section-head">
+            <div><span class="eyebrow">Research Areas</span><h2>진행 연구</h2></div>
+          </div>
+          <div class="research-grid" data-research-grid></div>
+        </div>
+        <div>
+          <div class="section-head">
+            <div><span class="eyebrow">Publications</span><h2>최근 연구 성과</h2></div>
+          </div>
+          <div class="pub-list" data-publications-wide></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wide-cta">
+      <div class="section">
+        <div><span class="eyebrow">Members</span><h2><span data-member-count>10</span>명의 구성원이 소비자와 광고의 접점을 함께 연구합니다.</h2></div>
+        <div class="actions"><a class="btn primary" href="people.html">구성원 보기</a><a class="btn secondary" href="join.html">지원 안내</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="footer-inner"><div><strong>광운대학교 소비자광고심리 연구실</strong>Kwangwoon University Consumer Advertising Psychology Lab</div><div>서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>Tel. 02)940-5420</div></div></footer>
+  <script src="cap-data.js?v=layout"></script>
+  <script src="layout-script.js"></script>
+</body>
+</html>

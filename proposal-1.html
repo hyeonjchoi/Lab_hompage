@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[시안 1] 신경·인지 — KW CAP Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ---- 시안 1: 신경·인지 (Neural Cognition) ---- */
+    :root {
+      --c-dark:    #0B1829;
+      --c-navy:    #0F2540;
+      --c-mid:     #183A5A;
+      --c-cyan:    #00D4FF;
+      --c-cyan2:   #00B8E0;
+      --c-glow:    rgba(0, 212, 255, 0.18);
+      --c-white:   #FFFFFF;
+      --c-dim:     rgba(255,255,255,0.62);
+      --c-glass:   rgba(11, 24, 41, 0.72);
+      --red:       #B51F2B;
+      --navy:      #183A5A;
+      --navy-2:    #25506F;
+      --ink:       #1F2933;
+      --muted:     #667085;
+      --line:      #D9E2EC;
+      --bg:        #F6F8FA;
+      --surface:   #FFFFFF;
+      --blue-soft: #EAF2F8;
+      --shadow:    0 18px 42px rgba(24, 58, 90, 0.09);
+      --radius:    8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      line-height: 1.65;
+    }
+    img { max-width: 100%; height: auto; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ---- 시안 배너 ---- */
+    .proposal-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: #1a1a2e;
+      padding: 8px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.78rem; color: rgba(255,255,255,0.8);
+      border-bottom: 2px solid var(--c-cyan);
+    }
+    .proposal-banner strong { color: var(--c-cyan); }
+    .proposal-banner a {
+      color: rgba(255,255,255,0.6); text-decoration: underline;
+      text-underline-offset: 2px; font-size: 0.76rem;
+    }
+    .proposal-banner a:hover { color: var(--c-cyan); }
+
+    /* ---- Header ---- */
+    .site-header {
+      position: sticky; top: 36px; z-index: 20;
+      border-bottom: 1px solid rgba(0,212,255,0.15);
+      background: rgba(11,24,41,0.92);
+      backdrop-filter: blur(14px);
+    }
+    .nav-shell {
+      display: flex; align-items: center; justify-content: space-between;
+      width: min(1180px, calc(100% - 32px));
+      min-height: 72px; margin: 0 auto; gap: 28px;
+    }
+    .brand { display: flex; align-items: center; min-width: 250px; gap: 12px; }
+    .brand-mark {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--c-mid) 0%, var(--c-cyan2) 100%);
+      border: 1px solid rgba(0,212,255,0.4);
+      gap: 1px;
+    }
+    .brand-mark .bm-kw { color: rgba(255,255,255,0.55); font-size: 0.55rem; font-weight: 900; letter-spacing: 0.1em; line-height: 1; }
+    .brand-mark .bm-cap { color: #fff; font-size: 0.85rem; font-weight: 900; letter-spacing: 0.04em; line-height: 1.1; }
+    .brand-name { display: grid; gap: 1px; }
+    .brand-name strong { color: #fff; font-size: 1rem; line-height: 1.25; }
+    .brand-name span { color: rgba(255,255,255,0.45); font-size: 0.68rem; line-height: 1.3; }
+    .nav-links {
+      display: flex; align-items: stretch; justify-content: flex-end;
+      flex-wrap: wrap; gap: 4px;
+    }
+    .nav-links a {
+      display: flex; flex-direction: column; justify-content: center;
+      min-width: 82px; min-height: 48px; padding: 7px 10px;
+      border-radius: 6px; color: rgba(255,255,255,0.8); font-weight: 800;
+      text-align: center; transition: background 0.15s, color 0.15s;
+    }
+    .nav-links a:hover { background: rgba(0,212,255,0.1); color: var(--c-cyan); }
+    .nav-links small { color: rgba(255,255,255,0.4); font-size: 0.68rem; font-weight: 700; display: block; }
+    .nav-links a[aria-current="page"] {
+      background: rgba(0,212,255,0.1);
+      box-shadow: inset 0 -2px 0 var(--c-cyan);
+      color: var(--c-cyan);
+    }
+    .nav-links .apply {
+      background: rgba(0,212,255,0.15);
+      color: var(--c-cyan);
+      border: 1px solid rgba(0,212,255,0.3);
+    }
+    .nav-links .apply:hover { background: rgba(0,212,255,0.25); }
+
+    /* ---- HERO ---- */
+    .hero {
+      position: relative;
+      min-height: calc(100vh - 108px);
+      background: linear-gradient(160deg, #081420 0%, #0F2540 45%, #0A1E36 100%);
+      overflow: hidden;
+      display: flex; align-items: center;
+    }
+
+    /* 뉴럴 네트워크 SVG 배경 */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0' stop-color='%2300D4FF' stop-opacity='0.06'/%3E%3Cstop offset='1' stop-color='%2300D4FF' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='600' height='600'/%3E%3Ccircle cx='80' cy='120' r='3' fill='%2300D4FF' opacity='0.35'/%3E%3Ccircle cx='220' cy='60' r='2.5' fill='%2300D4FF' opacity='0.3'/%3E%3Ccircle cx='380' cy='140' r='3.5' fill='%2300D4FF' opacity='0.4'/%3E%3Ccircle cx='520' cy='80' r='2' fill='%2300D4FF' opacity='0.25'/%3E%3Ccircle cx='160' cy='240' r='4' fill='%2300D4FF' opacity='0.35'/%3E%3Ccircle cx='300' cy='200' r='3' fill='%2300B8E0' opacity='0.3'/%3E%3Ccircle cx='460' cy='260' r='2.5' fill='%2300D4FF' opacity='0.4'/%3E%3Ccircle cx='560' cy='200' r='3' fill='%2300D4FF' opacity='0.25'/%3E%3Ccircle cx='50' cy='360' r='2.5' fill='%2300D4FF' opacity='0.3'/%3E%3Ccircle cx='200' cy='320' r='4' fill='%2300D4FF' opacity='0.35'/%3E%3Ccircle cx='340' cy='380' r='3' fill='%2300B8E0' opacity='0.3'/%3E%3Ccircle cx='480' cy='340' r='3.5' fill='%2300D4FF' opacity='0.4'/%3E%3Ccircle cx='140' cy='460' r='2.5' fill='%2300D4FF' opacity='0.25'/%3E%3Ccircle cx='290' cy='500' r='3' fill='%2300D4FF' opacity='0.3'/%3E%3Ccircle cx='430' cy='450' r='4' fill='%2300D4FF' opacity='0.35'/%3E%3Ccircle cx='550' cy='480' r='2.5' fill='%2300B8E0' opacity='0.3'/%3E%3Cline x1='80' y1='120' x2='220' y2='60' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='220' y1='60' x2='380' y2='140' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='380' y1='140' x2='520' y2='80' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='80' y1='120' x2='160' y2='240' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='220' y1='60' x2='300' y2='200' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='380' y1='140' x2='460' y2='260' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='160' y1='240' x2='300' y2='200' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='300' y1='200' x2='460' y2='260' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='160' y1='240' x2='200' y2='320' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='300' y1='200' x2='340' y2='380' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='460' y1='260' x2='480' y2='340' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='200' y1='320' x2='340' y2='380' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='340' y1='380' x2='480' y2='340' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='200' y1='320' x2='290' y2='500' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='340' y1='380' x2='430' y2='450' stroke='%2300D4FF' stroke-width='0.7' opacity='0.15'/%3E%3Cline x1='480' y1='340' x2='550' y2='480' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='520' y1='80' x2='560' y2='200' stroke='%2300D4FF' stroke-width='0.7' opacity='0.12'/%3E%3Cline x1='560' y1='200' x2='480' y2='340' stroke='%2300D4FF' stroke-width='0.7' opacity='0.1'/%3E%3C/svg%3E");
+      background-size: 600px 600px;
+      opacity: 0.7;
+    }
+
+    /* 오른쪽 뇌 실루엣 원형 장식 */
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -80px; top: 50%;
+      transform: translateY(-50%);
+      width: 520px; height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 40%, rgba(0,212,255,0.08) 0%, rgba(0,184,224,0.04) 50%, transparent 70%);
+      border: 1px solid rgba(0,212,255,0.08);
+    }
+
+    .hero-inner {
+      position: relative; z-index: 2;
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 80px 0 70px;
+    }
+
+    .hero .eyebrow {
+      color: var(--c-cyan);
+      font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin: 0 0 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .hero .eyebrow::before {
+      content: '';
+      display: block; width: 32px; height: 1px;
+      background: var(--c-cyan); opacity: 0.7;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      font-weight: 900;
+      color: var(--c-white);
+      line-height: 1.18;
+      max-width: 720px;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--c-cyan);
+    }
+
+    .hero .lead {
+      margin: 28px 0 0;
+      color: var(--c-dim);
+      font-size: 1.05rem;
+      max-width: 620px;
+      line-height: 1.75;
+    }
+    .hero .lead .en {
+      display: block; margin-top: 8px;
+      color: rgba(255,255,255,0.35);
+      font-size: 0.9em;
+    }
+
+    /* 유리 패널 */
+    .hero-panel {
+      margin-top: 36px;
+      padding: 24px 28px;
+      background: rgba(11, 24, 41, 0.6);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .hero-tags {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .hero-tags span {
+      padding: 5px 14px; border-radius: 999px;
+      background: rgba(0,212,255,0.1);
+      color: var(--c-cyan);
+      font-size: 0.78rem; font-weight: 700;
+      border: 1px solid rgba(0,212,255,0.25);
+    }
+
+    .hero-facts {
+      display: grid; grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+    }
+    .fact {
+      padding: 12px 10px; text-align: center;
+      border: 1px solid rgba(0,212,255,0.12);
+      border-radius: 10px;
+      background: rgba(0,212,255,0.04);
+    }
+    .fact b {
+      display: block;
+      color: var(--c-cyan);
+      font-size: 1.2rem; font-weight: 900;
+    }
+    .fact span {
+      display: block;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.76rem; margin-top: 2px;
+    }
+
+    /* 글로우 버튼 */
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+    .btn-glow {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 48px; padding: 12px 28px;
+      border: 1.5px solid var(--c-cyan);
+      border-radius: 8px;
+      background: rgba(0,212,255,0.12);
+      color: var(--c-cyan);
+      font-weight: 800; font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      transition: all 0.2s;
+      box-shadow: 0 0 12px rgba(0,212,255,0.12);
+      cursor: pointer; text-decoration: none;
+    }
+    .btn-glow:hover {
+      background: rgba(0,212,255,0.22);
+      box-shadow: 0 0 24px rgba(0,212,255,0.28), 0 0 8px rgba(0,212,255,0.15);
+      color: #fff;
+    }
+    .btn-glow.solid {
+      background: var(--c-cyan);
+      color: #0B1829;
+    }
+    .btn-glow.solid:hover {
+      background: #33DDFF;
+      box-shadow: 0 0 28px rgba(0,212,255,0.45);
+    }
+
+    /* ---- 나머지 섹션 (공통 스타일 재사용) ---- */
+    h1, h2, h3 { margin: 0; color: var(--navy); line-height: 1.22; }
+    h2 { font-size: clamp(1.55rem, 2.4vw, 2.35rem); }
+    h3 { font-size: 1.12rem; }
+    .tagline {
+      display: block; margin: 0 0 14px;
+      color: var(--red); font-size: 0.84rem;
+      font-weight: 900; text-transform: uppercase;
+    }
+    main { background: var(--bg); }
+    .section {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto; padding: 66px 0;
+    }
+    .section + .section { border-top: 1px solid var(--line); }
+    .section-head {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 28px; margin-bottom: 28px;
+    }
+    .section-head p { max-width: 710px; margin: 10px 0 0; color: var(--muted); }
+    .more-link {
+      white-space: nowrap; color: var(--navy); font-weight: 800;
+      font-size: 0.9rem; text-decoration: underline; text-underline-offset: 3px; flex-shrink: 0;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+    .card {
+      padding: 22px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--surface); box-shadow: 0 10px 24px rgba(24, 58, 90, 0.04);
+    }
+    .card p { margin: 12px 0 0; color: #364152; }
+    .card h3 {
+      font-size: 1.08rem; color: var(--navy);
+      padding-left: 12px; border-left: 3px solid var(--c-cyan);
+    }
+    .card .en { display: block; margin-top: 8px; color: var(--muted); font-size: 0.88rem; }
+    .publication-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+    .publication-list li {
+      padding: 18px 20px; border: 1px solid var(--line); border-left: 4px solid var(--red);
+      border-radius: 8px; background: #fff;
+    }
+    .publication-list b { display: block; color: var(--navy); font-size: 1rem; }
+    .pub-meta { color: var(--muted); font-size: 0.88rem; margin-top: 6px; display: block; }
+    .pub-link {
+      display: inline-block; margin-top: 8px; color: var(--navy);
+      font-size: 0.84rem; font-weight: 800; text-decoration: underline; text-underline-offset: 2px;
+    }
+    .join-band {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 0.7fr);
+      gap: 22px; padding: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--c-dark) 0%, var(--c-mid) 100%);
+      border: 1px solid rgba(0,212,255,0.2);
+      color: #fff;
+    }
+    .join-band h2 { color: #fff; }
+    .join-band p { color: rgba(255,255,255,0.72); }
+    .join-band .en { color: rgba(255,255,255,0.45); display: block; margin-top: 7px; font-size: 0.92em; }
+    .join-actions { display: grid; align-content: center; gap: 10px; }
+    .join-action {
+      display: block; padding: 14px 16px;
+      border: 1px solid rgba(0,212,255,0.25); border-radius: 8px;
+      background: rgba(0,212,255,0.06); color: #fff; font-weight: 800;
+      transition: background 0.15s;
+    }
+    .join-action:hover { background: rgba(0,212,255,0.14); }
+    .site-footer { border-top: 1px solid var(--line); background: #fff; }
+    .footer-inner {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0;
+      gap: 24px; color: var(--muted); font-size: 0.88rem; line-height: 1.7;
+    }
+    .footer-inner strong { color: var(--navy); font-size: 0.96rem; }
+
+    @media (max-width: 768px) {
+      .nav-shell { flex-direction: column; align-items: flex-start; padding: 12px 0; min-height: auto; }
+      .hero-inner { padding: 50px 0 48px; }
+      .hero h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+      .hero-facts { grid-template-columns: 1fr; }
+      .join-band { grid-template-columns: 1fr; }
+      .section-head { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="proposal-banner">
+    <span><strong>[시안 1] 신경·인지 (Neural Cognition)</strong> — 뉴럴 네트워크 패턴, 딥 다크 배경, 시안 강조색</span>
+    <a href="design-proposals.html">← 시안 목록으로</a>
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="#" aria-label="KW CAP Lab 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="#" aria-current="page">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Kwangwoon University · Consumer Advertising Psychology</p>
+      <h1>광고와 소비자 경험 속<br><em>마음의 움직임</em>을 연구합니다.</h1>
+      <p class="lead">
+        광운대학교 소비자광고심리 연구실은 광고 반응, 소비자 판단, AI 서비스 상호작용, 식품 관련 의사결정, 여성 소비자 경험을 연구합니다.
+        <span class="en">KW CAP Lab investigates how consumers think, feel, and act in advertising, service, and AI-mediated contexts.</span>
+      </p>
+      <div class="hero-panel">
+        <div class="hero-tags">
+          <span>소비자 판단 &amp; 광고 반응</span>
+          <span>인간-AI 서비스 상호작용</span>
+          <span>식품 관련 연구</span>
+          <span>여성 소비자 경험</span>
+        </div>
+        <div class="hero-facts">
+          <div class="fact"><b id="hero-axis-count">4</b><span>연구 축</span></div>
+          <div class="fact"><b id="hero-member-count">10</b><span>구성원</span></div>
+          <div class="fact"><b>RA</b><span>상시 모집</span></div>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a class="btn-glow solid" href="research.html">진행 연구 보기</a>
+        <a class="btn-glow" href="join.html">연구실 지원하기</a>
+      </div>
+    </div>
+  </section>
+
+  <main id="main">
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <span class="tagline">Research Areas</span>
+          <h2>진행 연구</h2>
+          <p>소비자와 광고, AI, 식품, 젠더를 연결하는 4개의 연구 축을 중심으로 연구합니다.</p>
+        </div>
+        <a class="more-link" href="research.html">전체 보기 →</a>
+      </div>
+      <div class="grid" id="research-snapshot"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <span class="tagline">Publications</span>
+          <h2>최근 연구 성과</h2>
+        </div>
+        <a class="more-link" href="publications.html">전체 보기 →</a>
+      </div>
+      <ul class="publication-list" id="pub-snapshot"></ul>
+    </section>
+
+    <section class="section">
+      <div class="join-band">
+        <div>
+          <span class="tagline" style="color:var(--c-cyan)">Join Us</span>
+          <h2>함께 연구할 분을 기다립니다</h2>
+          <p>
+            석사·박사 과정 대학원생과 학부연구생 RA를 모집합니다.
+            <span class="en">We welcome graduate students and undergraduate research assistants interested in consumer and advertising psychology.</span>
+          </p>
+        </div>
+        <div class="join-actions">
+          <a class="join-action" href="join.html#graduate">석사·박사 과정 안내</a>
+          <a class="join-action" href="join.html#ra">학부연구생 RA 상시 모집</a>
+          <a class="join-action" href="join.html#contact">연구실 문의</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab<br>
+        Department of Industrial Psychology · Kwangwoon University
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script>
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      if (typeof CAPData === 'undefined') return;
+      var c = CAPData.getContent();
+      if (c.research && c.research.axes) {
+        document.getElementById('hero-axis-count').textContent = c.research.axes.length;
+        document.getElementById('research-snapshot').innerHTML = c.research.axes.map(function(a){
+          return '<article class="card"><h3>' + escHtml(a.title) + '</h3><p>' + escHtml(a.desc.substring(0,80)) + '…</p><span class="en">' + escHtml(a.en) + '</span></article>';
+        }).join('');
+      }
+      document.getElementById('hero-member-count').textContent = CAPData.getMembers().length;
+      var articles = CAPData.getArticles().slice(0,2);
+      document.getElementById('pub-snapshot').innerHTML = articles.map(function(a){
+        return '<li><b>' + escHtml(a.title) + '</b><span class="pub-meta">' + escHtml(a.authors) + ' · ' + escHtml(a.journal) + ' · ' + escHtml(a.year) + '</span>' + (a.doi ? '<a class="pub-link" href="' + escHtml(a.doi) + '" target="_blank">DOI 링크</a>' : '<span class="pub-meta">DOI 추가 예정</span>') + '</li>';
+      }).join('');
+    });
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v9';
+const CACHE_NAME = 'kw-cap-lab-v10';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [
@@ -12,6 +12,7 @@ const PRECACHE_ASSETS = [
   'style.css',
   'cap-auth.js',
   'cap-notifications.js',
+  'cap-page-meta.js',
   'cap-data.js',
   'manifest.json',
   'icons/icon-192.png',

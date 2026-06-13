@@ -174,6 +174,43 @@ const CAP_DEFAULTS = {
       heroLead: '광운대학교 소비자광고심리 연구실은 광고 반응, 소비자 판단, AI 서비스 상호작용, 식품 관련 의사결정, 여성 소비자 경험을 연구합니다.',
       heroLeadEn: 'KW CAP Lab investigates how consumers think, feel, and act in advertising, service, and AI-mediated contexts.'
     },
+    pages: {
+      people: {
+        eyebrow: 'People',
+        title: '구성원',
+        description: '기본 프로필은 이모지 아바타로 제공하며, 사진과 이메일은 희망자에 한해 공개합니다.\n로그인한 구성원은 자신의 카드에서 직접 정보를 수정할 수 있습니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      research: {
+        eyebrow: 'Research Areas',
+        title: '진행 연구',
+        description: '소비자가 광고, 서비스, AI 기반 상호작용에서 어떻게 생각하고 느끼며 행동하는지 탐구합니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      publications: {
+        eyebrow: 'Publications',
+        title: '연구 성과',
+        description: '논문은 DOI와 저널 링크를 우선 제공합니다. 가능한 경우 학교 도서관 사이트와 연동합니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      reservation: {
+        eyebrow: 'RSVN',
+        title: '실험실 예약',
+        description: '광운대학교 산업심리학과 학생 전용 실험실습실, 한울관 105호 예약 안내입니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      join: {
+        eyebrow: 'Join Us',
+        title: '지원하기',
+        description: '대학원생 지원과 학부연구생 RA 모집은 절차가 다릅니다. 아래 안내를 확인하신 후 지원해 주세요.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      }
+    },
     research: {
       axes: [
         {
@@ -274,6 +311,8 @@ function capInitData() {
   }
   if (!localStorage.getItem('cap_content')) {
     localStorage.setItem('cap_content', JSON.stringify(CAP_DEFAULTS.content));
+  } else {
+    capApplyContentMigrations();
   }
 }
 
@@ -289,6 +328,39 @@ function capApplyMemberCredentialMigrations() {
   if (changed) {
     localStorage.setItem('cap_members', JSON.stringify(members));
   }
+}
+
+function capMergeDefaults(target, defaults) {
+  Object.keys(defaults).forEach(key => {
+    if (target[key] === undefined || target[key] === null) {
+      target[key] = defaults[key];
+    } else if (
+      typeof target[key] === 'object' &&
+      !Array.isArray(target[key]) &&
+      typeof defaults[key] === 'object' &&
+      !Array.isArray(defaults[key])
+    ) {
+      capMergeDefaults(target[key], defaults[key]);
+    }
+  });
+  return target;
+}
+
+function capApplyContentMigrations() {
+  const content = JSON.parse(localStorage.getItem('cap_content') || '{}');
+  capMergeDefaults(content, CAP_DEFAULTS.content);
+  if (content.pages) {
+    Object.keys(content.pages).forEach(pageId => {
+      const page = content.pages[pageId];
+      if (page.titleStyle && page.titleStyle.color === '#183A5A') {
+        page.titleStyle.color = '#FFFFFF';
+      }
+      if (page.descriptionStyle && page.descriptionStyle.color === '#667085') {
+        page.descriptionStyle.color = '#D9E2EC';
+      }
+    });
+  }
+  localStorage.setItem('cap_content', JSON.stringify(content));
 }
 
 /* ---- CRUD ---- */
@@ -337,6 +409,23 @@ const CAPData = {
   updateHomeContent(updates) {
     const c = this.getContent();
     c.home = { ...c.home, ...updates };
+    localStorage.setItem('cap_content', JSON.stringify(c));
+  },
+  getPageMeta(pageId) {
+    const c = this.getContent();
+    const fallback = CAP_DEFAULTS.content.pages?.[pageId] || {};
+    return capMergeDefaults({ ...(c.pages?.[pageId] || {}) }, fallback);
+  },
+  updatePageMeta(pageId, updates) {
+    const c = this.getContent();
+    c.pages = c.pages || {};
+    const current = this.getPageMeta(pageId);
+    c.pages[pageId] = {
+      ...current,
+      ...updates,
+      titleStyle: { ...(current.titleStyle || {}), ...(updates.titleStyle || {}) },
+      descriptionStyle: { ...(current.descriptionStyle || {}), ...(updates.descriptionStyle || {}) }
+    };
     localStorage.setItem('cap_content', JSON.stringify(c));
   },
   updateResearchAxis(axisId, updates) {
@@ -427,5 +516,8 @@ const CAPData = {
     localStorage.setItem('cap_content', JSON.stringify(CAP_DEFAULTS.content));
   }
 };
+
+window.CAP_DEFAULTS = CAP_DEFAULTS;
+window.CAPData = CAPData;
 
 capInitData();

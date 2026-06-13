@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[시안 v2-4] 코발트 매거진 — KW CAP Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ====================================================
+       시안 v2-4: 코발트 매거진 라이트 (Cobalt Magazine)
+       배경: 밝은 블루-그레이 / 강조: 코발트 블루 + 코럴
+       제안-4의 매거진 레이아웃 + 밝고 현대적인 컬러
+       ==================================================== */
+    :root {
+      --cobalt:    #1746A2;
+      --cobalt-2:  #1D4ED8;
+      --cobalt-3:  #2563EB;
+      --cobalt-soft:#DBEAFE;
+      --cobalt-bg: #EFF6FF;
+      --coral:     #E55934;
+      --coral-2:   #C74B28;
+      --coral-soft:#FEE2D5;
+      --ink:       #0F172A;
+      --ink-2:     #1E293B;
+      --muted:     #64748B;
+      --line:      #CBD5E1;
+      --line-2:    #E2E8F0;
+      --bg:        #F0F4F8;
+      --surface:   #FFFFFF;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+      font-family: "Noto Sans KR","Apple SD Gothic Neo",Arial,sans-serif; line-height: 1.65; }
+    a { color: inherit; text-decoration: none; }
+
+    /* -- 배너 -- */
+    .proposal-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      background: var(--cobalt); padding: 8px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.78rem; color: rgba(255,255,255,0.82);
+      border-bottom: 2px solid var(--coral);
+    }
+    .proposal-banner strong { color: #BFDBFE; }
+    .proposal-banner a { color: rgba(255,255,255,0.55); text-decoration: underline; text-underline-offset: 2px; }
+    .proposal-banner a:hover { color: #fff; }
+
+    /* -- 헤더: 순백 + 코발트 border -- */
+    .site-header {
+      position: sticky; top: 36px; z-index: 20;
+      background: var(--surface); border-bottom: 3px solid var(--cobalt);
+    }
+    .nav-shell {
+      display: flex; align-items: center; justify-content: space-between;
+      width: min(1200px, calc(100% - 40px)); min-height: 68px; margin: 0 auto; gap: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 42px; height: 42px; flex-shrink: 0; gap: 1px;
+      background: var(--cobalt);
+    }
+    .bm-kw { color: rgba(255,255,255,0.5); font-size: 0.5rem; font-weight: 900; letter-spacing: 0.1em; line-height: 1; }
+    .bm-cap { color: #fff; font-size: 0.82rem; font-weight: 900; line-height: 1.1; }
+    .brand-name strong { display: block; color: var(--cobalt); font-size: 0.98rem; font-weight: 900; }
+    .brand-name span { display: block; color: var(--muted); font-size: 0.66rem; }
+    .nav-links { display: flex; align-items: stretch; gap: 2px; }
+    .nav-links a {
+      display: flex; flex-direction: column; justify-content: center;
+      min-width: 80px; min-height: 48px; padding: 7px 10px;
+      color: var(--ink-2); font-weight: 800; text-align: center;
+      border-bottom: 3px solid transparent; margin-bottom: -3px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-links a:hover { color: var(--cobalt); border-bottom-color: var(--coral); }
+    .nav-links a[aria-current="page"] { color: var(--cobalt); border-bottom-color: var(--cobalt); }
+    .nav-links small { color: var(--muted); font-size: 0.65rem; font-weight: 700; display: block; }
+    .nav-links .apply { background: var(--cobalt); color: #fff; border-bottom-color: transparent; }
+    .nav-links .apply small { color: rgba(255,255,255,0.7); }
+    .nav-links .apply:hover { background: var(--cobalt-2); }
+
+    /* =====================
+       HERO — 밝은 블루 배경
+       ===================== */
+    .hero {
+      background: var(--cobalt-bg);
+      border-bottom: 1px solid var(--line);
+      position: relative; overflow: hidden;
+      display: flex; align-items: stretch;
+    }
+    /* 오른쪽 코발트 패널 */
+    .hero::after {
+      content: ''; position: absolute;
+      right: 0; top: 0; bottom: 0; width: 420px;
+      background: var(--cobalt);
+      clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+    .hero-inner {
+      position: relative; z-index: 2;
+      width: min(1200px, calc(100% - 40px)); margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 420px;
+      min-height: calc(100vh - 107px); align-items: stretch;
+    }
+    .hero-left {
+      padding: 80px 60px 80px 0;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    /* 매거진 레이블 */
+    .mag-label { display: flex; align-items: center; gap: 14px; margin-bottom: 30px; }
+    .mag-label-bar { width: 48px; height: 4px; background: var(--coral); }
+    .mag-label-text { color: var(--coral); font-size: 0.75rem; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; }
+    .hero h1 {
+      margin: 0; font-size: clamp(2.4rem, 4vw, 4rem);
+      font-weight: 900; color: var(--ink); line-height: 1.12; letter-spacing: -0.025em;
+    }
+    .hero h1 .cobalt-word { color: var(--cobalt); }
+    .hero-rule { width: 56px; height: 2px; background: var(--line); margin: 28px 0; }
+    .hero .lead { color: var(--ink-2); font-size: 1rem; max-width: 500px; line-height: 1.82; }
+    .hero .lead .en { display: block; margin-top: 8px; color: var(--muted); font-size: 0.9em; }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+    .hero-tags span {
+      padding: 5px 13px; background: var(--surface);
+      color: var(--cobalt); font-size: 0.77rem; font-weight: 700;
+      border: 1px solid var(--cobalt-soft); border-radius: 2px;
+    }
+    .hero-actions { display: flex; gap: 10px; margin-top: 36px; }
+    .btn-cobalt {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 52px; padding: 14px 32px;
+      font-weight: 800; font-size: 0.95rem;
+      transition: all 0.15s; cursor: pointer; text-decoration: none;
+    }
+    .btn-cobalt.primary { background: var(--cobalt); color: #fff; }
+    .btn-cobalt.primary:hover { background: var(--cobalt-2); }
+    .btn-cobalt.secondary { background: var(--surface); color: var(--cobalt); border: 2px solid var(--cobalt); }
+    .btn-cobalt.secondary:hover { background: var(--cobalt-bg); }
+
+    /* 오른쪽 패널 (코발트 배경) */
+    .hero-right {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 60px 0 60px 56px; gap: 16px;
+    }
+    .white-stat {
+      padding: 22px 24px; background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2); border-top: 3px solid var(--coral);
+    }
+    .white-stat b { display: block; font-size: 2.8rem; font-weight: 900; color: #fff; line-height: 1; }
+    .white-stat span { display: block; font-size: 0.74rem; font-weight: 700; color: rgba(255,255,255,0.55); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .white-stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .white-stat-mini {
+      padding: 18px; text-align: center;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+    }
+    .white-stat-mini b { display: block; font-size: 1.5rem; font-weight: 900; color: #fff; }
+    .white-stat-mini span { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 3px; }
+    .coral-box {
+      padding: 20px; border: 1px solid rgba(255,255,255,0.14);
+      border-left: 3px solid var(--coral);
+      background: rgba(255,255,255,0.06);
+    }
+    .coral-box-title { font-size: 0.72rem; font-weight: 900; color: var(--coral); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .coral-box-list { display: flex; flex-direction: column; gap: 6px; }
+    .coral-box-list span { font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.8); padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .coral-box-list span:last-child { border-bottom: none; padding-bottom: 0; }
+
+    /* ======================
+       본문
+       ====================== */
+    main { background: var(--bg); }
+    .section { width: min(1200px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0; }
+    .section + .section { border-top: 1px solid var(--line-2); }
+    .section-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 24px; margin-bottom: 36px;
+      padding-bottom: 18px; border-bottom: 2px solid var(--cobalt);
+    }
+    .section-header-left { display: flex; align-items: baseline; gap: 20px; }
+    .section-num { font-size: 3.5rem; font-weight: 900; color: var(--line); line-height: 1; letter-spacing: -0.04em; }
+    .section-label {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--coral); font-size: 0.75rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
+    }
+    .section-label::before { content: ''; display: block; width: 16px; height: 3px; background: var(--coral); }
+    .section-header h2 { margin: 0; font-size: clamp(1.5rem, 2.2vw, 2.1rem); color: var(--ink); font-weight: 900; }
+    .more-link { color: var(--cobalt); font-weight: 800; font-size: 0.88rem; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; flex-shrink: 0; }
+
+    /* 카드 */
+    .research-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+    .research-card {
+      padding: 28px 22px; background: var(--surface);
+      border: 1px solid var(--line-2); border-top: 3px solid var(--cobalt);
+      position: relative; transition: box-shadow 0.15s, border-top-color 0.15s;
+    }
+    .research-card:hover { box-shadow: 0 8px 28px rgba(23,70,162,0.1); border-top-color: var(--coral); }
+    .research-card::before {
+      content: attr(data-num); position: absolute; top: 16px; right: 18px;
+      font-size: 1.8rem; font-weight: 900; color: var(--cobalt-soft); line-height: 1; letter-spacing: -0.04em;
+    }
+    .research-card h3 { margin: 0 0 10px; font-size: 0.98rem; font-weight: 900; color: var(--cobalt); padding-right: 36px; line-height: 1.4; }
+    .research-card p { margin: 0; font-size: 0.86rem; color: var(--ink-2); line-height: 1.7; }
+    .research-card .en { display: block; margin-top: 10px; font-size: 0.8rem; color: var(--muted); }
+
+    /* 논문 */
+    .pub-list { display: flex; flex-direction: column; gap: 10px; }
+    .pub-item {
+      padding: 24px 28px; background: var(--surface);
+      border: 1px solid var(--line-2); border-left: 4px solid var(--coral);
+      display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 20px;
+      transition: box-shadow 0.12s;
+    }
+    .pub-item:hover { box-shadow: 0 4px 16px rgba(23,70,162,0.07); }
+    .pub-title { display: block; font-weight: 900; color: var(--ink); font-size: 0.98rem; margin-bottom: 6px; }
+    .pub-meta { display: block; color: var(--muted); font-size: 0.86rem; margin-top: 4px; }
+    .pub-link {
+      display: inline-flex; align-items: center; min-height: 36px; padding: 6px 16px;
+      border: 1.5px solid var(--cobalt); color: var(--cobalt);
+      font-size: 0.8rem; font-weight: 800; white-space: nowrap; transition: all 0.12s;
+    }
+    .pub-link:hover { background: var(--cobalt); color: #fff; }
+    .pub-no-link { color: var(--muted); font-size: 0.82rem; padding-top: 8px; }
+
+    /* Join */
+    .join-band { background: var(--cobalt); display: grid; grid-template-columns: 1fr 360px; }
+    .join-text { padding: 56px 48px; }
+    .join-text h2 { margin: 10px 0 0; font-size: clamp(1.6rem,2.4vw,2.2rem); color: #fff; font-weight: 900; }
+    .join-text p { margin: 18px 0 0; color: rgba(255,255,255,0.72); font-size: 0.98rem; line-height: 1.8; }
+    .join-text .en { display: block; margin-top: 8px; color: rgba(255,255,255,0.38); font-size: 0.9em; }
+    .join-links { display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.12); }
+    .join-link {
+      flex: 1; display: flex; align-items: center; padding: 0 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.82); font-weight: 700; font-size: 0.9rem;
+      transition: background 0.12s;
+    }
+    .join-link:last-child { border-bottom: none; }
+    .join-link:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .join-link::after { content: '→'; margin-left: auto; color: var(--coral); }
+
+    /* Footer */
+    .site-footer { border-top: 1px solid var(--line-2); background: var(--surface); }
+    .footer-inner {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      width: min(1200px, calc(100% - 40px)); margin: 0 auto; padding: 32px 0;
+      gap: 24px; color: var(--muted); font-size: 0.86rem; line-height: 1.75;
+    }
+    .footer-inner strong { display: block; color: var(--cobalt); font-size: 0.95rem; margin-bottom: 4px; }
+
+    @media (max-width: 1024px) {
+      .nav-shell { flex-direction: column; align-items: flex-start; padding: 12px 0; min-height: auto; }
+      .hero::after { display: none; }
+      .hero-inner { grid-template-columns: 1fr; background: var(--cobalt-bg); }
+      .hero-right { display: none; }
+      .hero-left { padding: 50px 0; }
+      .research-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .join-band { grid-template-columns: 1fr; }
+      .join-links { border-left: none; border-top: 1px solid rgba(255,255,255,0.12); flex-direction: row; flex-wrap: wrap; }
+      .join-link { flex: none; padding: 16px 24px; border-bottom: none; border-right: 1px solid rgba(255,255,255,0.08); width: 50%; }
+      .section-header { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 640px) {
+      .research-grid { grid-template-columns: 1fr; }
+      .pub-item { grid-template-columns: 1fr; }
+      .join-link { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+      .footer-inner { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="proposal-banner">
+    <span><strong>[시안 v2-4] 코발트 매거진 (Cobalt Magazine)</strong> — 밝은 블루 배경, 코발트+코럴, 전체 페이지 통일</span>
+    <a href="design-proposals-v2.html">← v2 시안 목록</a>
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="#">
+        <span class="brand-mark"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links">
+        <a href="#" aria-current="page">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="mag-label">
+          <div class="mag-label-bar"></div>
+          <span class="mag-label-text">Consumer Advertising Psychology · Kwangwoon Univ.</span>
+        </div>
+        <h1>광고와 소비자 경험 속<br><span class="cobalt-word">마음의 움직임</span>을<br>연구합니다.</h1>
+        <div class="hero-rule"></div>
+        <p class="lead">
+          광운대학교 소비자광고심리 연구실은 광고 반응, 소비자 판단, AI 서비스 상호작용, 식품 관련 의사결정, 여성 소비자 경험을 연구합니다.
+          <span class="en">KW CAP Lab investigates how consumers think, feel, and act in advertising, service, and AI-mediated contexts.</span>
+        </p>
+        <div class="hero-tags">
+          <span>소비자 판단 &amp; 광고 반응</span>
+          <span>인간-AI 서비스 상호작용</span>
+          <span>식품 관련 연구</span>
+          <span>여성 소비자 경험</span>
+        </div>
+        <div class="hero-actions">
+          <a class="btn-cobalt primary" href="research.html">진행 연구 보기</a>
+          <a class="btn-cobalt secondary" href="join.html">연구실 지원하기</a>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="white-stat"><b id="hero-axis-count">4</b><span>Research Axes · 연구 축</span></div>
+        <div class="white-stat-row">
+          <div class="white-stat-mini"><b id="hero-member-count">10</b><span>구성원</span></div>
+          <div class="white-stat-mini"><b>RA</b><span>상시 모집</span></div>
+        </div>
+        <div class="coral-box">
+          <div class="coral-box-title">Research Areas</div>
+          <div class="coral-box-list">
+            <span>소비자 판단 &amp; 광고 반응</span>
+            <span>인간-AI 서비스 상호작용</span>
+            <span>식품 관련 연구</span>
+            <span>여성 소비자 경험</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main id="main">
+    <section class="section">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num">01</span>
+          <div>
+            <div class="section-label">Research Areas</div>
+            <h2>진행 연구</h2>
+          </div>
+        </div>
+        <a class="more-link" href="research.html">전체 보기 →</a>
+      </div>
+      <div class="research-grid" id="research-snapshot"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-num">02</span>
+          <div>
+            <div class="section-label">Publications</div>
+            <h2>최근 연구 성과</h2>
+          </div>
+        </div>
+        <a class="more-link" href="publications.html">전체 보기 →</a>
+      </div>
+      <div class="pub-list" id="pub-snapshot"></div>
+    </section>
+
+    <section class="section" style="padding-bottom:0;">
+      <div class="join-band">
+        <div class="join-text">
+          <div class="section-label" style="color:rgba(255,255,255,0.8)"><span style="display:block;width:16px;height:3px;background:var(--coral);"></span>Join Us</div>
+          <h2>함께 연구할 분을 기다립니다</h2>
+          <p>석사·박사 과정 대학원생과 학부연구생 RA를 모집합니다.
+            <span class="en">We welcome graduate students and undergraduate research assistants interested in consumer and advertising psychology.</span>
+          </p>
+        </div>
+        <div class="join-links">
+          <a class="join-link" href="join.html#graduate">석사·박사 과정 안내</a>
+          <a class="join-link" href="join.html#ra">학부연구생 RA 상시 모집</a>
+          <a class="join-link" href="join.html#contact">연구실 문의</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab<br>
+        Department of Industrial Psychology · Kwangwoon University
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script>
+    function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    document.addEventListener('DOMContentLoaded', function(){
+      if(typeof CAPData==='undefined') return;
+      var c = CAPData.getContent();
+      if(c.research && c.research.axes){
+        document.getElementById('hero-axis-count').textContent = c.research.axes.length;
+        document.getElementById('research-snapshot').innerHTML = c.research.axes.map(function(a,i){
+          return '<article class="research-card" data-num="0'+(i+1)+'"><h3>'+escHtml(a.title)+'</h3><p>'+escHtml(a.desc.substring(0,90))+'…</p><span class="en">'+escHtml(a.en)+'</span></article>';
+        }).join('');
+      }
+      document.getElementById('hero-member-count').textContent = CAPData.getMembers().length;
+      var arts = CAPData.getArticles().slice(0,2);
+      document.getElementById('pub-snapshot').innerHTML = arts.map(function(a){
+        return '<div class="pub-item"><div><span class="pub-title">'+escHtml(a.title)+'</span><span class="pub-meta">'+escHtml(a.authors)+' · '+escHtml(a.journal)+' · '+escHtml(a.year)+'</span></div>'+(a.doi?'<a class="pub-link" href="'+escHtml(a.doi)+'" target="_blank">DOI →</a>':'<span class="pub-no-link">DOI 추가 예정</span>')+'</div>';
+      }).join('');
+    });
+  </script>
+</body>
+</html>

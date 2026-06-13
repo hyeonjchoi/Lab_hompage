@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[레이아웃 3] Research Dashboard — KW CAP Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="layout-styles.css">
+</head>
+<body>
+  <div class="proposal-banner">
+    <span><strong>[레이아웃 3] Research Dashboard</strong> — 현재 홈페이지 디자인 기반, 좌측 브랜드 레일 + 우측 정보 대시보드 구성</span>
+    <a href="layout-proposals.html">← 레이아웃 목록</a>
+  </div>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="#">
+        <span class="brand-mark"><small>KW</small><b>CAP</b></span>
+        <span class="brand-name"><strong>광운대학교 소비자광고심리 연구실</strong><span>Kwangwoon University Consumer Advertising Psychology Lab</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#" aria-current="page">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero-dashboard">
+    <div class="inner">
+      <aside class="dash-rail">
+        <div>
+          <span class="eyebrow">KW CAP Lab</span>
+          <h1>연구 현황을 한눈에 보는 첫 화면</h1>
+          <p>학술 연구실답게 핵심 데이터와 연구 축을 첫 화면에서 바로 읽게 만드는 구성입니다.</p>
+        </div>
+        <div class="actions"><a class="btn secondary" href="layout-proposals.html">다른 레이아웃</a></div>
+      </aside>
+      <div class="dash-main">
+        <article class="dash-panel hero-copy">
+          <span class="eyebrow">Consumer Advertising Psychology</span>
+          <h2>광고와 소비자 경험 속<br><span class="red-word">마음의 움직임</span>을 연구합니다.</h2>
+          <p>광고 반응, 소비자 판단, AI 서비스 상호작용, 식품 관련 의사결정, 여성 소비자 경험을 연결해 연구합니다.</p>
+          <div class="actions" style="margin-top:28px;"><a class="btn primary" href="research.html">진행 연구 보기</a><a class="btn secondary" href="join.html">지원하기</a></div>
+        </article>
+        <div class="dash-stack">
+          <article class="dash-panel dash-visual">
+            <img src="랩 홈페이지 제작 아이디어 초안/랩 홈페이지 제작기/003.png" alt="연구실 대시보드 비주얼 참고 이미지">
+            <div class="dash-visual-caption">Research dashboard visual anchor</div>
+          </article>
+          <article class="dash-panel dash-number"><b data-axis-count>4</b><span>Research Axes<br>연구 축</span></article>
+          <article class="dash-panel dash-number"><b data-member-count>10</b><span>Members<br>구성원</span></article>
+          <article class="dash-panel dash-number"><b>RA</b><span>Open Position<br>학부연구생 모집</span></article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="section">
+      <div class="section-head">
+        <div><span class="eyebrow">Research Board</span><h2>연구 축 보드</h2><p>대시보드형 안에서는 연구 주제가 홈페이지의 주 탐색 단위가 됩니다.</p></div>
+        <a class="more-link" href="research.html">전체 보기 -></a>
+      </div>
+      <div class="axis-board" data-axis-board></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div><span class="eyebrow">Publications</span><h2>최근 연구 성과</h2></div>
+        <a class="more-link" href="publications.html">전체 보기 -></a>
+      </div>
+      <div class="pub-list" data-publications-wide></div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="footer-inner"><div><strong>광운대학교 소비자광고심리 연구실</strong>Kwangwoon University Consumer Advertising Psychology Lab</div><div>서울특별시 노원구 광운로 20, 광운대학교 (01897)<br>Tel. 02)940-5420</div></div></footer>
+  <script src="cap-data.js?v=layout"></script>
+  <script src="layout-script.js"></script>
+</body>
+</html>
