@@ -253,6 +253,8 @@
     var editingNoteId = null;
     var goalPage = 1;
     var GOAL_PAGE_SIZE = 5;
+    var notePage = 1;
+    var NOTE_PAGE_SIZE = 10;
     var activeGoalView = 'list';
     var draggingPGoalId = null;
     var resizingPGoal = null;
@@ -849,6 +851,7 @@
 
     function selectProjectGoalForNotes(goalId) {
       selectedProjectGoalId = (selectedProjectGoalId === goalId) ? null : goalId;
+      notePage = 1;
       renderProjectGoalList();
       renderProjectNotes();
       var noteSect = document.getElementById('project-note-list');
@@ -856,7 +859,7 @@
     }
 
     function renderProjectNotes() {
-      var allNotes = (currentProject.notes || []).slice().sort(function(a, b) {
+      var allNotesRaw = (currentProject.notes || []).slice().sort(function(a, b) {
         return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
       });
       var grid = document.getElementById('project-note-list');
@@ -867,11 +870,11 @@
       }
       var notes;
       if (selectedProjectGoalId) {
-        var goalNotes = allNotes.filter(function(n) { return n.targetId === selectedProjectGoalId; });
-        var globalNotes = allNotes.filter(function(n) { return !n.targetId; }).map(function(n) { return Object.assign({}, n, { _isGlobal: true }); });
+        var goalNotes = allNotesRaw.filter(function(n) { return n.targetId === selectedProjectGoalId; });
+        var globalNotes = allNotesRaw.filter(function(n) { return !n.targetId; }).map(function(n) { return Object.assign({}, n, { _isGlobal: true }); });
         notes = goalNotes.concat(globalNotes);
       } else {
-        notes = allNotes;
+        notes = allNotesRaw;
       }
       if (!notes.length) {
         grid.innerHTML = '<p class="lab-empty">저장된 메모나 피드백이 없습니다.' + (selectedProjectGoalId ? '<br><small style="color:var(--muted)">전체 보기는 목표 선택을 해제하세요.</small>' : '') + '</p>';
@@ -879,7 +882,12 @@
         if (det) { det.hidden = true; selectedProjectNoteId = null; }
         return;
       }
-      grid.innerHTML = notes.map(function(note) {
+      var totalNotePages = Math.max(1, Math.ceil(notes.length / NOTE_PAGE_SIZE));
+      if (notePage > totalNotePages) notePage = totalNotePages;
+      if (notePage < 1) notePage = 1;
+      var nStart = (notePage - 1) * NOTE_PAGE_SIZE;
+      var visibleNotes = notes.slice(nStart, nStart + NOTE_PAGE_SIZE);
+      grid.innerHTML = visibleNotes.map(function(note) {
         var typeLabel = note.type === 'feedback' ? '피드백' : '메모';
         var replyCount = (note.replies || []).length;
         var isSel = selectedProjectNoteId === note.id;
@@ -896,11 +904,25 @@
             (replyCount ? '<span class="note-sticky-reply-badge">💬 ' + replyCount + '</span>' : '') +
           '</div>' +
         '</article>';
-      }).join('');
+      }).join('') + (totalNotePages > 1
+        ? '<div class="minutes-pagination" aria-label="메모 페이지 이동">' +
+            '<button type="button" class="btn-sm" onclick="changeProjectNotePage(-1)"' + (notePage === 1 ? ' disabled' : '') + '>이전</button>' +
+            '<span>' + notePage + ' / ' + totalNotePages + ' · 총 ' + notes.length + '개</span>' +
+            '<button type="button" class="btn-sm" onclick="changeProjectNotePage(1)"' + (notePage === totalNotePages ? ' disabled' : '') + '>다음</button>' +
+          '</div>'
+        : '');
       if (selectedProjectNoteId) {
         var origNote = (currentProject.notes || []).find(function(n) { return n.id === selectedProjectNoteId; });
         if (origNote) { renderProjectNoteDetail(origNote); } else { selectedProjectNoteId = null; document.getElementById('project-note-detail').hidden = true; }
       }
+    }
+
+    function changeProjectNotePage(delta) {
+      notePage += delta;
+      selectedProjectNoteId = null;
+      var det = document.getElementById('project-note-detail');
+      if (det) det.hidden = true;
+      renderProjectNotes();
     }
 
     function selectProjectNote(noteId) {

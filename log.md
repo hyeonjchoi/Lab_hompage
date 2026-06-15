@@ -873,3 +873,106 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 - 로컬에서 `style.css`와 `layout-styles.css` 문법 및 관련 줄바꿈 규칙을 확인했다.
 - 운영 HTML 파일들이 새 CSS 버전을 참조하도록 갱신했다.
 - 이후 Git 커밋, 원격 `main` 푸시, GitHub Pages 배포 확인을 진행한다.
+
+---
+
+## 2026-06-15 — 연구 개인·팀 페이지 UX 개선 (연속 작업)
+
+### 작업 범위
+
+이번 작업에서는 개인 연구 페이지(`lab-member.html`)와 팀 프로젝트 연구방(`lab-project.html`)의 목표 일정보기 캘린더 구조를 전면 교체하고, 메모/피드백·연구 목표·팀 프로젝트·랩미팅 등 주요 섹션에 페이지네이션을 적용했다.
+
+---
+
+### 1. 목표 캘린더 — week-grid 방식으로 전면 교체
+
+#### 변경 전 (CSS custom property 방식)
+
+- 각 날짜 셀 내부에 `.goal-calendar-items` flex 컬럼을 두고, `is-period-start` 칩이 `width: calc((100% * var(--goal-span)) + (15px * (var(--goal-span) - 1)))` 수식으로 인접 셀을 overflow하는 방식
+- 문제: 칩 제목이 특정 조건에서 렌더링되지 않음, 여러 목표가 겹칠 때 레인이 분리되지 않음
+
+#### 변경 후 (CSS Grid week-by-week 방식)
+
+- 월 전체를 주(week) 단위로 분리, 각 주는 `<div class="calendar-week">` (7컬럼 CSS Grid)
+- 날짜 셀: `grid-row:1; grid-column:N` 명시적 배치
+- 레인 배경 셀: `grid-row:lane+2; grid-column:N` 명시적 배치 (border 없음, 투명 spacer 역할)
+- 목표 칩: `grid-row:lane+2; grid-column:startCol/endCol+1`로 직접 span — 제목 항상 표시됨
+- 레인 배정 알고리즘은 주 단위로 적용하여 겹치는 목표가 자동으로 별도 행에 배치됨
+
+#### 캘린더 날짜 셀 테두리 방향
+
+- `border-bottom` → `border-top` 변경: 날짜 숫자 위에 구분선이 표시되도록 수정
+- `.calendar-weekday-row .calendar-weekday { border-bottom: none }` 추가로 weekday 헤더와 첫 주 사이의 이중 선 방지
+
+#### 크기 조절 핸들 복원
+
+- 새 캘린더 칩에 `.goal-resize-handle.start / .end` 복원
+- `startGoalResize()` / `startPGoalResize()` 함수를 통한 드래그 날짜 조정 동작 유지
+- CSS: `display:block; flex-shrink:0; width:7px; cursor:ew-resize`
+
+---
+
+### 2. 메모/피드백 상세 패널 레이아웃 변경
+
+- 수정·삭제 버튼을 `note-detail-subrow` 행으로 분리하여 확인필요 체크박스 옆에 위치
+- 닫기 버튼은 `note-detail-head` 오른쪽 정렬 유지
+- `.note-detail-text`에 `overflow-wrap: break-word` 추가로 긴 텍스트 가로 넘침 방지
+
+---
+
+### 3. 연결 메모(goal-notes-panel) 위치 이동
+
+- `lab-member.html`: `goal-notes-panel`을 메모 아티클에서 **프로필 카드 하단(좌측 컬럼)** 으로 이동
+- 개인 목표 클릭 시 프로필 아래에 연결 메모가 표시됨
+- 리스트 뷰 행 클릭(`selectGoalNotes`): notes panel만 열기
+- 캘린더 칩 클릭(`showGoalDetail`): notes panel + 수정 폼 열기
+- 수정 버튼만 edit form 활성화
+
+---
+
+### 4. 프로젝트 설정 버튼 (lab-project.html)
+
+- `프로젝트 설정` 버튼: 기존 관리자(isAdminView)만 활성화 → **프로젝트 생성자(isCreator)도 사용 가능**으로 변경
+- `openProjectEditPanel()`, `saveProjectEdit()` 동일 조건 적용
+
+---
+
+### 5. 페이지네이션 적용 (2026-06-15)
+
+#### lab-member.html
+
+| 섹션 | 페이지당 항목 수 | 변수 |
+|------|--------------|------|
+| 연구 목표 | 5개 | `GOAL_PAGE_SIZE = 5` (기존 유지) |
+| 메모/피드백 | **6개 (신규)** | `NOTE_PAGE_SIZE = 6`, `notePage` |
+| 참여 팀 프로젝트 | **3개 (신규)** | `PROJECT_PAGE_SIZE = 3`, `projectPage` |
+| 랩미팅 기록 | **6개 (4→6 변경)** | `MEMBER_MEETINGS_PAGE_SIZE = 6` |
+
+- `renderNotes()`: 페이지 슬라이싱 + `renderNotePagination()` 호출, 페이지 이동 시 상세 패널 닫기
+- `renderMemberProjects()`: 페이지 슬라이싱 + `changeProjectPage()` 함수 추가
+- `changeNotePage()` / `changeProjectPage()` 함수 신규 추가
+
+#### lab-project.html
+
+| 섹션 | 페이지당 항목 수 | 변수 |
+|------|--------------|------|
+| 연구 목표 | 5개 | `GOAL_PAGE_SIZE = 5` (기존 유지) |
+| 메모/피드백 | **10개 (신규)** | `NOTE_PAGE_SIZE = 10`, `notePage` |
+
+- `renderProjectNotes()`: 페이지 슬라이싱 + `changeProjectNotePage()` 함수 추가
+- 목표 필터(`selectProjectGoalForNotes`) 변경 시 `notePage = 1`로 리셋
+
+---
+
+### 수정 파일 목록
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `style.css` | 캘린더 CSS 전면 교체, note-detail-subrow 추가, 테두리 방향 수정 |
+| `lab-member.html` | 캘린더 rewrite, 연결 메모 패널 위치 이동, 노트·프로젝트 페이지네이션 추가 |
+| `lab-project.html` | 캘린더 rewrite, 프로젝트 설정 권한 확장, 노트 페이지네이션 추가 |
+
+### 배포
+
+- `main` 브랜치 커밋 후 `git push origin main`
+- GitHub Pages: `https://hyeonjchoi.github.io/Lab_hompage/`

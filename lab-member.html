@@ -203,7 +203,11 @@
     var draggingGoalId = null;
     var resizingGoal = null;
     var memberMeetingsPage = 1;
-    var MEMBER_MEETINGS_PAGE_SIZE = 4;
+    var MEMBER_MEETINGS_PAGE_SIZE = 6;
+    var notePage = 1;
+    var NOTE_PAGE_SIZE = 6;
+    var projectPage = 1;
+    var PROJECT_PAGE_SIZE = 3;
     var editingNoteId = null;
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -878,17 +882,22 @@
     var selectedNoteId = null;
 
     function renderNotes() {
-      var notes = labData.memberNotes
+      var allNotes = labData.memberNotes
         .filter(function (note) { return note.memberId === currentMember.id; })
         .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); });
       var grid = document.getElementById('member-note-list');
-      if (!notes.length) {
+      if (!allNotes.length) {
         grid.innerHTML = '<p class="lab-empty">저장된 메모나 피드백이 없습니다.</p>';
         var detailEl = document.getElementById('member-note-detail');
         if (detailEl) { detailEl.hidden = true; selectedNoteId = null; }
         return;
       }
-      grid.innerHTML = notes.map(function(note) {
+      var totalNotePages = Math.max(1, Math.ceil(allNotes.length / NOTE_PAGE_SIZE));
+      if (notePage > totalNotePages) notePage = totalNotePages;
+      if (notePage < 1) notePage = 1;
+      var noteStart = (notePage - 1) * NOTE_PAGE_SIZE;
+      var visibleNotes = allNotes.slice(noteStart, noteStart + NOTE_PAGE_SIZE);
+      grid.innerHTML = visibleNotes.map(function(note) {
         var typeLabel = note.type === 'feedback' ? '피드백' : '메모';
         var preview = (note.text || '').slice(0, 100);
         var isSel = selectedNoteId === note.id;
@@ -903,11 +912,28 @@
             '<span class="note-sticky-reply-badge">' + escHtml(note.authorName || '') + '</span>' +
           '</div>' +
         '</article>';
-      }).join('');
+      }).join('') + renderNotePagination(totalNotePages, allNotes.length);
       if (selectedNoteId) {
-        var sel = notes.find(function(n) { return n.id === selectedNoteId; });
+        var sel = allNotes.find(function(n) { return n.id === selectedNoteId; });
         if (sel) { renderMemberNoteDetail(sel); } else { selectedNoteId = null; document.getElementById('member-note-detail').hidden = true; }
       }
+    }
+
+    function renderNotePagination(totalPages, totalCount) {
+      if (totalPages <= 1) return '';
+      return '<div class="minutes-pagination" aria-label="메모 페이지 이동">' +
+        '<button type="button" class="btn-sm" onclick="changeNotePage(-1)"' + (notePage === 1 ? ' disabled' : '') + '>이전</button>' +
+        '<span>' + notePage + ' / ' + totalPages + ' · 총 ' + totalCount + '개</span>' +
+        '<button type="button" class="btn-sm" onclick="changeNotePage(1)"' + (notePage === totalPages ? ' disabled' : '') + '>다음</button>' +
+      '</div>';
+    }
+
+    function changeNotePage(delta) {
+      notePage += delta;
+      selectedNoteId = null;
+      var detailEl = document.getElementById('member-note-detail');
+      if (detailEl) detailEl.hidden = true;
+      renderNotes();
     }
 
     function selectMemberNote(noteId) {
@@ -1121,17 +1147,22 @@
     function renderMemberProjects() {
       var list = document.getElementById('member-project-list');
       if (!list) return;
-      var projects = (labData.teamProjects || []).filter(function(p) {
+      var allProjects = (labData.teamProjects || []).filter(function(p) {
         return Array.isArray(p.memberIds) && p.memberIds.includes(currentMember.id);
       }).sort(function(a, b) {
         return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
       });
-      if (!projects.length) {
+      if (!allProjects.length) {
         list.innerHTML = '<p class="lab-empty">참여 중인 팀 프로젝트가 없습니다.</p>';
         return;
       }
+      var totalProjectPages = Math.max(1, Math.ceil(allProjects.length / PROJECT_PAGE_SIZE));
+      if (projectPage > totalProjectPages) projectPage = totalProjectPages;
+      if (projectPage < 1) projectPage = 1;
+      var pStart = (projectPage - 1) * PROJECT_PAGE_SIZE;
+      var visibleProjects = allProjects.slice(pStart, pStart + PROJECT_PAGE_SIZE);
       var sLabel = function(s) { return { ready: '준비', active: '진행', completed: '종료', paused: '종료' }[s] || '진행'; };
-      list.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + projects.map(function(p) {
+      var cardsHtml = '<div style="display:flex;flex-direction:column;gap:8px">' + visibleProjects.map(function(p) {
         var isActive = p.status === 'active';
         var isCompleted = p.status === 'completed' || p.status === 'paused';
         var statusColor = isActive ? 'color:var(--red);font-weight:900' : isCompleted ? 'color:var(--muted)' : 'color:#166534;font-weight:900';
@@ -1146,6 +1177,19 @@
           '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '" style="flex-shrink:0;white-space:nowrap">프로젝트 방</a>' +
         '</article>';
       }).join('') + '</div>';
+      var pagHtml = totalProjectPages > 1
+        ? '<div class="minutes-pagination" aria-label="팀 프로젝트 페이지 이동">' +
+            '<button type="button" class="btn-sm" onclick="changeProjectPage(-1)"' + (projectPage === 1 ? ' disabled' : '') + '>이전</button>' +
+            '<span>' + projectPage + ' / ' + totalProjectPages + ' · 총 ' + allProjects.length + '개</span>' +
+            '<button type="button" class="btn-sm" onclick="changeProjectPage(1)"' + (projectPage === totalProjectPages ? ' disabled' : '') + '>다음</button>' +
+          '</div>'
+        : '';
+      list.innerHTML = cardsHtml + pagHtml;
+    }
+
+    function changeProjectPage(delta) {
+      projectPage += delta;
+      renderMemberProjects();
     }
 
     function formatKoreanDate(value) {
