@@ -1835,86 +1835,42 @@ main { background: var(--bg); }
 .goal-status-select.hold {
   background-color: var(--red-soft); color: var(--red);
 }
-.goal-calendar {
-  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
-  border: 1px solid var(--line); border-radius: 0; overflow: visible; background: #fff;
-}
-.goal-calendar-title {
-  grid-column: 1 / -1; padding: 12px 14px;
-  border-bottom: 1px solid var(--line); background: var(--bg);
-  color: var(--navy); font-weight: 900;
-}
+/* ── Goal calendar — week-grid approach ── */
+.goal-calendar-wrap { border: 1px solid var(--line); background: #fff; overflow: hidden; }
+.goal-calendar-title { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--bg); color: var(--navy); font-weight: 900; }
+.calendar-weekday-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.calendar-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .goal-calendar-cell {
-  min-height: 86px; padding: 7px;
+  min-height: 34px; padding: 5px 6px;
   border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
-  background: #fff; overflow: visible;
+  background: #fff;
 }
-.goal-calendar-cell:nth-child(7n + 1) {
-  border-right: none;
+.goal-calendar-cell.is-empty { background: #F9FAFB; }
+.goal-lane-bg {
+  height: 28px;
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  background: #fff;
 }
-.goal-calendar-cell.is-empty {
-  background: #F9FAFB;
-}
-.goal-calendar-items {
-  display: flex; flex-direction: column; gap: 2px; margin-top: 4px; position: relative;
-}
+.goal-lane-bg.is-empty { background: #F9FAFB; }
 .goal-calendar-chip {
-  max-width: 100%; border-radius: 0;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.goal-calendar-chip {
-  display: grid; grid-template-columns: 8px minmax(0, 1fr) 8px; align-items: center; gap: 4px;
-  min-height: 30px; padding: 4px 5px; border: 1px solid transparent;
-  cursor: grab; position: relative; z-index: 1; font-family: inherit; text-align: left;
-}
-.goal-calendar-chip.is-period-start {
-  width: calc((100% * var(--goal-span)) + (15px * (var(--goal-span) - 1)));
-  max-width: none;
-  z-index: 20;
-  position: relative;
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 6px; border-radius: 2px; border: 1px solid transparent;
+  margin: 2px 3px; cursor: pointer; font-family: inherit;
+  font-size: 0.72rem; font-weight: 700; text-align: left;
+  min-height: 22px; overflow: hidden; position: relative; z-index: 5;
 }
 .goal-calendar-chip strong {
-  grid-column: 2;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: inherit;
-  min-width: 0;
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit;
 }
-.goal-calendar-chip:hover {
-  outline: 2px solid rgba(0,0,0,0.22);
-  outline-offset: -1px;
-}
-.goal-calendar-chip.todo {
-  border-color: #D1D5DB;
-}
-.goal-calendar-chip.doing {
-  border-color: #BFDBFE;
-}
-.goal-calendar-chip.done {
-  border-color: #BFE7CD;
-}
-.goal-calendar-chip.hold {
-  border-color: #F3C2C7;
-}
-.goal-resize-handle {
-  display: block; width: 8px; height: 100%; min-height: 22px;
-  border-radius: 0; background: rgba(255, 255, 255, 0.62);
-  cursor: ew-resize;
-}
-.goal-resize-handle.start { grid-column: 1; }
-.goal-resize-handle.end { grid-column: 3; }
-.goal-resize-handle:hover {
-  background: rgba(255, 255, 255, 0.95);
-}
+.goal-calendar-chip:hover { outline: 2px solid rgba(0,0,0,0.22); outline-offset: -1px; }
+.goal-calendar-chip.todo  { border-color: #D1D5DB; }
+.goal-calendar-chip.doing { border-color: #BFDBFE; }
+.goal-calendar-chip.done  { border-color: #BFE7CD; }
+.goal-calendar-chip.hold  { border-color: #F3C2C7; }
+.goal-resize-handle { display: none; }
 .is-resizing-goal,
-.is-resizing-goal * {
-  cursor: ew-resize !important;
-  user-select: none;
-}
-.goal-calendar-status {
-  width: 66px; min-height: 22px; border: 1px solid rgba(0,0,0,0.08);
-  border-radius: 0; background: rgba(255,255,255,0.75);
-  font-family: inherit; font-size: 0.68rem; color: var(--ink); font-weight: 800;
-}
+.is-resizing-goal * { cursor: ew-resize !important; user-select: none; }
 .timeline-item,
 .note-card {
   padding: 15px; border: 1px solid var(--line); border-left: 4px solid transparent;
@@ -2252,8 +2208,9 @@ main { background: var(--bg); }
   margin-bottom: 12px;
 }
 .note-detail-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; display: block; }
-.note-detail-text { font-size: 0.88rem; line-height: 1.6; color: var(--ink); white-space: pre-wrap; word-break: keep-all; }
-.note-detail-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+.note-detail-text { font-size: 0.88rem; line-height: 1.6; color: var(--ink); white-space: pre-wrap; word-break: keep-all; overflow-wrap: break-word; }
+.note-detail-subrow { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+.note-detail-actions { display: flex; gap: 6px; align-items: center; }
 .note-detail-close { background: none; border: none; font-size: 0.8rem; font-weight: 900; color: var(--muted); cursor: pointer; padding: 2px 4px; }
 .note-detail-close:hover { color: var(--navy); }
 /* goal-linked note color overrides */
