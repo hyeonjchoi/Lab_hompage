@@ -713,6 +713,127 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 
 ---
 
+## 2026-06-15 — 팀 프로젝트 연구방 기능 추가 (2단계 완료)
+
+### 구현 개요
+
+구성원 다수가 함께 진행하는 팀 프로젝트를 위한 공유 연구방(`lab-project.html`)을 신설하고, 기존 페이지에 연동 기능을 추가했다. 이후 캘린더 뷰·댓글 시스템·폼 토글 등 2단계 개선사항도 함께 완료했다.
+
+---
+
+### Phase 1 — 팀 프로젝트 연구방 신설 및 기존 페이지 연동
+
+#### 수정/생성 파일
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `cap-data.js` | teamProject CRUD 메서드 + reply 메서드 추가 |
+| `lab.html` | 팀 프로젝트 섹션 추가 (생성 폼 + 프로젝트 카드 목록) |
+| `lab-member.html` | 참여 중인 팀 프로젝트 섹션 추가, 메모 폼 토글 처리 |
+| `lab-project.html` | 신규 생성 — 팀 프로젝트 전용 연구방 |
+| `style.css` | 팀 프로젝트 관련 CSS 클래스 추가 |
+
+#### 데이터 스키마 (`cap_lab_data.teamProjects[]`)
+
+```javascript
+{
+  id: 'project_' + Date.now(),
+  name, description, status: 'active'|'completed'|'paused',
+  memberIds: [userId, ...], createdBy, createdAt, updatedAt,
+  goals: [{ id, assigneeId, title, status, startDate, endDate, targetDate, category, memo, ... }],
+  notes: [{ id, type: 'memo'|'feedback', text, authorId, authorName, authorRole,
+            targetType, targetId, done, createdAt, updatedAt,
+            replies: [{ id, text, authorId, authorName, authorRole, createdAt }] }],
+  progress: [{ memberId, status, memo, updatedAt }],
+  meetings: [eventId, ...]
+}
+```
+
+#### 접근 권한 정책
+
+- 프로젝트 생성: 로그인한 모든 구성원 가능
+- 열람: 지도교수(admin) + 참여 구성원(member)만 가능 — 비구성원은 `lab.html`으로 리다이렉트
+- 목표 CRUD: 담당자(assigneeId) 본인 + admin
+- 진행상황 업데이트: 본인만
+- 메모/피드백 삭제: 작성자 본인 + admin
+- 프로젝트 설정 변경: admin만
+
+#### cap-data.js 추가 메서드
+
+- `_getLabData()`, `_saveLabData()` — 내부 헬퍼
+- `getTeamProjects()`, `getTeamProject(id)`, `addTeamProject()`, `updateTeamProject()`, `removeTeamProject()`, `getProjectsForMember(userId)`
+- `addProjectGoal()`, `updateProjectGoal()`, `removeProjectGoal()`
+- `addProjectNote()`, `updateProjectNote()`, `removeProjectNote()`
+- `addProjectNoteReply()`, `removeProjectNoteReply()`
+- `updateProjectProgress()` — upsert 패턴
+
+---
+
+### Phase 2 — 캘린더 뷰·댓글·폼 토글 개선
+
+#### lab-project.html 추가 기능
+
+1. **목표 리스트/캘린더 뷰 토글**
+   - 상단 `리스트 보기` / `일정 보기` 버튼으로 전환
+   - `setProjectGoalView()`, `updateGoalViewButtons()`
+   - `renderProjectGoalList()` — 기존 테이블 목록
+   - `renderProjectGoalCalendar()` — 월별 캘린더, 담당자 표시, 드래그/리사이즈 지원
+
+2. **캘린더 드래그 & 리사이즈**
+   - `dragPGoal()`, `allowPGoalDrop()`, `dropPGoalOnDate()`
+   - `startPGoalResize()`, `resizePGoalFromPointer()`, `finishPGoalResize()`
+   - 본인 담당 목표만 이동/리사이즈 가능
+
+3. **메모 폼 토글**
+   - "작성하기" 버튼 클릭 시 입력 폼이 열리고, 저장/취소 시 자동으로 닫힘
+   - `toggleProjectNoteForm()`, `cancelProjectNoteEdit()` 업데이트
+
+4. **댓글(Reply) 시스템**
+   - 각 메모/피드백 카드 하단에 "댓글 달기" 버튼 + 인라인 입력창
+   - `toggleReplyForm(noteId)`, `submitProjectReply(noteId)`, `deleteProjectReply(noteId, replyId)`
+   - 데이터 저장: `CAPData.addProjectNoteReply()` / `removeProjectNoteReply()`
+
+5. **기록 유형 통일**
+   - 팀 프로젝트 기록 유형을 '댓글/메모'에서 '메모/피드백'으로 변경
+   - 학생: 메모, 교수: 피드백 (자동 분류)
+
+#### lab-member.html 추가 기능
+
+1. **팀 프로젝트 목표 개인 연구 페이지 연동**
+   - `getAllMemberGoals()` — 개인 목표 + 참여 중인 팀 프로젝트에서 본인에게 배정된 목표를 통합 반환
+   - 리스트 뷰: 팀 목표에 `[프로젝트명]` 배지 표시, 수정 대신 "프로젝트 방 →" 링크 제공
+   - 캘린더 뷰: 팀 목표 칩에 `is-team-goal` 클래스 + 프로젝트명 라벨 표시, 드래그 비활성화
+   - 팀 목표 클릭 → `lab-project.html?id=[projectId]`로 이동
+
+2. **메모 최신순 정렬**
+   - 메모/피드백 목록이 최신 항목이 위에 먼저 표시되도록 정렬 변경
+
+3. **메모 폼 토글**
+   - "작성하기" 클릭 시 입력 폼 표시, 저장/취소 시 자동으로 닫힘
+
+#### style.css 추가 클래스
+
+```css
+.note-target               /* 연결 목표 표시 */
+.project-member-chip       /* 팀 멤버 칩 */
+.goal-source-badge         /* 팀 목표 출처 배지 */
+.goal-calendar-chip.is-team-goal  /* 캘린더 팀 목표 구분 스타일 */
+.goal-team-label           /* 캘린더 팀 목표 프로젝트명 */
+.note-replies              /* 댓글 영역 */
+.note-reply-list, .note-reply-card, .note-reply-meta
+.note-reply-actions, .note-reply-form-wrap
+.note-reply-toggle         /* 댓글 달기 버튼 */
+```
+
+### Git 및 배포
+
+- 커밋: 팀 프로젝트 연구방 기능 전체
+- 브랜치: `main`
+- 원격 저장소: `git@github.com:hyeonjchoi/Lab_hompage.git`
+- GitHub Pages 공개 URL: `https://hyeonjchoi.github.io/Lab_hompage/`
+
+---
+
 ## 다음 작업자를 위한 진행 규칙
 
 - 새 작업을 시작하기 전에 반드시 이 `log.md`를 먼저 확인한다.

@@ -514,6 +514,174 @@ const CAPData = {
   resetToDefaults() {
     localStorage.setItem('cap_members', JSON.stringify(CAP_DEFAULTS.members));
     localStorage.setItem('cap_content', JSON.stringify(CAP_DEFAULTS.content));
+  },
+
+  /* Team Projects — internal helpers */
+  _getLabData() {
+    var raw = localStorage.getItem('cap_lab_data');
+    var data = {};
+    try { data = raw ? JSON.parse(raw) : {}; } catch(e) {}
+    data.teamProjects = Array.isArray(data.teamProjects) ? data.teamProjects : [];
+    return data;
+  },
+  _saveLabData(data) {
+    localStorage.setItem('cap_lab_data', JSON.stringify(data));
+  },
+
+  /* Team Projects — CRUD */
+  getTeamProjects() {
+    return this._getLabData().teamProjects;
+  },
+  getTeamProject(id) {
+    return this.getTeamProjects().find(function(p) { return p.id === id; }) || null;
+  },
+  addTeamProject(project) {
+    var data = this._getLabData();
+    project.id = 'project_' + Date.now();
+    project.goals = Array.isArray(project.goals) ? project.goals : [];
+    project.notes = Array.isArray(project.notes) ? project.notes : [];
+    project.progress = Array.isArray(project.progress) ? project.progress : [];
+    project.meetings = Array.isArray(project.meetings) ? project.meetings : [];
+    project.status = project.status || 'active';
+    project.createdAt = new Date().toISOString();
+    project.updatedAt = new Date().toISOString();
+    data.teamProjects.push(project);
+    this._saveLabData(data);
+    return project.id;
+  },
+  updateTeamProject(id, updates) {
+    var data = this._getLabData();
+    var idx = data.teamProjects.findIndex(function(p) { return p.id === id; });
+    if (idx === -1) return false;
+    data.teamProjects[idx] = Object.assign({}, data.teamProjects[idx], updates);
+    data.teamProjects[idx].updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+    return true;
+  },
+  removeTeamProject(id) {
+    var data = this._getLabData();
+    data.teamProjects = data.teamProjects.filter(function(p) { return p.id !== id; });
+    this._saveLabData(data);
+  },
+  getProjectsForMember(userId) {
+    return this.getTeamProjects().filter(function(p) {
+      return Array.isArray(p.memberIds) && p.memberIds.includes(userId);
+    });
+  },
+
+  /* Project Goals */
+  addProjectGoal(projectId, goal) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return null;
+    goal.id = 'pgoal_' + Date.now();
+    goal.createdAt = new Date().toISOString();
+    goal.updatedAt = new Date().toISOString();
+    project.goals = Array.isArray(project.goals) ? project.goals : [];
+    project.goals.push(goal);
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+    return goal.id;
+  },
+  updateProjectGoal(projectId, goalId, updates) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return false;
+    var idx = (project.goals || []).findIndex(function(g) { return g.id === goalId; });
+    if (idx === -1) return false;
+    project.goals[idx] = Object.assign({}, project.goals[idx], updates);
+    project.goals[idx].updatedAt = new Date().toISOString();
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+    return true;
+  },
+  removeProjectGoal(projectId, goalId) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return;
+    project.goals = (project.goals || []).filter(function(g) { return g.id !== goalId; });
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+  },
+
+  /* Project Notes/Comments */
+  addProjectNote(projectId, note) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return null;
+    note.id = 'pnote_' + Date.now();
+    note.done = !!note.done;
+    note.createdAt = new Date().toISOString();
+    note.updatedAt = new Date().toISOString();
+    project.notes = Array.isArray(project.notes) ? project.notes : [];
+    project.notes.push(note);
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+    return note.id;
+  },
+  updateProjectNote(projectId, noteId, updates) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return false;
+    var idx = (project.notes || []).findIndex(function(n) { return n.id === noteId; });
+    if (idx === -1) return false;
+    project.notes[idx] = Object.assign({}, project.notes[idx], updates);
+    project.notes[idx].updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+    return true;
+  },
+  removeProjectNote(projectId, noteId) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return;
+    project.notes = (project.notes || []).filter(function(n) { return n.id !== noteId; });
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+  },
+
+  /* Project Note Replies */
+  addProjectNoteReply(projectId, noteId, reply) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return null;
+    var note = (project.notes || []).find(function(n) { return n.id === noteId; });
+    if (!note) return null;
+    note.replies = Array.isArray(note.replies) ? note.replies : [];
+    reply.id = 'preply_' + Date.now();
+    reply.createdAt = new Date().toISOString();
+    note.replies.push(reply);
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+    return reply.id;
+  },
+  removeProjectNoteReply(projectId, noteId, replyId) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return;
+    var note = (project.notes || []).find(function(n) { return n.id === noteId; });
+    if (!note) return;
+    note.replies = (note.replies || []).filter(function(r) { return r.id !== replyId; });
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+  },
+
+  /* Project Progress (per-member within project) */
+  updateProjectProgress(projectId, memberId, status, memo) {
+    var data = this._getLabData();
+    var project = data.teamProjects.find(function(p) { return p.id === projectId; });
+    if (!project) return false;
+    project.progress = Array.isArray(project.progress) ? project.progress : [];
+    var existing = project.progress.find(function(item) { return item.memberId === memberId; });
+    if (existing) {
+      existing.status = status;
+      existing.memo = memo;
+      existing.updatedAt = new Date().toISOString();
+    } else {
+      project.progress.push({ memberId: memberId, status: status, memo: memo, updatedAt: new Date().toISOString() });
+    }
+    project.updatedAt = new Date().toISOString();
+    this._saveLabData(data);
+    return true;
   }
 };
 

@@ -129,8 +129,12 @@
             <span class="lab-kicker">Memo</span>
             <h2>메모와 피드백</h2>
           </div>
+          <div class="lab-panel-actions">
+            <button type="button" class="btn-sm primary" onclick="toggleNoteForm()">작성하기</button>
+          </div>
         </div>
-        <form class="member-note-form" onsubmit="saveMemberNote(event)">
+        <div class="note-list" id="member-note-list"></div>
+        <form class="member-note-form" id="member-note-form" onsubmit="saveMemberNote(event)" hidden>
           <div class="form-group">
             <label for="member-note-type">기록 유형</label>
             <select id="member-note-type">
@@ -147,8 +151,21 @@
             <button class="save-btn" type="submit" id="member-note-submit">기록 저장</button>
           </div>
         </form>
-        <div class="note-list" id="member-note-list"></div>
       </article>
+    </section>
+
+    <section class="lab-board" aria-labelledby="member-projects-title" style="margin-top:32px">
+      <div class="lab-panel-head compact">
+        <div>
+          <span class="lab-kicker">Team Projects</span>
+          <h2 id="member-projects-title">참여 중인 팀 프로젝트</h2>
+          <p class="lab-panel-sub">공동 참여 중인 팀 프로젝트 목록입니다. LAB 페이지에서 새 프로젝트를 만들 수 있습니다.</p>
+        </div>
+        <div class="lab-panel-actions">
+          <a class="btn-sm" href="lab.html">LAB 페이지</a>
+        </div>
+      </div>
+      <div class="progress-grid" id="member-project-list"></div>
     </section>
   </main>
 
@@ -220,6 +237,7 @@
       data.events.forEach(function (event) {
         event.attendees = Array.isArray(event.attendees) ? event.attendees : [];
       });
+      data.teamProjects = Array.isArray(data.teamProjects) ? data.teamProjects : [];
       return data;
     }
 
@@ -244,6 +262,7 @@
       renderGoals();
       renderMeetings();
       renderNotes();
+      renderMemberProjects();
       if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'member', memberId: currentMember.id });
     }
 
@@ -291,8 +310,26 @@
         .sort(function (a, b) { return String(a.startDate || a.targetDate || '').localeCompare(String(b.startDate || b.targetDate || '')); });
     }
 
+    function getAllMemberGoals() {
+      var personal = labData.memberGoals
+        .filter(function(g) { return g.memberId === currentMember.id; })
+        .map(function(g) { return Object.assign({}, g, { _source: 'personal' }); });
+      var teamGoals = [];
+      (labData.teamProjects || []).forEach(function(p) {
+        if (!(Array.isArray(p.memberIds) && p.memberIds.includes(currentMember.id))) return;
+        (p.goals || []).forEach(function(g) {
+          if (g.assigneeId === currentMember.id) {
+            teamGoals.push(Object.assign({}, g, { _source: 'project', _projectId: p.id, _projectName: p.name }));
+          }
+        });
+      });
+      return personal.concat(teamGoals).sort(function(a, b) {
+        return String(a.startDate || a.targetDate || '').localeCompare(String(b.startDate || b.targetDate || ''));
+      });
+    }
+
     function renderGoalList() {
-      var goals = getMemberGoals();
+      var goals = getAllMemberGoals();
       var totalPages = Math.max(1, Math.ceil(goals.length / GOAL_PAGE_SIZE));
       if (goalPage > totalPages) goalPage = totalPages;
       if (goalPage < 1) goalPage = 1;
@@ -300,13 +337,19 @@
       var visibleGoals = goals.slice(start, start + GOAL_PAGE_SIZE);
       document.getElementById('member-goals').innerHTML = goals.length ? '<div class="goal-table-wrap"><table class="goal-table">' +
         '<thead><tr><th>이름</th><th>상태</th><th>목표 날짜</th><th>메모사항</th><th></th></tr></thead><tbody>' + visibleGoals.map(function (goal) {
+        var isTeamGoal = goal._source === 'project';
         var statusControl = '<span class="goal-status ' + escHtml(goal.status || 'todo') + '">' + escHtml(goalStatusLabel(goal.status)) + '</span>';
-        var actions = isAdminView ? '' : '<div class="goal-row-actions">' +
-          '<button type="button" class="btn-sm" onclick="editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
-          '<button type="button" class="btn-sm danger" onclick="deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
-        '</div>';
+        var actions = isAdminView ? '' : (isTeamGoal
+          ? '<div class="goal-row-actions"><a class="btn-sm" href="lab-project.html?id=' + escHtml(goal._projectId) + '">프로젝트 방</a></div>'
+          : '<div class="goal-row-actions">' +
+              '<button type="button" class="btn-sm" onclick="editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
+              '<button type="button" class="btn-sm danger" onclick="deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
+            '</div>');
         return '<tr>' +
-          '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong><span>' + escHtml(goal.category || '목표') + '</span></td>' +
+          '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong>' +
+            '<span>' + escHtml(goal.category || '목표') + '</span>' +
+            (isTeamGoal ? '<span class="goal-source-badge">팀: ' + escHtml(goal._projectName || '팀 프로젝트') + '</span>' : '') +
+          '</td>' +
           '<td class="goal-status-cell">' + statusControl + '</td>' +
           '<td>' + escHtml(formatGoalDateRange(goal)) + '</td>' +
           '<td>' + escHtml(goal.memo || '-') + '</td>' +
@@ -316,7 +359,7 @@
     }
 
     function renderGoalCalendar() {
-      var goals = getMemberGoals();
+      var goals = getAllMemberGoals();
       var today = new Date();
       var year = today.getFullYear();
       var month = today.getMonth();
@@ -338,15 +381,18 @@
         cells.push('<div class="goal-calendar-cell" ondragover="allowGoalDrop(event)" ondrop="dropGoalOnDate(event,\'' + dateKey + '\')">' +
           '<div class="calendar-date">' + day + '</div>' +
           '<div class="goal-calendar-items">' + dayGoals.map(function (goal) {
+            var isTeamGoal = goal._source === 'project';
+            var canInteract = !isAdminView && !isTeamGoal;
             var firstVisibleDate = String(goal.startDate || goal.targetDate || '') < monthStartKey ? monthStartKey : (goal.startDate || goal.targetDate);
             var isContinuationStart = dateKey > firstVisibleDate && new Date(dateKey).getDay() === 0;
             if (dateKey !== firstVisibleDate && !isContinuationStart) return '';
             var weekRemaining = 7 - new Date(dateKey).getDay();
             var span = Math.min(getGoalVisibleDuration(goal, dateKey, monthEndKey), weekRemaining);
-            return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start" draggable="' + (!isAdminView) + '" onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:' + span + '">' +
-              (isAdminView ? '' : '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>') +
+            return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start' + (isTeamGoal ? ' is-team-goal' : '') + '" draggable="' + canInteract + '" onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:' + span + '">' +
+              (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
               '<strong>' + escHtml(goal.title) + '</strong>' +
-              (isAdminView ? '' : '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>') +
+              (isTeamGoal ? '<span class="goal-team-label">팀: ' + escHtml(goal._projectName || '팀 프로젝트') + '</span>' : '') +
+              (canInteract ? '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>' : '') +
             '</button>';
           }).join('') + '</div>' +
         '</div>');
@@ -409,7 +455,14 @@
 
     function showGoalDetail(goalId) {
       if (isAdminView) return;
-      editGoal(goalId);
+      var personalGoal = labData.memberGoals.find(function(g) { return g.id === goalId && g.memberId === currentMember.id; });
+      if (personalGoal) { editGoal(goalId); return; }
+      var foundProjectId = null;
+      (labData.teamProjects || []).forEach(function(p) {
+        if (foundProjectId) return;
+        if ((p.goals || []).some(function(g) { return g.id === goalId; })) foundProjectId = p.id;
+      });
+      if (foundProjectId) window.location.href = 'lab-project.html?id=' + foundProjectId;
     }
 
     function editGoal(goalId) {
@@ -683,6 +736,16 @@
       return note.authorName ? typeLabel + ' · ' + note.authorName : typeLabel;
     }
 
+    function toggleNoteForm() {
+      var form = document.getElementById('member-note-form');
+      if (!form) return;
+      form.hidden = !form.hidden;
+      if (!form.hidden) {
+        renderNoteForm();
+        document.getElementById('member-note-text').focus();
+      }
+    }
+
     function saveMemberNote(e) {
       e.preventDefault();
       var existing = editingNoteId ? labData.memberNotes.find(function (note) { return note.id === editingNoteId; }) : null;
@@ -706,6 +769,8 @@
       }
       saveLabData();
       resetNoteForm();
+      var form = document.getElementById('member-note-form');
+      if (form) form.hidden = true;
       renderNotes();
       if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'member', memberId: currentMember.id });
       showToast(existing ? '기록을 수정했습니다.' : (isAdminView ? '피드백을 저장했습니다.' : '개인 기록을 저장했습니다.'));
@@ -719,6 +784,8 @@
       document.getElementById('member-note-text').value = note.text || '';
       document.getElementById('member-note-submit').textContent = '기록 수정';
       document.getElementById('member-note-cancel').hidden = false;
+      var form = document.getElementById('member-note-form');
+      if (form) form.hidden = false;
       document.getElementById('member-note-text').focus();
     }
 
@@ -746,6 +813,8 @@
 
     function cancelNoteEdit() {
       resetNoteForm();
+      var form = document.getElementById('member-note-form');
+      if (form) form.hidden = true;
     }
 
     function resetNoteForm() {
@@ -753,6 +822,38 @@
       document.getElementById('member-note-text').value = '';
       document.getElementById('member-note-submit').textContent = '기록 저장';
       document.getElementById('member-note-cancel').hidden = true;
+    }
+
+    function renderMemberProjects() {
+      var list = document.getElementById('member-project-list');
+      if (!list) return;
+      var projects = (labData.teamProjects || []).filter(function(p) {
+        return Array.isArray(p.memberIds) && p.memberIds.includes(currentMember.id);
+      }).sort(function(a, b) {
+        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+      });
+      if (!projects.length) {
+        list.innerHTML = '<p class="lab-empty">참여 중인 팀 프로젝트가 없습니다. LAB 페이지에서 새 프로젝트를 만들 수 있습니다.</p>';
+        return;
+      }
+      var projectStatusLabel = function(s) {
+        return { active: '진행 중', completed: '완료', paused: '일시 중단' }[s] || '진행 중';
+      };
+      list.innerHTML = projects.map(function(p) {
+        var myProgress = (p.progress || []).find(function(item) { return item.memberId === currentMember.id; });
+        return '<article class="progress-card">' +
+          '<div class="progress-avatar" aria-hidden="true">팀</div>' +
+          '<div>' +
+            '<strong>' + escHtml(p.name) + '</strong>' +
+            '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + (p.memberIds || []).length + '명</span>' +
+            '<p>' + escHtml(p.description || '') + '</p>' +
+            (myProgress ? '<p style="font-size:0.8rem;color:var(--muted)">내 과제: ' + escHtml(myProgress.status || '') + '</p>' : '') +
+            '<div class="progress-actions">' +
+              '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '">프로젝트 방 →</a>' +
+            '</div>' +
+          '</div>' +
+        '</article>';
+      }).join('');
     }
 
     function formatKoreanDate(value) {

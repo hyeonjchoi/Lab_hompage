@@ -2182,3 +2182,23 @@ main { background: var(--bg); }
     width: 100%;
   }
 }
+
+/* Team Project */
+.note-target { display:block; margin-bottom:6px; color:var(--navy); font-size:0.76rem; font-weight:900; }
+.project-member-chip { display:inline-flex; align-items:center; gap:4px; background:var(--blue-soft); color:var(--navy); border-radius:20px; padding:3px 10px; font-size:0.82rem; font-weight:700; }
+
+/* Goal source badge (team project goal in individual page) */
+.goal-source-badge { display:inline-flex; align-items:center; background:var(--navy); color:#fff; font-size:0.64rem; font-weight:900; padding:1px 7px; border-radius:10px; margin-left:5px; white-space:nowrap; vertical-align:middle; }
+.goal-calendar-chip.is-team-goal { border-left:3px solid var(--red); background:rgba(181,31,43,0.08); }
+.goal-team-label { font-size:0.64rem; opacity:0.8; display:block; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Note reply system */
+.note-replies { margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+.note-reply-list { display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
+.note-reply-card { background:var(--bg); border-radius:var(--radius); padding:8px 12px; font-size:0.85rem; }
+.note-reply-meta { color:var(--muted); font-size:0.75rem; margin-bottom:3px; display:block; }
+.note-reply-actions { display:flex; gap:6px; margin-top:4px; }
+.note-reply-form-wrap { display:flex; gap:6px; align-items:flex-end; margin-top:6px; }
+.note-reply-form-wrap textarea { flex:1; min-height:44px; font-size:0.84rem; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-family:inherit; resize:vertical; }
+.note-reply-toggle { background:none; border:none; color:var(--navy-2); font-size:0.78rem; font-weight:700; cursor:pointer; padding:2px 0; display:block; margin-top:4px; }
+.note-reply-toggle:hover { text-decoration:underline; }

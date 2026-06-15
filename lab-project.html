@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KW CAP Lab 팀 프로젝트 연구 공간">
+  <title>팀 프로젝트 | KW CAP Lab</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#183A5A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CAP Lab">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=magazine-v1-5-wordbreak">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="광운대학교 소비자광고심리 연구실 홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+        <a class="lab-nav-link" href="lab.html" hidden>LAB<small>Members</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <main id="main" class="lab-page member-lab-page">
+    <section class="lab-hero">
+      <div>
+        <span class="tagline">Team Project</span>
+        <h1 id="project-page-title">팀 프로젝트 연구 공간</h1>
+        <p id="project-page-lead">공동 연구 목표, 구성원별 과제 현황과 댓글을 한 곳에서 확인합니다.</p>
+      </div>
+      <div class="lab-quick-actions">
+        <a class="btn-sm" href="lab.html">← LAB으로 돌아가기</a>
+        <button type="button" class="btn-sm primary" id="progress-update-btn" onclick="openProgressUpdatePanel()" hidden>내 과제 업데이트</button>
+        <button type="button" class="btn-sm primary" id="project-admin-edit-btn" onclick="openProjectEditPanel()" hidden>프로젝트 설정</button>
+      </div>
+    </section>
+
+    <section class="member-record-grid">
+      <article class="lab-board member-profile-summary" id="project-info-card">
+        <span class="lab-kicker">Project Info</span>
+        <div id="project-info-content"></div>
+      </article>
+
+      <article class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Goals</span>
+            <h2>연구 목표</h2>
+          </div>
+          <div class="goal-view-toggle" aria-label="목표 표시 방식">
+            <button type="button" class="btn-sm primary" id="goal-add-button" onclick="openProjectGoalForm()">목표 추가</button>
+            <button type="button" class="btn-sm primary" id="pgoal-list-button" onclick="setProjectGoalView('list')">리스트보기</button>
+            <button type="button" class="btn-sm" id="pgoal-calendar-button" onclick="setProjectGoalView('calendar')">일정보기</button>
+          </div>
+        </div>
+        <p class="lab-empty compact" id="goal-readonly-note" hidden>관리자 권한으로는 목표 내역을 확인할 수만 있습니다.</p>
+        <div id="project-goals"></div>
+        <form class="goal-form" id="project-goal-form" onsubmit="saveProjectGoal(event)" hidden>
+          <div class="form-group">
+            <label for="pgoal-assignee">담당 구성원</label>
+            <select id="pgoal-assignee"></select>
+          </div>
+          <div class="form-group">
+            <label for="pgoal-title">목표 내용</label>
+            <input id="pgoal-title" required placeholder="예: 파일럿 설문 설계">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pgoal-status">달성 상태</label>
+              <select id="pgoal-status">
+                <option value="todo">예정</option>
+                <option value="doing">진행 중</option>
+                <option value="done">완료</option>
+                <option value="hold">보류</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pgoal-start-date">시작 날짜</label>
+              <input id="pgoal-start-date" type="date" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pgoal-end-date">종료 날짜</label>
+              <input id="pgoal-end-date" type="date" required>
+            </div>
+            <div class="form-group">
+              <label for="pgoal-category">분류</label>
+              <input id="pgoal-category" placeholder="예: 연구, 수업, 논문">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pgoal-memo">메모사항</label>
+            <textarea id="pgoal-memo" placeholder="필요한 준비물, 확인할 내용, 다음 액션을 적어두세요."></textarea>
+          </div>
+          <div class="goal-form-actions">
+            <button class="btn-sm" type="button" id="pgoal-cancel-button" onclick="cancelProjectGoalEdit()" hidden>수정 취소</button>
+            <button class="save-btn" type="submit" id="pgoal-submit-button">목표 저장</button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <section class="member-record-grid">
+      <article class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Task Status</span>
+            <h2>구성원 과제 현황</h2>
+            <p class="lab-panel-sub">각 구성원의 이 프로젝트 내 과제 진행 상황입니다.</p>
+          </div>
+        </div>
+        <div id="project-member-progress-panel">
+          <div id="project-progress-update-form" hidden style="border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+            <p style="font-weight:700;margin:0 0 12px">내 과제 진행상황 업데이트</p>
+            <form onsubmit="saveProjectProgress(event)">
+              <div class="form-group">
+                <label for="pp-status">과제 상태</label>
+                <input id="pp-status" required placeholder="예: 문헌 리뷰 진행 중">
+              </div>
+              <div class="form-group">
+                <label for="pp-memo">공유 메모</label>
+                <textarea id="pp-memo" placeholder="현재 진행 사항과 다음 액션을 적어주세요."></textarea>
+              </div>
+              <div class="drawer-actions" style="margin-top:12px">
+                <button type="button" class="btn-sm" onclick="closeProgressUpdatePanel()">취소</button>
+                <button type="submit" class="save-btn">업데이트 저장</button>
+              </div>
+            </form>
+          </div>
+          <div class="progress-grid" id="project-member-progress"></div>
+        </div>
+      </article>
+
+      <article class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Memo</span>
+            <h2>메모와 피드백</h2>
+            <p class="lab-panel-sub">메모나 피드백을 작성하고, 각 기록에 댓글을 달 수 있습니다.</p>
+          </div>
+          <div class="lab-panel-actions">
+            <button type="button" class="btn-sm primary" onclick="toggleProjectNoteForm()">작성하기</button>
+          </div>
+        </div>
+        <div class="note-list" id="project-note-list"></div>
+        <form class="member-note-form" id="project-note-form-el" onsubmit="saveProjectNote(event)" hidden>
+          <div class="form-group" id="pnote-type-group">
+            <label for="pnote-type">기록 유형</label>
+            <select id="pnote-type">
+              <option value="memo">메모</option>
+              <option value="feedback">피드백</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="pnote-target">연결 목표 <small style="font-weight:400">(선택)</small></label>
+            <select id="pnote-target">
+              <option value="">프로젝트 전체</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="pnote-text">내용</label>
+            <textarea id="pnote-text" required placeholder="메모, 아이디어, 피드백을 남겨주세요."></textarea>
+          </div>
+          <div class="member-note-actions">
+            <button class="btn-sm" type="button" id="pnote-cancel" onclick="cancelProjectNoteEdit()" hidden>수정 취소</button>
+            <button class="save-btn" type="submit" id="pnote-submit">기록 저장</button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <div id="project-edit-panel" hidden style="margin-top:32px">
+      <div class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Settings</span>
+            <h2>프로젝트 설정</h2>
+          </div>
+          <div class="lab-panel-actions">
+            <button type="button" class="btn-sm" onclick="closeProjectEditPanel()">닫기</button>
+          </div>
+        </div>
+        <form onsubmit="saveProjectEdit(event)" style="margin-top:16px">
+          <div class="form-group">
+            <label for="pedit-name">프로젝트 이름</label>
+            <input id="pedit-name" required>
+          </div>
+          <div class="form-group">
+            <label for="pedit-desc">설명</label>
+            <textarea id="pedit-desc"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="pedit-status">프로젝트 상태</label>
+            <select id="pedit-status">
+              <option value="active">진행 중</option>
+              <option value="completed">완료</option>
+              <option value="paused">일시 중단</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="member-check-actions"><label>참여 구성원</label><button type="button" class="btn-sm" onclick="selectAllEditMembers()">전체 선택</button></div>
+            <div class="member-check-grid" id="pedit-members"></div>
+          </div>
+          <div class="drawer-actions" style="margin-top:16px">
+            <button type="button" class="btn-sm" onclick="closeProjectEditPanel()">취소</button>
+            <button type="submit" class="save-btn">설정 저장</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897) · Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="cap-data.js?v=axes-awards"></script>
+  <script src="cap-auth.js?v=lab"></script>
+  <script src="cap-notifications.js?v=lab-alerts"></script>
+  <script>
+    var LAB_KEY = 'cap_lab_data';
+    var labData = null;
+    var currentProject = null;
+    var currentSession = null;
+    var isAdminView = false;
+    var isMember = false;
+    var editingGoalId = null;
+    var editingNoteId = null;
+    var goalPage = 1;
+    var GOAL_PAGE_SIZE = 5;
+    var activeGoalView = 'list';
+    var draggingPGoalId = null;
+    var resizingPGoal = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      CAPAuth.requireLogin(true);
+      currentSession = CAPAuth.getSession();
+
+      var params = new URLSearchParams(window.location.search);
+      var projectId = params.get('id');
+      if (!projectId) { window.location.href = 'lab.html'; return; }
+
+      labData = loadLabData();
+      currentProject = (labData.teamProjects || []).find(function(p) { return p.id === projectId; });
+
+      if (!currentProject) {
+        document.getElementById('main').innerHTML = '<div class="lab-board" style="margin:32px auto;max-width:640px"><p class="lab-empty">프로젝트를 찾을 수 없습니다. <a href="lab.html">LAB 페이지로 돌아가기</a></p></div>';
+        return;
+      }
+
+      isAdminView = !!(currentSession && currentSession.role === 'admin');
+      isMember = Array.isArray(currentProject.memberIds) && currentProject.memberIds.includes(currentSession ? currentSession.userId : '');
+
+      if (!isAdminView && !isMember) {
+        window.location.href = 'lab.html';
+        return;
+      }
+
+      renderProjectPage();
+    });
+
+    function loadLabData() {
+      var raw = localStorage.getItem(LAB_KEY);
+      var data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch(e) {}
+      data.events = Array.isArray(data.events) ? data.events : [];
+      data.minutes = Array.isArray(data.minutes) ? data.minutes : [];
+      data.teamProjects = Array.isArray(data.teamProjects) ? data.teamProjects : [];
+      data.teamProjects.forEach(function(p) {
+        p.goals = Array.isArray(p.goals) ? p.goals : [];
+        p.notes = Array.isArray(p.notes) ? p.notes : [];
+        p.progress = Array.isArray(p.progress) ? p.progress : [];
+        p.memberIds = Array.isArray(p.memberIds) ? p.memberIds : [];
+      });
+      return data;
+    }
+
+    function reloadProject() {
+      labData = loadLabData();
+      currentProject = (labData.teamProjects || []).find(function(p) { return p.id === currentProject.id; });
+    }
+
+    function renderProjectPage() {
+      renderProjectHeader();
+      renderProjectInfo();
+      renderProjectGoals();
+      renderProjectMemberProgress();
+      renderProjectNotes();
+      renderNoteTargetOptions();
+      renderGoalAssigneeOptions();
+      renderGoalPermissions();
+      renderNoteForm();
+      updateGoalViewButtons();
+    }
+
+    function renderProjectHeader() {
+      document.getElementById('project-page-title').textContent = currentProject.name;
+      document.getElementById('project-page-lead').textContent = currentProject.description || '팀 공동 연구 공간입니다.';
+
+      var progressBtn = document.getElementById('progress-update-btn');
+      var adminEditBtn = document.getElementById('project-admin-edit-btn');
+      if (progressBtn) progressBtn.hidden = !isMember || isAdminView;
+      if (adminEditBtn) adminEditBtn.hidden = !isAdminView;
+    }
+
+    function renderProjectInfo() {
+      var statusLabel = { active: '진행 중', completed: '완료', paused: '일시 중단' }[currentProject.status] || '진행 중';
+      var creator = CAPData.getMember(currentProject.createdBy);
+      var memberChips = (currentProject.memberIds || []).map(function(id) {
+        var m = CAPData.getMember(id);
+        var name = m ? m.name : id + '(탈퇴)';
+        var char = m ? (m.profile.avatarEmoji || m.avatarChar || name.charAt(0)) : '?';
+        return '<span class="project-member-chip" title="' + escHtml(name) + '">' + escHtml(char) + ' ' + escHtml(name) + '</span>';
+      }).join('');
+
+      document.getElementById('project-info-content').innerHTML =
+        '<div class="member-profile-avatar" style="font-size:1.5rem">팀</div>' +
+        '<strong>' + escHtml(currentProject.name) + '</strong>' +
+        '<span>' + escHtml(statusLabel) + ' · 목표 ' + (currentProject.goals || []).length + '개</span>' +
+        '<p style="margin:8px 0 4px;font-size:0.85rem;color:var(--muted)">' + formatKoreanDateTime(currentProject.createdAt) + ' · ' + escHtml(creator ? creator.name : '구성원') + ' 생성</p>' +
+        '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">' + memberChips + '</div>';
+    }
+
+    function renderGoalPermissions() {
+      var addBtn = document.getElementById('goal-add-button');
+      var note = document.getElementById('goal-readonly-note');
+      var form = document.getElementById('project-goal-form');
+      if (addBtn) addBtn.hidden = isAdminView;
+      if (note) note.hidden = !isAdminView;
+      if (form && isAdminView) form.hidden = true;
+    }
+
+    function setProjectGoalView(view) {
+      activeGoalView = view === 'calendar' ? 'calendar' : 'list';
+      renderProjectGoals();
+    }
+
+    function updateGoalViewButtons() {
+      var listBtn = document.getElementById('pgoal-list-button');
+      var calBtn = document.getElementById('pgoal-calendar-button');
+      if (listBtn) listBtn.classList.toggle('primary', activeGoalView === 'list');
+      if (calBtn) calBtn.classList.toggle('primary', activeGoalView === 'calendar');
+    }
+
+    function renderProjectGoals() {
+      updateGoalViewButtons();
+      if (activeGoalView === 'calendar') {
+        renderProjectGoalCalendar();
+      } else {
+        renderProjectGoalList();
+      }
+    }
+
+    function renderProjectGoalList() {
+      var goals = (currentProject.goals || []).slice().sort(function(a, b) {
+        return String(a.startDate || '').localeCompare(String(b.startDate || ''));
+      });
+      var totalPages = Math.max(1, Math.ceil(goals.length / GOAL_PAGE_SIZE));
+      if (goalPage > totalPages) goalPage = totalPages;
+      if (goalPage < 1) goalPage = 1;
+      var start = (goalPage - 1) * GOAL_PAGE_SIZE;
+      var visibleGoals = goals.slice(start, start + GOAL_PAGE_SIZE);
+
+      document.getElementById('project-goals').innerHTML = goals.length
+        ? '<div class="goal-table-wrap"><table class="goal-table">' +
+          '<thead><tr><th>담당자</th><th>목표</th><th>상태</th><th>기간</th><th>메모</th><th></th></tr></thead><tbody>' +
+          visibleGoals.map(function(goal) {
+            var assignee = CAPData.getMember(goal.assigneeId);
+            var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+            var actions = (isAdminView || isMyGoal)
+              ? '<div class="goal-row-actions">' +
+                  (!isAdminView ? '<button type="button" class="btn-sm" onclick="editProjectGoal(\'' + escHtml(goal.id) + '\')">수정</button>' : '') +
+                  '<button type="button" class="btn-sm danger" onclick="deleteProjectGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
+                '</div>'
+              : '';
+            return '<tr>' +
+              '<td><span>' + escHtml(assignee ? assignee.name : '(탈퇴)') + '</span></td>' +
+              '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong><span>' + escHtml(goal.category || '목표') + '</span></td>' +
+              '<td class="goal-status-cell"><span class="goal-status ' + escHtml(goal.status || 'todo') + '">' + escHtml(goalStatusLabel(goal.status)) + '</span></td>' +
+              '<td>' + escHtml(formatGoalDateRange(goal)) + '</td>' +
+              '<td>' + escHtml(goal.memo || '-') + '</td>' +
+              '<td>' + actions + '</td>' +
+            '</tr>';
+          }).join('') +
+          '</tbody></table></div>' + renderGoalPagination(totalPages, goals.length)
+        : '<p class="lab-empty">아직 등록된 팀 연구 목표가 없습니다.</p>';
+    }
+
+    function renderProjectGoalCalendar() {
+      var goals = (currentProject.goals || []).slice().sort(function(a, b) {
+        return String(a.startDate || '').localeCompare(String(b.startDate || ''));
+      });
+      var today = new Date();
+      var year = today.getFullYear();
+      var month = today.getMonth();
+      var first = new Date(year, month, 1);
+      var firstDay = first.getDay();
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var monthStartKey = formatDateKey(first);
+      var monthEndKey = formatDateKey(new Date(year, month, daysInMonth));
+      var cells = ['<div class="goal-calendar-title">' + year + '년 ' + (month + 1) + '월 팀 목표 일정</div>'];
+      ['일', '월', '화', '수', '목', '금', '토'].forEach(function(label) {
+        cells.push('<div class="calendar-weekday">' + label + '</div>');
+      });
+      for (var blank = 0; blank < firstDay; blank++) {
+        cells.push('<div class="goal-calendar-cell is-empty"></div>');
+      }
+      for (var day = 1; day <= daysInMonth; day++) {
+        var dateKey = formatDateKey(new Date(year, month, day));
+        var dayGoals = goals.filter(function(goal) { return isDateInGoalRange(dateKey, goal); });
+        cells.push('<div class="goal-calendar-cell" ondragover="allowPGoalDrop(event)" ondrop="dropPGoalOnDate(event,\'' + dateKey + '\')">' +
+          '<div class="calendar-date">' + day + '</div>' +
+          '<div class="goal-calendar-items">' + dayGoals.map(function(goal) {
+            var assignee = CAPData.getMember(goal.assigneeId);
+            var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+            var canInteract = !isAdminView && isMyGoal;
+            var firstVisibleDate = String(goal.startDate || goal.targetDate || '') < monthStartKey ? monthStartKey : (goal.startDate || goal.targetDate);
+            var isContinuationStart = dateKey > firstVisibleDate && new Date(dateKey).getDay() === 0;
+            if (dateKey !== firstVisibleDate && !isContinuationStart) return '';
+            var weekRemaining = 7 - new Date(dateKey).getDay();
+            var span = Math.min(getGoalVisibleDuration(goal, dateKey, monthEndKey), weekRemaining);
+            return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start" draggable="' + canInteract + '" onclick="editProjectGoal(\'' + escHtml(goal.id) + '\')" ondragstart="dragPGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:' + span + '">' +
+              (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startPGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
+              '<strong>' + escHtml(goal.title) + '</strong>' +
+              (assignee ? '<span class="goal-team-label">' + escHtml(assignee.name) + '</span>' : '') +
+              (canInteract ? '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startPGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>' : '') +
+            '</button>';
+          }).join('') + '</div>' +
+        '</div>');
+      }
+      document.getElementById('project-goals').innerHTML = goals.length
+        ? '<div class="goal-calendar">' + cells.join('') + '</div>'
+        : '<p class="lab-empty">일정에 표시할 연구 목표가 없습니다.</p>';
+    }
+
+    function dragPGoal(e, goalId) {
+      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      if (!goal || resizingPGoal) { e.preventDefault(); return; }
+      var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+      if (!isMyGoal && !isAdminView) { e.preventDefault(); return; }
+      draggingPGoalId = goalId;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', goalId);
+    }
+
+    function allowPGoalDrop(e) { e.preventDefault(); }
+
+    function dropPGoalOnDate(e, dateKey) {
+      e.preventDefault();
+      var goalId = e.dataTransfer.getData('text/plain') || draggingPGoalId;
+      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      if (!goal) return;
+      var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+      if (!isMyGoal && !isAdminView) return;
+      var duration = getGoalDuration(goal);
+      CAPData.updateProjectGoal(currentProject.id, goalId, {
+        startDate: dateKey,
+        endDate: addDaysKey(dateKey, duration - 1),
+        targetDate: addDaysKey(dateKey, duration - 1)
+      });
+      draggingPGoalId = null;
+      reloadProject();
+      renderProjectGoals();
+      showToast('목표 기간을 변경했습니다.');
+    }
+
+    function startPGoalResize(e, goalId, edge) {
+      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      if (!goal) return;
+      var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+      if (!isMyGoal && !isAdminView) return;
+      e.preventDefault(); e.stopPropagation();
+      resizingPGoal = { goalId: goalId, edge: edge, startX: e.clientX,
+        originalStart: goal.startDate || goal.targetDate,
+        originalEnd: goal.endDate || goal.targetDate || goal.startDate };
+      document.body.classList.add('is-resizing-goal');
+      document.addEventListener('mousemove', resizePGoalFromPointer);
+      document.addEventListener('mouseup', finishPGoalResize);
+    }
+
+    function resizePGoalFromPointer(e) {
+      if (!resizingPGoal) return;
+      var goal = (currentProject.goals || []).find(function(g) { return g.id === resizingPGoal.goalId; });
+      if (!goal) return;
+      var cell = document.querySelector('.goal-calendar-cell:not(.is-empty)');
+      var cellWidth = cell ? cell.getBoundingClientRect().width : 96;
+      var deltaDays = Math.round((e.clientX - resizingPGoal.startX) / Math.max(48, cellWidth));
+      if (resizingPGoal.edge === 'start') {
+        var ns = addDaysKey(resizingPGoal.originalStart, deltaDays);
+        if (ns <= resizingPGoal.originalEnd) goal.startDate = ns;
+      } else {
+        var ne = addDaysKey(resizingPGoal.originalEnd, deltaDays);
+        if (ne >= resizingPGoal.originalStart) { goal.endDate = ne; goal.targetDate = ne; }
+      }
+      renderProjectGoalCalendar();
+    }
+
+    function finishPGoalResize() {
+      if (!resizingPGoal) return;
+      var goal = (currentProject.goals || []).find(function(g) { return g.id === resizingPGoal.goalId; });
+      if (goal) {
+        CAPData.updateProjectGoal(currentProject.id, resizingPGoal.goalId, {
+          startDate: goal.startDate, endDate: goal.endDate, targetDate: goal.targetDate || goal.endDate
+        });
+        reloadProject();
+        showToast('목표 기간을 조정했습니다.');
+      }
+      resizingPGoal = null;
+      document.body.classList.remove('is-resizing-goal');
+      document.removeEventListener('mousemove', resizePGoalFromPointer);
+      document.removeEventListener('mouseup', finishPGoalResize);
+      renderProjectGoals();
+    }
+
+    function isDateInGoalRange(dateKey, goal) {
+      var start = goal.startDate || goal.targetDate;
+      var end = goal.endDate || goal.targetDate || start;
+      return start && dateKey >= start && dateKey <= end;
+    }
+
+    function getGoalDuration(goal) {
+      var start = new Date(goal.startDate || goal.targetDate);
+      var end = new Date(goal.endDate || goal.targetDate || goal.startDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+      return Math.max(1, Math.round((end - start) / 86400000) + 1);
+    }
+
+    function getGoalVisibleDuration(goal, visibleStartKey, monthEndKey) {
+      var endKey = goal.endDate || goal.targetDate || visibleStartKey;
+      var visibleEndKey = endKey > monthEndKey ? monthEndKey : endKey;
+      var start = new Date(visibleStartKey);
+      var end = new Date(visibleEndKey);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+      return Math.max(1, Math.round((end - start) / 86400000) + 1);
+    }
+
+    function addDaysKey(dateKey, days) {
+      var date = new Date(dateKey);
+      date.setDate(date.getDate() + days);
+      return formatDateKey(date);
+    }
+
+    function formatDateKey(date) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    function renderGoalAssigneeOptions() {
+      var select = document.getElementById('pgoal-assignee');
+      if (!select) return;
+      var myId = currentSession ? currentSession.userId : '';
+      if (isAdminView) {
+        select.innerHTML = (currentProject.memberIds || []).map(function(id) {
+          var m = CAPData.getMember(id);
+          return '<option value="' + escHtml(id) + '">' + escHtml(m ? m.name : id) + '</option>';
+        }).join('');
+      } else {
+        var m = CAPData.getMember(myId);
+        select.innerHTML = '<option value="' + escHtml(myId) + '">' + escHtml(m ? m.name : myId) + '</option>';
+        select.disabled = true;
+      }
+    }
+
+    function openProjectGoalForm(forceOpen) {
+      if (isAdminView) return;
+      var form = document.getElementById('project-goal-form');
+      if (!forceOpen && !form.hidden) {
+        cancelProjectGoalEdit();
+        return;
+      }
+      form.hidden = false;
+      renderGoalAssigneeOptions();
+      document.getElementById('pgoal-title').focus();
+    }
+
+    function saveProjectGoal(e) {
+      e.preventDefault();
+      if (isAdminView) { showToast('관리자는 목표를 저장할 수 없습니다.'); return; }
+      var assigneeId = document.getElementById('pgoal-assignee').value;
+      var startDate = document.getElementById('pgoal-start-date').value;
+      var endDate = document.getElementById('pgoal-end-date').value || startDate;
+      if (endDate < startDate) { showToast('종료 날짜는 시작 날짜 이후로 입력해 주세요.'); return; }
+
+      if (editingGoalId) {
+        CAPData.updateProjectGoal(currentProject.id, editingGoalId, {
+          assigneeId: assigneeId,
+          title: document.getElementById('pgoal-title').value.trim(),
+          status: document.getElementById('pgoal-status').value,
+          startDate: startDate,
+          endDate: endDate,
+          targetDate: endDate,
+          category: document.getElementById('pgoal-category').value.trim() || '목표',
+          memo: document.getElementById('pgoal-memo').value.trim()
+        });
+        showToast('목표를 수정했습니다.');
+      } else {
+        CAPData.addProjectGoal(currentProject.id, {
+          assigneeId: assigneeId,
+          title: document.getElementById('pgoal-title').value.trim(),
+          status: document.getElementById('pgoal-status').value,
+          startDate: startDate,
+          endDate: endDate,
+          targetDate: endDate,
+          category: document.getElementById('pgoal-category').value.trim() || '목표',
+          memo: document.getElementById('pgoal-memo').value.trim(),
+          authorId: currentSession ? currentSession.userId : '',
+          authorName: currentSession ? currentSession.name : ''
+        });
+        showToast('목표를 저장했습니다.');
+      }
+      reloadProject();
+      cancelProjectGoalEdit();
+      renderProjectGoals();
+      renderNoteTargetOptions();
+    }
+
+    function editProjectGoal(goalId) {
+      if (isAdminView) return;
+      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      if (!goal) return;
+      if (currentSession && goal.assigneeId !== currentSession.userId && !isAdminView) {
+        showToast('담당자만 수정할 수 있습니다.');
+        return;
+      }
+      editingGoalId = goalId;
+      openProjectGoalForm(true);
+      document.getElementById('pgoal-title').value = goal.title || '';
+      document.getElementById('pgoal-status').value = goal.status || 'todo';
+      document.getElementById('pgoal-start-date').value = goal.startDate || '';
+      document.getElementById('pgoal-end-date').value = goal.endDate || '';
+      document.getElementById('pgoal-category').value = goal.category || '';
+      document.getElementById('pgoal-memo').value = goal.memo || '';
+      document.getElementById('pgoal-submit-button').textContent = '목표 수정';
+      document.getElementById('pgoal-cancel-button').hidden = false;
+      document.getElementById('project-goal-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function cancelProjectGoalEdit() {
+      editingGoalId = null;
+      document.getElementById('pgoal-title').value = '';
+      document.getElementById('pgoal-status').value = 'todo';
+      document.getElementById('pgoal-start-date').value = '';
+      document.getElementById('pgoal-end-date').value = '';
+      document.getElementById('pgoal-category').value = '';
+      document.getElementById('pgoal-memo').value = '';
+      document.getElementById('pgoal-submit-button').textContent = '목표 저장';
+      document.getElementById('pgoal-cancel-button').hidden = true;
+      document.getElementById('project-goal-form').hidden = true;
+    }
+
+    function deleteProjectGoal(goalId) {
+      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      if (!goal) return;
+      var canDelete = isAdminView || (currentSession && goal.assigneeId === currentSession.userId);
+      if (!canDelete) { showToast('담당자 또는 관리자만 삭제할 수 있습니다.'); return; }
+      if (!confirm('이 목표를 삭제할까요?')) return;
+      CAPData.removeProjectGoal(currentProject.id, goalId);
+      if (editingGoalId === goalId) cancelProjectGoalEdit();
+      reloadProject();
+      renderProjectGoals();
+      renderNoteTargetOptions();
+      showToast('목표를 삭제했습니다.');
+    }
+
+    function renderGoalPagination(totalPages, totalCount) {
+      if (totalPages <= 1) return '';
+      return '<div class="minutes-pagination" aria-label="목표 페이지 이동">' +
+        '<button type="button" class="btn-sm" onclick="changeGoalPage(-1)"' + (goalPage === 1 ? ' disabled' : '') + '>이전</button>' +
+        '<span>' + goalPage + ' / ' + totalPages + ' · 총 ' + totalCount + '개</span>' +
+        '<button type="button" class="btn-sm" onclick="changeGoalPage(1)"' + (goalPage === totalPages ? ' disabled' : '') + '>다음</button>' +
+      '</div>';
+    }
+
+    function changeGoalPage(delta) {
+      goalPage += delta;
+      renderProjectGoals();
+    }
+
+    function renderProjectMemberProgress() {
+      var grid = document.getElementById('project-member-progress');
+      if (!grid) return;
+      var progressByMember = {};
+      (currentProject.progress || []).forEach(function(item) { progressByMember[item.memberId] = item; });
+
+      grid.innerHTML = (currentProject.memberIds || []).map(function(memberId) {
+        var m = CAPData.getMember(memberId);
+        var name = m ? m.name : memberId + '(탈퇴)';
+        var char = m ? (m.profile.avatarEmoji || m.avatarChar || name.charAt(0)) : '?';
+        var progress = progressByMember[memberId] || { status: '과제 상태 추가 예정', memo: '' };
+        var isSelf = currentSession && currentSession.userId === memberId;
+        return '<article class="progress-card' + (isSelf ? ' is-self' : '') + '">' +
+          '<div class="progress-avatar" aria-hidden="true">' + escHtml(char) + '</div>' +
+          '<div>' +
+            '<strong>' + escHtml(name) + '</strong>' +
+            '<span>' + escHtml(progress.status) + '</span>' +
+            '<p>' + escHtml(progress.memo || '') + '</p>' +
+            (isSelf && !isAdminView ? '<div class="progress-actions"><button type="button" class="btn-sm" onclick="openProgressUpdatePanel()">내 과제 업데이트</button></div>' : '') +
+          '</div>' +
+        '</article>';
+      }).join('') || '<p class="lab-empty">구성원이 없습니다.</p>';
+    }
+
+    function openProgressUpdatePanel() {
+      if (!isMember || isAdminView) return;
+      var panel = document.getElementById('project-progress-update-form');
+      if (!panel) return;
+      var myProgress = (currentProject.progress || []).find(function(item) { return item.memberId === (currentSession ? currentSession.userId : ''); });
+      if (myProgress) {
+        var statusInput = document.getElementById('pp-status');
+        var memoInput = document.getElementById('pp-memo');
+        if (statusInput) statusInput.value = myProgress.status || '';
+        if (memoInput) memoInput.value = myProgress.memo || '';
+      }
+      panel.hidden = false;
+      var statusInput = document.getElementById('pp-status');
+      if (statusInput) statusInput.focus();
+    }
+
+    function closeProgressUpdatePanel() {
+      var panel = document.getElementById('project-progress-update-form');
+      if (panel) panel.hidden = true;
+    }
+
+    function saveProjectProgress(e) {
+      e.preventDefault();
+      if (!currentSession || !isMember) return;
+      var status = document.getElementById('pp-status').value.trim();
+      var memo = document.getElementById('pp-memo').value.trim();
+      CAPData.updateProjectProgress(currentProject.id, currentSession.userId, status, memo);
+      reloadProject();
+      closeProgressUpdatePanel();
+      renderProjectMemberProgress();
+      showToast('과제 진행상황을 업데이트했습니다.');
+    }
+
+    function toggleProjectNoteForm() {
+      var form = document.getElementById('project-note-form-el');
+      if (!form) return;
+      form.hidden = !form.hidden;
+      if (!form.hidden) {
+        editingNoteId = null;
+        document.getElementById('pnote-text').value = '';
+        document.getElementById('pnote-submit').textContent = '기록 저장';
+        document.getElementById('pnote-cancel').hidden = true;
+        renderNoteTargetOptions();
+        document.getElementById('pnote-text').focus();
+      }
+    }
+
+    function renderNoteTargetOptions() {
+      var select = document.getElementById('pnote-target');
+      if (!select) return;
+      var currentVal = select.value;
+      select.innerHTML = '<option value="">프로젝트 전체</option>' +
+        (currentProject.goals || []).map(function(g) {
+          return '<option value="' + escHtml(g.id) + '">' + escHtml(g.title) + '</option>';
+        }).join('');
+      select.value = currentVal || '';
+    }
+
+    function renderProjectNotes() {
+      var notes = (currentProject.notes || []).slice().sort(function(a, b) {
+        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+      });
+      document.getElementById('project-note-list').innerHTML = notes.length ? notes.map(function(note) {
+        var targetGoal = note.targetType === 'goal' && note.targetId
+          ? (currentProject.goals || []).find(function(g) { return g.id === note.targetId; })
+          : null;
+        var canManage = canManageProjectNote(note);
+        var replies = note.replies || [];
+        var replyListHtml = replies.length
+          ? '<div class="note-reply-list">' + replies.map(function(r) {
+              var canDeleteReply = currentSession && (currentSession.role === 'admin' || r.authorId === currentSession.userId);
+              return '<div class="note-reply-card">' +
+                '<span class="note-reply-meta">' + escHtml(r.authorName || '') + ' · ' + escHtml(formatKoreanDateTime(r.createdAt)) + '</span>' +
+                '<span>' + escHtml(r.text) + '</span>' +
+                (canDeleteReply ? '<div class="note-reply-actions"><button type="button" class="btn-sm danger" onclick="deleteProjectReply(\'' + escHtml(note.id) + '\',\'' + escHtml(r.id) + '\')">삭제</button></div>' : '') +
+              '</div>';
+            }).join('') + '</div>'
+          : '';
+        return '<article class="note-card' + (note.done ? ' is-done' : '') + '">' +
+          '<div class="note-card-head">' +
+            '<label class="note-check"><input type="checkbox" ' + (note.done ? 'checked ' : '') + 'onchange="toggleProjectNoteDone(\'' + escHtml(note.id) + '\')"> <span>' + (note.done ? '확인 완료' : '확인 필요') + '</span></label>' +
+            '<span>' + escHtml(projectNoteLabel(note)) + ' · ' + escHtml(formatKoreanDateTime(note.createdAt)) + '</span>' +
+          '</div>' +
+          (targetGoal ? '<small class="note-target">연결 목표: ' + escHtml(targetGoal.title) + '</small>' : '') +
+          '<p>' + escHtml(note.text) + '</p>' +
+          (canManage ? '<div class="note-card-actions">' +
+            '<button type="button" class="btn-sm" onclick="editProjectNote(\'' + escHtml(note.id) + '\')">수정</button>' +
+            '<button type="button" class="btn-sm danger" onclick="deleteProjectNote(\'' + escHtml(note.id) + '\')">삭제</button>' +
+          '</div>' : '') +
+          '<div class="note-replies">' +
+            replyListHtml +
+            (currentSession ? '<button type="button" class="note-reply-toggle" onclick="toggleReplyForm(\'' + escHtml(note.id) + '\')">댓글 달기</button>' +
+            '<div class="note-reply-form-wrap" id="reply-form-' + escHtml(note.id) + '" hidden>' +
+              '<textarea placeholder="댓글을 입력하세요..." rows="2"></textarea>' +
+              '<button type="button" class="btn-sm primary" onclick="submitProjectReply(\'' + escHtml(note.id) + '\')">등록</button>' +
+            '</div>' : '') +
+          '</div>' +
+        '</article>';
+      }).join('') : '<p class="lab-empty">저장된 메모나 피드백이 없습니다.</p>';
+    }
+
+    function projectNoteLabel(note) {
+      var typeLabel = note.type === 'feedback' ? '교수 피드백' : '메모';
+      return note.authorName ? typeLabel + ' · ' + note.authorName : typeLabel;
+    }
+
+    function canManageProjectNote(note) {
+      if (!currentSession) return false;
+      return currentSession.role === 'admin' || note.authorId === currentSession.userId;
+    }
+
+    function saveProjectNote(e) {
+      e.preventDefault();
+      if (!currentSession) return;
+      var targetId = document.getElementById('pnote-target').value;
+      var type = isAdminView ? 'feedback' : document.getElementById('pnote-type').value;
+
+      if (editingNoteId) {
+        var existing = (currentProject.notes || []).find(function(n) { return n.id === editingNoteId; });
+        if (!existing || !canManageProjectNote(existing)) return;
+        CAPData.updateProjectNote(currentProject.id, editingNoteId, {
+          type: type,
+          text: document.getElementById('pnote-text').value.trim(),
+          targetType: targetId ? 'goal' : 'project',
+          targetId: targetId || null
+        });
+        showToast('기록을 수정했습니다.');
+      } else {
+        CAPData.addProjectNote(currentProject.id, {
+          type: type,
+          text: document.getElementById('pnote-text').value.trim(),
+          authorId: currentSession.userId,
+          authorName: currentSession.name,
+          authorRole: currentSession.role,
+          targetType: targetId ? 'goal' : 'project',
+          targetId: targetId || null,
+          done: false
+        });
+        showToast('기록을 저장했습니다.');
+      }
+      reloadProject();
+      cancelProjectNoteEdit();
+      renderProjectNotes();
+    }
+
+    function editProjectNote(noteId) {
+      var note = (currentProject.notes || []).find(function(n) { return n.id === noteId; });
+      if (!note || !canManageProjectNote(note)) return;
+      editingNoteId = noteId;
+      if (!isAdminView) {
+        var typeSelect = document.getElementById('pnote-type');
+        if (typeSelect) typeSelect.value = note.type || 'memo';
+      }
+      var targetSelect = document.getElementById('pnote-target');
+      if (targetSelect) targetSelect.value = note.targetId || '';
+      document.getElementById('pnote-text').value = note.text || '';
+      document.getElementById('pnote-submit').textContent = '기록 수정';
+      document.getElementById('pnote-cancel').hidden = false;
+      var form = document.getElementById('project-note-form-el');
+      if (form) form.hidden = false;
+      document.getElementById('pnote-text').focus();
+    }
+
+    function deleteProjectNote(noteId) {
+      var note = (currentProject.notes || []).find(function(n) { return n.id === noteId; });
+      if (!note || !canManageProjectNote(note)) return;
+      if (!confirm('이 기록을 삭제할까요?')) return;
+      CAPData.removeProjectNote(currentProject.id, noteId);
+      reloadProject();
+      cancelProjectNoteEdit();
+      renderProjectNotes();
+      showToast('기록을 삭제했습니다.');
+    }
+
+    function toggleProjectNoteDone(noteId) {
+      var note = (currentProject.notes || []).find(function(n) { return n.id === noteId; });
+      if (!note) return;
+      CAPData.updateProjectNote(currentProject.id, noteId, { done: !note.done });
+      reloadProject();
+      renderProjectNotes();
+    }
+
+    function cancelProjectNoteEdit() {
+      editingNoteId = null;
+      document.getElementById('pnote-text').value = '';
+      document.getElementById('pnote-submit').textContent = '기록 저장';
+      document.getElementById('pnote-cancel').hidden = true;
+      var form = document.getElementById('project-note-form-el');
+      if (form) form.hidden = true;
+    }
+
+    function toggleReplyForm(noteId) {
+      var wrap = document.getElementById('reply-form-' + noteId);
+      if (!wrap) return;
+      wrap.hidden = !wrap.hidden;
+      if (!wrap.hidden) {
+        var ta = wrap.querySelector('textarea');
+        if (ta) { ta.value = ''; ta.focus(); }
+      }
+    }
+
+    function submitProjectReply(noteId) {
+      if (!currentSession) return;
+      var wrap = document.getElementById('reply-form-' + noteId);
+      if (!wrap) return;
+      var ta = wrap.querySelector('textarea');
+      var text = ta ? ta.value.trim() : '';
+      if (!text) return;
+      CAPData.addProjectNoteReply(currentProject.id, noteId, {
+        text: text,
+        authorId: currentSession.userId,
+        authorName: currentSession.name,
+        authorRole: currentSession.role
+      });
+      reloadProject();
+      renderProjectNotes();
+      showToast('댓글을 등록했습니다.');
+    }
+
+    function deleteProjectReply(noteId, replyId) {
+      if (!confirm('이 댓글을 삭제할까요?')) return;
+      CAPData.removeProjectNoteReply(currentProject.id, noteId, replyId);
+      reloadProject();
+      renderProjectNotes();
+      showToast('댓글을 삭제했습니다.');
+    }
+
+    function openProjectEditPanel() {
+      if (!isAdminView) return;
+      var panel = document.getElementById('project-edit-panel');
+      if (!panel) return;
+      document.getElementById('pedit-name').value = currentProject.name || '';
+      document.getElementById('pedit-desc').value = currentProject.description || '';
+      document.getElementById('pedit-status').value = currentProject.status || 'active';
+      var membersWrap = document.getElementById('pedit-members');
+      if (membersWrap) {
+        membersWrap.innerHTML = CAPData.getMembers().filter(function(m) { return m.group !== 'alumni'; }).map(function(m) {
+          var checked = (currentProject.memberIds || []).includes(m.id);
+          return '<label class="member-check"><input type="checkbox" name="pedit-member" value="' + escHtml(m.id) + '"' + (checked ? ' checked' : '') + '> <span>' + escHtml(m.name) + '</span></label>';
+        }).join('');
+      }
+      panel.hidden = false;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeProjectEditPanel() {
+      var panel = document.getElementById('project-edit-panel');
+      if (panel) panel.hidden = true;
+    }
+
+    function selectAllEditMembers() {
+      Array.from(document.querySelectorAll('input[name="pedit-member"]')).forEach(function(input) { input.checked = true; });
+    }
+
+    function saveProjectEdit(e) {
+      e.preventDefault();
+      if (!isAdminView) return;
+      var memberIds = Array.from(document.querySelectorAll('input[name="pedit-member"]:checked')).map(function(input) { return input.value; });
+      CAPData.updateTeamProject(currentProject.id, {
+        name: document.getElementById('pedit-name').value.trim(),
+        description: document.getElementById('pedit-desc').value.trim(),
+        status: document.getElementById('pedit-status').value,
+        memberIds: memberIds
+      });
+      reloadProject();
+      closeProjectEditPanel();
+      renderProjectPage();
+      showToast('프로젝트 설정을 저장했습니다.');
+    }
+
+    function renderNoteForm() {
+      var typeSelect = document.getElementById('pnote-type');
+      var textArea = document.getElementById('pnote-text');
+      if (isAdminView) {
+        if (typeSelect) typeSelect.parentElement.innerHTML = '<label>기록 유형</label><p style="margin:4px 0 0;font-weight:700;color:var(--navy)">교수 피드백</p>';
+        if (textArea) textArea.placeholder = '구성원에게 남길 피드백을 입력하세요.';
+      }
+    }
+
+    function goalStatusLabel(status) {
+      return { todo: '예정', doing: '진행 중', done: '완료', hold: '보류' }[status] || '예정';
+    }
+
+    function formatGoalDateRange(goal) {
+      var start = goal.startDate || goal.targetDate || '';
+      var end = goal.endDate || goal.targetDate || start;
+      if (!start) return '-';
+      return start === end ? formatKoreanDate(start) : formatKoreanDate(start) + ' - ' + formatKoreanDate(end);
+    }
+
+    function formatKoreanDate(value) {
+      if (!value) return '-';
+      var parts = value.split('-');
+      return Number(parts[0]) + '년 ' + Number(parts[1]) + '월 ' + Number(parts[2]) + '일';
+    }
+
+    function formatKoreanDateTime(value) {
+      if (!value) return '-';
+      var date = new Date(value);
+      if (isNaN(date.getTime())) return value;
+      return date.getFullYear() + '년 ' + (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
+    }
+  </script>
+  <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
+</body>
+</html>
