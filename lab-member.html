@@ -119,9 +119,6 @@
             <span class="lab-kicker">Team Projects</span>
             <h2>참여 팀 프로젝트</h2>
           </div>
-          <div class="lab-panel-actions">
-            <a class="btn-sm" href="lab.html">LAB</a>
-          </div>
         </div>
         <div id="member-project-list"></div>
       </article>
@@ -386,6 +383,7 @@
       var first = new Date(year, month, 1);
       var firstDay = first.getDay();
       var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var monthStartKey = formatDateKey(first);
       var monthEndKey = formatDateKey(new Date(year, month, daysInMonth));
       var goalsWithLanes = assignGoalLanes(goals);
       var numLanes = goalsWithLanes.reduce(function(m, g) { return Math.max(m, g.lane + 1); }, 0);
@@ -407,12 +405,15 @@
           if (!goal) return '<div class="goal-lane-spacer"></div>';
           var isTeamGoal = goal._source === 'project';
           var canInteract = !isAdminView && !isTeamGoal;
-          var startKey = goal.startDate || goal.targetDate;
-          var isStart = dateKey === startKey || new Date(dateKey).getDay() === 0;
-          if (!isStart) {
-            return '<div class="goal-lane-cont ' + escHtml(goal.status || 'todo') + (isTeamGoal ? ' is-team-goal' : '') + '"></div>';
+          var rawStart = goal.startDate || goal.targetDate || '';
+          var firstVisibleKey = rawStart < monthStartKey ? monthStartKey : rawStart;
+          var isChipStart = dateKey === firstVisibleKey || new Date(dateKey).getDay() === 0;
+          if (!isChipStart) {
+            return '<div class="goal-lane-cont"></div>';
           }
-          return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start' + (isTeamGoal ? ' is-team-goal' : '') + '" draggable="' + canInteract + '" onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:1">' +
+          var weekRemaining = 7 - new Date(dateKey).getDay();
+          var span = Math.min(getGoalVisibleDuration(goal, dateKey, monthEndKey), weekRemaining);
+          return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start' + (isTeamGoal ? ' is-team-goal' : '') + '" draggable="' + canInteract + '" onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:' + span + '">' +
             (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
             '<strong>' + escHtml(goal.title) + '</strong>' +
             (isTeamGoal ? '<span class="goal-team-label">' + escHtml(goal._projectName || '팀') + '</span>' : '') +
@@ -706,17 +707,46 @@
       if (memberMeetingsPage < 1) memberMeetingsPage = 1;
       var start = (memberMeetingsPage - 1) * MEMBER_MEETINGS_PAGE_SIZE;
       var visibleMeetings = meetings.slice(start, start + MEMBER_MEETINGS_PAGE_SIZE);
-      document.getElementById('member-meetings').innerHTML = meetings.length
-        ? '<div class="meeting-mini-grid">' + visibleMeetings.map(function (meeting) {
-            var minutes = labData.minutes.filter(function (item) { return item.eventId === meeting.id || item.meetingDate === meeting.date; });
-            var firstMinute = minutes[0];
-            return '<article class="meeting-mini-card">' +
-              '<strong>' + escHtml(meeting.title) + '</strong>' +
-              '<span>' + escHtml(formatKoreanDate(meeting.date)) + '</span>' +
-              (firstMinute ? '<div class="meeting-mini-minutes">' + escHtml(firstMinute.title) + (minutes.length > 1 ? ' 외 ' + (minutes.length - 1) + '건' : '') + '</div>' : '') +
-            '</article>';
-          }).join('') + '</div>' + renderMemberMeetingsPagination(totalPages, meetings.length)
-        : '<p class="lab-empty">참석자로 등록된 랩미팅이 없습니다.</p>';
+      if (!meetings.length) {
+        document.getElementById('member-meetings').innerHTML = '<p class="lab-empty">참석자로 등록된 랩미팅이 없습니다.</p>';
+        return;
+      }
+      var gridItems = [];
+      visibleMeetings.forEach(function (meeting) {
+        var minutes = labData.minutes.filter(function (item) { return item.eventId === meeting.id || item.meetingDate === meeting.date; });
+        var firstMinute = minutes[0];
+        var isSel = selectedMeetingId === meeting.id;
+        gridItems.push('<article class="meeting-mini-card' + (isSel ? ' is-selected' : '') + '" onclick="selectMemberMeeting(\'' + escHtml(meeting.id) + '\')" style="cursor:pointer">' +
+          '<strong>' + escHtml(meeting.title) + '</strong>' +
+          '<span>' + escHtml(formatKoreanDate(meeting.date)) + '</span>' +
+          (firstMinute ? '<div class="meeting-mini-minutes">' + escHtml(firstMinute.title) + (minutes.length > 1 ? ' 외 ' + (minutes.length - 1) + '건' : '') + '</div>' : '') +
+        '</article>');
+        if (isSel && minutes.length) {
+          var detailHtml = '<div class="meeting-mini-detail">' +
+            '<div class="meeting-mini-detail-head">' +
+              '<strong style="font-size:0.82rem;color:var(--navy)">' + escHtml(meeting.title) + ' 회의록</strong>' +
+              '<button type="button" class="meeting-mini-close" onclick="selectMemberMeeting(\'' + escHtml(meeting.id) + '\')">닫기 ✕</button>' +
+            '</div>' +
+            minutes.map(function(m) {
+              return '<div class="minutes-detail-item">' +
+                '<strong>' + escHtml(m.title || '') + '</strong>' +
+                '<p>' + escHtml(m.content || m.text || '') + '</p>' +
+              '</div>';
+            }).join('') +
+          '</div>';
+          gridItems.push(detailHtml);
+        } else if (isSel) {
+          gridItems.push('<div class="meeting-mini-detail"><p class="lab-empty" style="margin:0">회의록이 없습니다.</p></div>');
+        }
+      });
+      document.getElementById('member-meetings').innerHTML =
+        '<div class="meeting-mini-grid">' + gridItems.join('') + '</div>' +
+        renderMemberMeetingsPagination(totalPages, meetings.length);
+    }
+
+    function selectMemberMeeting(meetingId) {
+      selectedMeetingId = (selectedMeetingId === meetingId) ? null : meetingId;
+      renderMeetings();
     }
 
     function renderMemberMeetingsPagination(totalPages, totalCount) {
@@ -733,6 +763,7 @@
       renderMeetings();
     }
 
+    var selectedMeetingId = null;
     var selectedNoteId = null;
 
     function renderNotes() {
@@ -788,6 +819,17 @@
       if (!detailEl) return;
       var isAuthor = currentSession && note.authorId === currentSession.userId;
       var typeLabel = note.type === 'feedback' ? '피드백' : '개인 메모';
+      var replies = note.replies || [];
+      var repliesHtml = replies.length
+        ? '<div class="note-reply-list">' + replies.map(function(r) {
+            var canDelReply = currentSession && r.authorId === currentSession.userId;
+            return '<div class="note-reply-card">' +
+              '<span class="note-reply-meta">' + escHtml(r.authorName || '') + ' · ' + escHtml(formatKoreanDateTime(r.createdAt)) + '</span>' +
+              '<p style="margin:2px 0;font-size:0.84rem">' + escHtml(r.text || '') + '</p>' +
+              (canDelReply ? '<div class="note-reply-actions"><button type="button" class="btn-sm danger" onclick="deleteMemberReply(\'' + escHtml(note.id) + '\',\'' + escHtml(r.id) + '\')">삭제</button></div>' : '') +
+            '</div>';
+          }).join('') + '</div>'
+        : '<p class="lab-empty" style="font-size:0.78rem;margin:6px 0">아직 댓글이 없습니다.</p>';
       detailEl.innerHTML =
         '<div class="note-detail-head">' +
           '<div>' +
@@ -806,8 +848,47 @@
         '<div class="note-detail-actions">' +
           (isAuthor ? '<button type="button" class="btn-sm" onclick="editMemberNote(\'' + escHtml(note.id) + '\')">수정</button>' : '') +
           (isAuthor ? '<button type="button" class="btn-sm danger" onclick="deleteMemberNote(\'' + escHtml(note.id) + '\')">삭제</button>' : '') +
+        '</div>' +
+        '<div class="note-replies" style="margin-top:12px">' +
+          repliesHtml +
+          (currentSession
+            ? '<div class="note-reply-form-wrap" id="member-reply-form-' + escHtml(note.id) + '">' +
+                '<textarea id="member-reply-input-' + escHtml(note.id) + '" rows="2" placeholder="댓글 작성..."></textarea>' +
+                '<button type="button" class="btn-sm" onclick="submitMemberReply(\'' + escHtml(note.id) + '\')">등록</button>' +
+              '</div>'
+            : '') +
         '</div>';
       detailEl.hidden = false;
+    }
+
+    function submitMemberReply(noteId) {
+      var input = document.getElementById('member-reply-input-' + noteId);
+      if (!input || !input.value.trim()) return;
+      var idx = labData.memberNotes.findIndex(function(n) { return n.id === noteId; });
+      if (idx === -1) return;
+      if (!Array.isArray(labData.memberNotes[idx].replies)) labData.memberNotes[idx].replies = [];
+      labData.memberNotes[idx].replies.push({
+        id: 'mreply_' + Date.now(),
+        text: input.value.trim(),
+        authorId: currentSession.userId,
+        authorName: currentSession.name,
+        createdAt: new Date().toISOString()
+      });
+      saveLabData();
+      input.value = '';
+      var note = labData.memberNotes[idx];
+      renderMemberNoteDetail(note);
+      showToast('댓글이 등록되었습니다.');
+    }
+
+    function deleteMemberReply(noteId, replyId) {
+      var idx = labData.memberNotes.findIndex(function(n) { return n.id === noteId; });
+      if (idx === -1) return;
+      labData.memberNotes[idx].replies = (labData.memberNotes[idx].replies || []).filter(function(r) { return r.id !== replyId; });
+      saveLabData();
+      var note = labData.memberNotes[idx];
+      renderMemberNoteDetail(note);
+      showToast('댓글이 삭제되었습니다.');
     }
 
     function canManageNote(note) {

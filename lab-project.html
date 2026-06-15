@@ -438,6 +438,7 @@
       var first = new Date(year, month, 1);
       var firstDay = first.getDay();
       var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var monthEndKey = formatDateKey(new Date(year, month, daysInMonth));
       var goalsWithLanes = assignPGoalLanes(goals);
       var numLanes = goalsWithLanes.reduce(function(m, g) { return Math.max(m, g.lane + 1); }, 0);
       var cells = ['<div class="goal-calendar-title">' + year + '년 ' + (month + 1) + '월 팀 목표 일정</div>'];
@@ -447,6 +448,7 @@
       for (var blank = 0; blank < firstDay; blank++) {
         cells.push('<div class="goal-calendar-cell is-empty"></div>');
       }
+      var monthStartKey = formatDateKey(first);
       for (var day = 1; day <= daysInMonth; day++) {
         var dateKey = formatDateKey(new Date(year, month, day));
         var dayLanes = [];
@@ -459,12 +461,15 @@
           var assignee = CAPData.getMember(goal.assigneeId);
           var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
           var canInteract = isMyGoal || isAdminView;
-          var startKey = goal.startDate || goal.targetDate;
-          var isStart = dateKey === startKey || new Date(dateKey).getDay() === 0;
-          if (!isStart) {
-            return '<div class="goal-lane-cont ' + escHtml(goal.status || 'todo') + '"></div>';
+          var rawStart = goal.startDate || goal.targetDate || '';
+          var firstVisibleKey = rawStart < monthStartKey ? monthStartKey : rawStart;
+          var isChipStart = dateKey === firstVisibleKey || new Date(dateKey).getDay() === 0;
+          if (!isChipStart) {
+            return '<div class="goal-lane-cont"></div>';
           }
-          return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start" draggable="' + canInteract + '" onclick="editProjectGoal(\'' + escHtml(goal.id) + '\')" ondragstart="dragPGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:1">' +
+          var weekRemaining = 7 - new Date(dateKey).getDay();
+          var span = Math.min(getGoalVisibleDuration(goal, dateKey, monthEndKey), weekRemaining);
+          return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start" draggable="' + canInteract + '" onclick="editProjectGoal(\'' + escHtml(goal.id) + '\')" ondragstart="dragPGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:' + span + '">' +
             (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startPGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
             '<strong>' + escHtml(goal.title) + '</strong>' +
             (assignee ? '<span class="goal-team-label">' + escHtml(assignee.name) + '</span>' : '') +
