@@ -2175,6 +2175,9 @@ main { background: var(--bg); }
   gap: 9px;
   padding: 2px 0 6px;
 }
+.note-sticky-grid .minutes-pagination {
+  grid-column: 1 / -1;
+}
 .note-sticky {
   min-height: 148px; height: 148px;
   background: #FEFCE8; border: 1px solid #F7E87A;

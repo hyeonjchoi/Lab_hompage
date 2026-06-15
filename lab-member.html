@@ -582,17 +582,15 @@
       if (!panel || !listEl) return;
       var allNotes = labData.memberNotes.filter(function(n) { return n.memberId === currentMember.id; });
       var linkedNotes = allNotes.filter(function(n) { return n.linkedGoalId === goalId; });
-      var globalNotes = allNotes.filter(function(n) { return !n.linkedGoalId; });
       if (titleEl) titleEl.textContent = '「' + goalTitle + '」 관련 메모';
-      var combined = linkedNotes.concat(globalNotes.map(function(n) { return Object.assign({}, n, { _isGlobal: true }); }));
-      if (!combined.length) {
+      if (!linkedNotes.length) {
         listEl.innerHTML = '<p class="lab-empty" style="font-size:0.78rem">연결된 메모가 없습니다.</p>';
       } else {
-        listEl.innerHTML = combined.map(function(note) {
+        listEl.innerHTML = linkedNotes.map(function(note) {
           var typeLabel = note.type === 'feedback' ? '피드백' : '메모';
           var preview = (note.text || '').slice(0, 80);
-          return '<article class="note-sticky type-' + escHtml(note.type || 'memo') + (note._isGlobal ? ' is-global' : '') + (note.done ? ' is-done' : '') + '" onclick="selectMemberNote(\'' + escHtml(note.id) + '\')" title="' + (note._isGlobal ? '전체 메모' : '이 목표 메모') + '">' +
-            '<div class="note-sticky-type"><span>' + escHtml(typeLabel) + '</span>' + (note._isGlobal ? '<span style="font-size:0.6rem;color:var(--muted)">전체</span>' : '') + '</div>' +
+          return '<article class="note-sticky type-' + escHtml(note.type || 'memo') + (note.done ? ' is-done' : '') + '" onclick="selectMemberNote(\'' + escHtml(note.id) + '\')">' +
+            '<div class="note-sticky-type"><span>' + escHtml(typeLabel) + '</span></div>' +
             '<div class="note-sticky-body">' + escHtml(preview) + '</div>' +
             '<div class="note-sticky-foot"><span>' + escHtml(formatKoreanDateTime(note.createdAt)) + '</span></div>' +
           '</article>';
