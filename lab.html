@@ -1043,7 +1043,7 @@
     }
 
     function projectStatusLabel(s) {
-      return { active: '진행 중', completed: '완료', paused: '일시 중단' }[s] || '진행 중';
+      return { ready: '준비', active: '진행', completed: '종료', paused: '종료' }[s] || '진행';
     }
 
     function renderTeamProjects() {

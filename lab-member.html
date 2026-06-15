@@ -145,6 +145,13 @@
         </div>
         <div class="note-sticky-grid" id="member-note-list"></div>
         <div id="member-note-detail" class="note-detail-panel" hidden></div>
+        <div id="goal-notes-panel" hidden class="goal-notes-panel">
+          <div class="goal-notes-panel-head">
+            <span id="goal-notes-panel-title">목표 관련 메모</span>
+            <button type="button" class="goal-notes-panel-close" onclick="closeGoalNotesPanel()">닫기 ✕</button>
+          </div>
+          <div class="note-sticky-grid" id="goal-linked-notes"></div>
+        </div>
         <form class="member-note-form" id="member-note-form" onsubmit="saveMemberNote(event)" hidden>
           <div class="form-group">
             <label for="member-note-type">기록 유형</label>
@@ -152,6 +159,10 @@
               <option value="memo">개인 메모</option>
               <option value="feedback">피드백</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label for="member-note-goal">연결 목표 <small style="font-weight:400">(선택)</small></label>
+            <select id="member-note-goal"><option value="">연결 없음 (전체 메모)</option></select>
           </div>
           <div class="form-group">
             <label for="member-note-text">내용</label>
@@ -481,16 +492,61 @@
       document.getElementById('goal-title').focus();
     }
 
+    var selectedGoalId = null;
+
     function showGoalDetail(goalId) {
       if (isAdminView) return;
       var personalGoal = labData.memberGoals.find(function(g) { return g.id === goalId && g.memberId === currentMember.id; });
-      if (personalGoal) { editGoal(goalId); return; }
+      if (personalGoal) {
+        if (selectedGoalId === goalId) {
+          closeGoalNotesPanel();
+          editGoal(goalId);
+        } else {
+          selectedGoalId = goalId;
+          renderGoalNotesPanel(goalId, personalGoal.title);
+          editGoal(goalId);
+        }
+        return;
+      }
       var foundProjectId = null;
       (labData.teamProjects || []).forEach(function(p) {
         if (foundProjectId) return;
         if ((p.goals || []).some(function(g) { return g.id === goalId; })) foundProjectId = p.id;
       });
       if (foundProjectId) window.location.href = 'lab-project.html?id=' + foundProjectId;
+    }
+
+    function renderGoalNotesPanel(goalId, goalTitle) {
+      var panel = document.getElementById('goal-notes-panel');
+      var titleEl = document.getElementById('goal-notes-panel-title');
+      var listEl = document.getElementById('goal-linked-notes');
+      if (!panel || !listEl) return;
+      var allNotes = labData.memberNotes.filter(function(n) { return n.memberId === currentMember.id; });
+      var linkedNotes = allNotes.filter(function(n) { return n.linkedGoalId === goalId; });
+      var globalNotes = allNotes.filter(function(n) { return !n.linkedGoalId; });
+      if (titleEl) titleEl.textContent = '「' + goalTitle + '」 관련 메모';
+      var combined = linkedNotes.concat(globalNotes.map(function(n) { return Object.assign({}, n, { _isGlobal: true }); }));
+      if (!combined.length) {
+        listEl.innerHTML = '<p class="lab-empty" style="font-size:0.78rem">연결된 메모가 없습니다.</p>';
+      } else {
+        listEl.innerHTML = combined.map(function(note) {
+          var typeLabel = note.type === 'feedback' ? '피드백' : '메모';
+          var preview = (note.text || '').slice(0, 80);
+          return '<article class="note-sticky type-' + escHtml(note.type || 'memo') + (note._isGlobal ? ' is-global' : '') + (note.done ? ' is-done' : '') + '" onclick="selectMemberNote(\'' + escHtml(note.id) + '\')" title="' + (note._isGlobal ? '전체 메모' : '이 목표 메모') + '">' +
+            '<div class="note-sticky-type"><span>' + escHtml(typeLabel) + '</span>' + (note._isGlobal ? '<span style="font-size:0.6rem;color:var(--muted)">전체</span>' : '') + '</div>' +
+            '<div class="note-sticky-body">' + escHtml(preview) + '</div>' +
+            '<div class="note-sticky-foot"><span>' + escHtml(formatKoreanDateTime(note.createdAt)) + '</span></div>' +
+          '</article>';
+        }).join('');
+      }
+      panel.hidden = false;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeGoalNotesPanel() {
+      selectedGoalId = null;
+      var panel = document.getElementById('goal-notes-panel');
+      if (panel) panel.hidden = true;
     }
 
     function editGoal(goalId) {
@@ -730,7 +786,7 @@
             minutes.map(function(m) {
               return '<div class="minutes-detail-item">' +
                 '<strong>' + escHtml(m.title || '') + '</strong>' +
-                '<p>' + escHtml(m.content || m.text || '') + '</p>' +
+                '<p>' + escHtml(m.summary || m.content || m.text || '(회의록 내용 없음)') + '</p>' +
               '</div>';
             }).join('') +
           '</div>';
@@ -907,19 +963,32 @@
       form.hidden = !form.hidden;
       if (!form.hidden) {
         renderNoteForm();
+        renderMemberGoalSelect();
         document.getElementById('member-note-text').focus();
       }
+    }
+
+    function renderMemberGoalSelect() {
+      var sel = document.getElementById('member-note-goal');
+      if (!sel) return;
+      var goals = labData.memberGoals.filter(function(g) { return g.memberId === currentMember.id; });
+      sel.innerHTML = '<option value="">연결 없음 (전체 메모)</option>' +
+        goals.map(function(g) {
+          return '<option value="' + escHtml(g.id) + '">' + escHtml(g.title) + '</option>';
+        }).join('');
     }
 
     function saveMemberNote(e) {
       e.preventDefault();
       var existing = editingNoteId ? labData.memberNotes.find(function (note) { return note.id === editingNoteId; }) : null;
       if (existing && !canManageNote(existing)) return;
+      var goalSel = document.getElementById('member-note-goal');
       var nextNote = {
         id: existing ? existing.id : 'note_' + Date.now(),
         memberId: currentMember.id,
         type: isAdminView ? 'feedback' : document.getElementById('member-note-type').value,
         text: document.getElementById('member-note-text').value.trim(),
+        linkedGoalId: goalSel ? goalSel.value : '',
         authorId: existing ? existing.authorId : (currentSession ? currentSession.userId : ''),
         authorName: existing ? existing.authorName : (currentSession ? currentSession.name : ''),
         authorRole: existing ? existing.authorRole : (currentSession ? currentSession.role : ''),
@@ -947,6 +1016,9 @@
       editingNoteId = noteId;
       if (!isAdminView) document.getElementById('member-note-type').value = note.type || 'memo';
       document.getElementById('member-note-text').value = note.text || '';
+      renderMemberGoalSelect();
+      var goalSel = document.getElementById('member-note-goal');
+      if (goalSel) goalSel.value = note.linkedGoalId || '';
       document.getElementById('member-note-submit').textContent = '기록 수정';
       document.getElementById('member-note-cancel').hidden = false;
       var form = document.getElementById('member-note-form');
@@ -985,6 +1057,8 @@
     function resetNoteForm() {
       editingNoteId = null;
       document.getElementById('member-note-text').value = '';
+      var goalSel = document.getElementById('member-note-goal');
+      if (goalSel) goalSel.value = '';
       document.getElementById('member-note-submit').textContent = '기록 저장';
       document.getElementById('member-note-cancel').hidden = true;
     }
@@ -998,20 +1072,23 @@
         return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
       });
       if (!projects.length) {
-        list.innerHTML = '<p class="lab-empty">참여 중인 팀 프로젝트가 없습니다. LAB 페이지에서 새 프로젝트를 만들 수 있습니다.</p>';
+        list.innerHTML = '<p class="lab-empty">참여 중인 팀 프로젝트가 없습니다.</p>';
         return;
       }
-      var projectStatusLabel = function(s) {
-        return { active: '진행 중', completed: '완료', paused: '일시 중단' }[s] || '진행 중';
-      };
-      var statusLabel = function(s) { return { active: '진행 중', completed: '완료', paused: '중단' }[s] || '진행 중'; };
+      var sLabel = function(s) { return { ready: '준비', active: '진행', completed: '종료', paused: '종료' }[s] || '진행'; };
       list.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + projects.map(function(p) {
-        var myProgress = (p.progress || []).find(function(item) { return item.memberId === currentMember.id; });
-        return '<article style="padding:10px;border:1px solid var(--line);background:#fff">' +
-          '<strong style="font-size:0.82rem;display:block;color:var(--navy);margin-bottom:3px">' + escHtml(p.name) + '</strong>' +
-          '<span style="font-size:0.72rem;color:var(--muted);font-weight:700">' + statusLabel(p.status) + ' · ' + (p.memberIds || []).length + '명</span>' +
-          (myProgress && myProgress.status ? '<p style="font-size:0.72rem;color:var(--ink);margin:4px 0 0">내 과제: ' + escHtml(myProgress.status) + '</p>' : '') +
-          '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '" style="margin-top:8px;display:inline-block">방 →</a>' +
+        var isActive = p.status === 'active';
+        var isCompleted = p.status === 'completed' || p.status === 'paused';
+        var statusColor = isActive ? 'color:var(--red);font-weight:900' : isCompleted ? 'color:var(--muted)' : 'color:#166534;font-weight:900';
+        var desc = (p.description || '').slice(0, 60) + ((p.description || '').length > 60 ? '...' : '');
+        return '<article style="padding:10px 12px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;gap:10px">' +
+          '<div style="flex:1;min-width:0">' +
+            '<strong style="font-size:0.82rem;display:block;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(p.name) + '</strong>' +
+            (desc ? '<p style="font-size:0.72rem;color:var(--ink);margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(desc) + '</p>' : '') +
+            '<span style="font-size:0.72rem;' + statusColor + '">' + sLabel(p.status) + '</span>' +
+            '<span style="font-size:0.72rem;color:var(--muted);margin-left:6px">' + (p.memberIds || []).length + '명</span>' +
+          '</div>' +
+          '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '" style="flex-shrink:0;white-space:nowrap">프로젝트 방</a>' +
         '</article>';
       }).join('') + '</div>';
     }

@@ -153,8 +153,8 @@
         <div class="lab-panel-head compact">
           <div>
             <span class="lab-kicker">Memo</span>
-            <h2>메모와 피드백</h2>
-            <p class="lab-panel-sub">메모나 피드백을 작성하고, 각 기록에 댓글을 달 수 있습니다.</p>
+            <h2 id="project-note-filter-label">메모와 피드백</h2>
+            <p class="lab-panel-sub">목표를 클릭하면 연결된 메모가 필터됩니다.</p>
           </div>
           <div class="lab-panel-actions">
             <button type="button" class="btn-sm primary" onclick="toggleProjectNoteForm()">작성하기</button>
@@ -211,9 +211,9 @@
           <div class="form-group">
             <label for="pedit-status">프로젝트 상태</label>
             <select id="pedit-status">
-              <option value="active">진행 중</option>
-              <option value="completed">완료</option>
-              <option value="paused">일시 중단</option>
+              <option value="ready">준비</option>
+              <option value="active">진행</option>
+              <option value="completed">종료</option>
             </select>
           </div>
           <div class="form-group">
@@ -256,6 +256,7 @@
     var activeGoalView = 'list';
     var draggingPGoalId = null;
     var resizingPGoal = null;
+    var selectedProjectGoalId = null;
 
     document.addEventListener('DOMContentLoaded', function () {
       CAPAuth.requireLogin(true);
@@ -329,7 +330,7 @@
     }
 
     function renderProjectInfo() {
-      var statusLabel = { active: '진행 중', completed: '완료', paused: '일시 중단' }[currentProject.status] || '진행 중';
+      var statusLabel = { ready: '준비', active: '진행', completed: '종료', paused: '종료' }[currentProject.status] || '진행';
       var creator = CAPData.getMember(currentProject.createdBy);
       var memberChips = (currentProject.memberIds || []).map(function(id) {
         var m = CAPData.getMember(id);
@@ -397,13 +398,14 @@
                   '<button type="button" class="btn-sm danger" onclick="deleteProjectGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
                 '</div>'
               : '';
-            return '<tr>' +
+            var isSelGoal = selectedProjectGoalId === goal.id;
+            return '<tr style="cursor:pointer' + (isSelGoal ? ';background:#EFF6FF' : '') + '" onclick="selectProjectGoalForNotes(\'' + escHtml(goal.id) + '\')">' +
               '<td><span>' + escHtml(assignee ? assignee.name : '(탈퇴)') + '</span></td>' +
               '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong><span>' + escHtml(goal.category || '목표') + '</span></td>' +
               '<td class="goal-status-cell"><span class="goal-status ' + escHtml(goal.status || 'todo') + '">' + escHtml(goalStatusLabel(goal.status)) + '</span></td>' +
               '<td>' + escHtml(formatGoalDateRange(goal)) + '</td>' +
               '<td>' + escHtml(goal.memo || '-') + '</td>' +
-              '<td>' + actions + '</td>' +
+              '<td onclick="event.stopPropagation()">' + actions + '</td>' +
             '</tr>';
           }).join('') +
           '</tbody></table></div>' + renderGoalPagination(totalPages, goals.length)
@@ -665,9 +667,9 @@
     function editProjectGoal(goalId) {
       var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
       if (!goal) return;
+      selectProjectGoalForNotes(goalId);
       var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
       if (!isMyGoal && !isAdminView) {
-        showToast('담당자만 수정할 수 있습니다.');
         return;
       }
       editingGoalId = goalId;
@@ -808,13 +810,34 @@
 
     var selectedProjectNoteId = null;
 
+    function selectProjectGoalForNotes(goalId) {
+      selectedProjectGoalId = (selectedProjectGoalId === goalId) ? null : goalId;
+      renderProjectGoalList();
+      renderProjectNotes();
+      var noteSect = document.getElementById('project-note-list');
+      if (noteSect && selectedProjectGoalId) noteSect.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     function renderProjectNotes() {
-      var notes = (currentProject.notes || []).slice().sort(function(a, b) {
+      var allNotes = (currentProject.notes || []).slice().sort(function(a, b) {
         return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
       });
       var grid = document.getElementById('project-note-list');
+      var notePanelHead = document.getElementById('project-note-filter-label');
+      var selectedGoal = selectedProjectGoalId ? (currentProject.goals || []).find(function(g) { return g.id === selectedProjectGoalId; }) : null;
+      if (notePanelHead) {
+        notePanelHead.textContent = selectedGoal ? '「' + selectedGoal.title + '」 관련 메모' : '메모와 피드백';
+      }
+      var notes;
+      if (selectedProjectGoalId) {
+        var goalNotes = allNotes.filter(function(n) { return n.targetId === selectedProjectGoalId; });
+        var globalNotes = allNotes.filter(function(n) { return !n.targetId; }).map(function(n) { return Object.assign({}, n, { _isGlobal: true }); });
+        notes = goalNotes.concat(globalNotes);
+      } else {
+        notes = allNotes;
+      }
       if (!notes.length) {
-        grid.innerHTML = '<p class="lab-empty">저장된 메모나 피드백이 없습니다.</p>';
+        grid.innerHTML = '<p class="lab-empty">저장된 메모나 피드백이 없습니다.' + (selectedProjectGoalId ? '<br><small style="color:var(--muted)">전체 보기는 목표 선택을 해제하세요.</small>' : '') + '</p>';
         var det = document.getElementById('project-note-detail');
         if (det) { det.hidden = true; selectedProjectNoteId = null; }
         return;
@@ -823,9 +846,11 @@
         var typeLabel = note.type === 'feedback' ? '피드백' : '메모';
         var replyCount = (note.replies || []).length;
         var isSel = selectedProjectNoteId === note.id;
-        return '<article class="note-sticky type-' + escHtml(note.type || 'memo') + (note.done ? ' is-done' : '') + (isSel ? ' is-selected' : '') + '" onclick="selectProjectNote(\'' + escHtml(note.id) + '\')">' +
+        var isGlobal = !!note._isGlobal;
+        return '<article class="note-sticky type-' + escHtml(note.type || 'memo') + (note.done ? ' is-done' : '') + (isSel ? ' is-selected' : '') + (isGlobal ? ' is-global' : '') + '" onclick="selectProjectNote(\'' + escHtml(note.id) + '\')">' +
           '<div class="note-sticky-type">' +
             '<span>' + escHtml(typeLabel) + '</span>' +
+            (isGlobal ? '<span style="font-size:0.6rem;color:var(--muted)">전체</span>' : '') +
             (note.done ? '<span style="color:var(--navy)">✓</span>' : '') +
           '</div>' +
           '<div class="note-sticky-body">' + escHtml((note.text || '').slice(0, 100)) + '</div>' +
@@ -836,8 +861,8 @@
         '</article>';
       }).join('');
       if (selectedProjectNoteId) {
-        var selNote = notes.find(function(n) { return n.id === selectedProjectNoteId; });
-        if (selNote) { renderProjectNoteDetail(selNote); } else { selectedProjectNoteId = null; document.getElementById('project-note-detail').hidden = true; }
+        var origNote = (currentProject.notes || []).find(function(n) { return n.id === selectedProjectNoteId; });
+        if (origNote) { renderProjectNoteDetail(origNote); } else { selectedProjectNoteId = null; document.getElementById('project-note-detail').hidden = true; }
       }
     }
 

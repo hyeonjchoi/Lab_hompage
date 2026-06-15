@@ -1870,15 +1870,18 @@ main { background: var(--bg); }
 .goal-calendar-chip.is-period-start {
   width: calc((100% * var(--goal-span)) + (15px * (var(--goal-span) - 1)));
   max-width: none;
-  z-index: 10;
+  z-index: 20;
   position: relative;
 }
 .goal-calendar-chip strong {
   grid-column: 2;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: inherit;
+  min-width: 0;
 }
 .goal-calendar-chip:hover {
-  filter: brightness(0.98);
+  outline: 2px solid rgba(0,0,0,0.22);
+  outline-offset: -1px;
 }
 .goal-calendar-chip.todo {
   border-color: #D1D5DB;
@@ -2250,9 +2253,19 @@ main { background: var(--bg); }
 }
 .note-detail-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; display: block; }
 .note-detail-text { font-size: 0.88rem; line-height: 1.6; color: var(--ink); white-space: pre-wrap; word-break: keep-all; }
-.note-detail-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+.note-detail-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .note-detail-close { background: none; border: none; font-size: 0.8rem; font-weight: 900; color: var(--muted); cursor: pointer; padding: 2px 4px; }
 .note-detail-close:hover { color: var(--navy); }
+/* goal-linked note color overrides */
+.note-sticky.is-global { background: #F0FDF4; border-color: #86EFAC; }
+.goal-notes-panel { margin-top: 12px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--line); }
+.goal-notes-panel-head { font-size: 0.78rem; font-weight: 900; color: var(--navy); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.goal-notes-panel-close { background: none; border: none; font-size: 0.72rem; font-weight: 900; color: var(--muted); cursor: pointer; margin-left: auto; }
+.project-status-chip { font-size:0.72rem; font-weight:900; padding:2px 7px; border-radius:2px; display:inline-block; }
+.project-status-chip.active { color: var(--red); background: var(--red-soft); }
+.project-status-chip.completed { color: var(--muted); background: #f0f0f0; }
+.project-status-chip.ready { color: #166534; background: var(--green-soft); }
+.project-status-chip.paused { color: var(--muted); background: #f0f0f0; }
 
 /* ── Calendar lane-based rendering ── */
 .goal-lane-spacer {
