@@ -1856,7 +1856,7 @@ main { background: var(--bg); }
   background: #F9FAFB;
 }
 .goal-calendar-items {
-  display: grid; gap: 4px; margin-top: 6px; position: relative;
+  display: flex; flex-direction: column; gap: 2px; margin-top: 4px; position: relative;
 }
 .goal-calendar-chip {
   max-width: 100%; border-radius: 0;
@@ -1868,8 +1868,8 @@ main { background: var(--bg); }
   cursor: grab; position: relative; z-index: 1; font-family: inherit; text-align: left;
 }
 .goal-calendar-chip.is-period-start {
-  width: calc((100% * var(--goal-span)) + (15px * (var(--goal-span) - 1)));
-  max-width: none;
+  width: 100%;
+  max-width: 100%;
   z-index: 2;
 }
 .goal-calendar-chip strong {
@@ -2202,3 +2202,100 @@ main { background: var(--bg); }
 .note-reply-form-wrap textarea { flex:1; min-height:44px; font-size:0.84rem; padding:6px 10px; border:1px solid var(--line); border-radius:var(--radius); font-family:inherit; resize:vertical; }
 .note-reply-toggle { background:none; border:none; color:var(--navy-2); font-size:0.78rem; font-weight:700; cursor:pointer; padding:2px 0; display:block; margin-top:4px; }
 .note-reply-toggle:hover { text-decoration:underline; }
+
+/* ── Sticky note card grid ── */
+.note-sticky-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  gap: 9px;
+  padding: 2px 0 6px;
+}
+.note-sticky {
+  min-height: 148px; height: 148px;
+  background: #FEFCE8; border: 1px solid #F7E87A;
+  padding: 10px 10px 8px; display: flex; flex-direction: column;
+  cursor: pointer; overflow: hidden;
+  box-shadow: 1px 2px 5px rgba(0,0,0,0.07);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.note-sticky:hover { transform: translateY(-2px); box-shadow: 2px 5px 12px rgba(0,0,0,0.12); }
+.note-sticky.type-feedback { background: #EFF6FF; border-color: #93C5FD; }
+.note-sticky.is-done { opacity: 0.52; }
+.note-sticky.is-selected { outline: 2px solid var(--navy); outline-offset: 1px; }
+.note-sticky-type {
+  font-size: 0.6rem; font-weight: 900; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--muted); margin-bottom: 6px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.note-sticky-body {
+  flex: 1; font-size: 0.78rem; line-height: 1.42; color: var(--ink);
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+  word-break: keep-all;
+}
+.note-sticky-foot {
+  margin-top: 6px; padding-top: 5px; border-top: 1px solid rgba(0,0,0,0.1);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 0.62rem; color: var(--muted); flex-shrink: 0; gap: 4px;
+}
+.note-sticky-reply-badge { font-weight: 800; }
+.note-detail-panel {
+  border: 2px solid var(--navy); background: #fff;
+  padding: 16px 18px; margin-top: 4px;
+}
+.note-detail-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  margin-bottom: 12px;
+}
+.note-detail-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; display: block; }
+.note-detail-text { font-size: 0.88rem; line-height: 1.6; color: var(--ink); white-space: pre-wrap; word-break: keep-all; }
+.note-detail-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+.note-detail-close { background: none; border: none; font-size: 0.8rem; font-weight: 900; color: var(--muted); cursor: pointer; padding: 2px 4px; }
+.note-detail-close:hover { color: var(--navy); }
+
+/* ── Calendar lane-based rendering ── */
+.goal-lane-spacer {
+  height: 26px; flex-shrink: 0;
+}
+.goal-lane-cont {
+  height: 26px; flex-shrink: 0; width: 100%;
+  border-top: 3px solid transparent; opacity: 0.6;
+}
+.goal-lane-cont.todo { border-top-color: #D1D5DB; background: #F9FAFB; }
+.goal-lane-cont.doing { border-top-color: #93C5FD; background: #EFF6FF; }
+.goal-lane-cont.done { border-top-color: #6EE7A0; background: #F0FDF4; }
+.goal-lane-cont.hold { border-top-color: #F9A8B0; background: #FFF0F1; }
+.goal-lane-cont.is-team-goal { border-top-color: var(--red); background: rgba(181,31,43,0.06); }
+
+/* ── 3-col member record grid ── */
+.member-record-grid-3 {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+  gap: 18px; margin-bottom: 18px; align-items: start;
+}
+
+/* ── Meeting mini card grid ── */
+.meeting-mini-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;
+}
+.meeting-mini-card {
+  padding: 10px 12px; border: 1px solid var(--line); background: #fff;
+  display: flex; flex-direction: column; gap: 3px; cursor: default;
+}
+.meeting-mini-card strong {
+  font-size: 0.82rem; color: var(--navy); font-weight: 900;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.meeting-mini-card span {
+  font-size: 0.7rem; color: var(--muted); font-weight: 700;
+}
+.meeting-mini-card .meeting-mini-minutes {
+  font-size: 0.68rem; color: var(--ink); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.75;
+}
+
+/* responsive adjustments */
+@media (max-width: 980px) {
+  .member-record-grid-3 { grid-template-columns: 1fr; }
+  .note-sticky-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}

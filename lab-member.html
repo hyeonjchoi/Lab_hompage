@@ -112,7 +112,20 @@
       </article>
     </section>
 
-    <section class="member-record-grid">
+    <section class="member-record-grid-3">
+      <article class="lab-board">
+        <div class="lab-panel-head compact">
+          <div>
+            <span class="lab-kicker">Team Projects</span>
+            <h2>참여 팀 프로젝트</h2>
+          </div>
+          <div class="lab-panel-actions">
+            <a class="btn-sm" href="lab.html">LAB</a>
+          </div>
+        </div>
+        <div id="member-project-list"></div>
+      </article>
+
       <article class="lab-board">
         <div class="lab-panel-head compact">
           <div>
@@ -120,7 +133,7 @@
             <h2>참석 랩미팅 기록</h2>
           </div>
         </div>
-        <div class="meeting-minutes-list" id="member-meetings"></div>
+        <div id="member-meetings"></div>
       </article>
 
       <article class="lab-board">
@@ -133,7 +146,8 @@
             <button type="button" class="btn-sm primary" onclick="toggleNoteForm()">작성하기</button>
           </div>
         </div>
-        <div class="note-list" id="member-note-list"></div>
+        <div class="note-sticky-grid" id="member-note-list"></div>
+        <div id="member-note-detail" class="note-detail-panel" hidden></div>
         <form class="member-note-form" id="member-note-form" onsubmit="saveMemberNote(event)" hidden>
           <div class="form-group">
             <label for="member-note-type">기록 유형</label>
@@ -152,20 +166,6 @@
           </div>
         </form>
       </article>
-    </section>
-
-    <section class="lab-board" aria-labelledby="member-projects-title" style="margin-top:32px">
-      <div class="lab-panel-head compact">
-        <div>
-          <span class="lab-kicker">Team Projects</span>
-          <h2 id="member-projects-title">참여 중인 팀 프로젝트</h2>
-          <p class="lab-panel-sub">공동 참여 중인 팀 프로젝트 목록입니다. LAB 페이지에서 새 프로젝트를 만들 수 있습니다.</p>
-        </div>
-        <div class="lab-panel-actions">
-          <a class="btn-sm" href="lab.html">LAB 페이지</a>
-        </div>
-      </div>
-      <div class="progress-grid" id="member-project-list"></div>
     </section>
   </main>
 
@@ -195,7 +195,7 @@
     var draggingGoalId = null;
     var resizingGoal = null;
     var memberMeetingsPage = 1;
-    var MEMBER_MEETINGS_PAGE_SIZE = 3;
+    var MEMBER_MEETINGS_PAGE_SIZE = 4;
     var editingNoteId = null;
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -358,6 +358,26 @@
       }).join('') + '</tbody></table></div>' + renderGoalPagination(totalPages, goals.length) : '<p class="lab-empty">아직 등록된 연구 목표가 없습니다.</p>';
     }
 
+    function assignGoalLanes(goals) {
+      var sorted = goals.slice().sort(function(a, b) {
+        return String(a.startDate || a.targetDate || '').localeCompare(String(b.startDate || b.targetDate || ''));
+      });
+      var laneEnds = [];
+      var result = [];
+      sorted.forEach(function(goal) {
+        var start = goal.startDate || goal.targetDate || '';
+        var end = goal.endDate || goal.targetDate || start;
+        var laneIdx = -1;
+        for (var i = 0; i < laneEnds.length; i++) {
+          if (laneEnds[i] < start) { laneIdx = i; break; }
+        }
+        if (laneIdx === -1) { laneIdx = laneEnds.length; }
+        laneEnds[laneIdx] = end;
+        result.push({ goal: goal, lane: laneIdx });
+      });
+      return result;
+    }
+
     function renderGoalCalendar() {
       var goals = getAllMemberGoals();
       var today = new Date();
@@ -366,10 +386,11 @@
       var first = new Date(year, month, 1);
       var firstDay = first.getDay();
       var daysInMonth = new Date(year, month + 1, 0).getDate();
-      var monthStartKey = formatDateKey(first);
       var monthEndKey = formatDateKey(new Date(year, month, daysInMonth));
+      var goalsWithLanes = assignGoalLanes(goals);
+      var numLanes = goalsWithLanes.reduce(function(m, g) { return Math.max(m, g.lane + 1); }, 0);
       var cells = ['<div class="goal-calendar-title">' + year + '년 ' + (month + 1) + '월 목표 일정</div>'];
-      ['일', '월', '화', '수', '목', '금', '토'].forEach(function (label) {
+      ['일', '월', '화', '수', '목', '금', '토'].forEach(function(label) {
         cells.push('<div class="calendar-weekday">' + label + '</div>');
       });
       for (var blank = 0; blank < firstDay; blank++) {
@@ -377,24 +398,30 @@
       }
       for (var day = 1; day <= daysInMonth; day++) {
         var dateKey = formatDateKey(new Date(year, month, day));
-        var dayGoals = goals.filter(function (goal) { return isDateInGoalRange(dateKey, goal); });
+        var dayLanes = [];
+        for (var i = 0; i < numLanes; i++) { dayLanes.push(null); }
+        goalsWithLanes.forEach(function(item) {
+          if (isDateInGoalRange(dateKey, item.goal)) { dayLanes[item.lane] = item.goal; }
+        });
+        var laneHtml = dayLanes.map(function(goal) {
+          if (!goal) return '<div class="goal-lane-spacer"></div>';
+          var isTeamGoal = goal._source === 'project';
+          var canInteract = !isAdminView && !isTeamGoal;
+          var startKey = goal.startDate || goal.targetDate;
+          var isStart = dateKey === startKey || new Date(dateKey).getDay() === 0;
+          if (!isStart) {
+            return '<div class="goal-lane-cont ' + escHtml(goal.status || 'todo') + (isTeamGoal ? ' is-team-goal' : '') + '"></div>';
+          }
+          return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start' + (isTeamGoal ? ' is-team-goal' : '') + '" draggable="' + canInteract + '" onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:1">' +
+            (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
+            '<strong>' + escHtml(goal.title) + '</strong>' +
+            (isTeamGoal ? '<span class="goal-team-label">' + escHtml(goal._projectName || '팀') + '</span>' : '') +
+            (canInteract ? '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>' : '') +
+          '</button>';
+        }).join('');
         cells.push('<div class="goal-calendar-cell" ondragover="allowGoalDrop(event)" ondrop="dropGoalOnDate(event,\'' + dateKey + '\')">' +
           '<div class="calendar-date">' + day + '</div>' +
-          '<div class="goal-calendar-items">' + dayGoals.map(function (goal) {
-            var isTeamGoal = goal._source === 'project';
-            var canInteract = !isAdminView && !isTeamGoal;
-            var firstVisibleDate = String(goal.startDate || goal.targetDate || '') < monthStartKey ? monthStartKey : (goal.startDate || goal.targetDate);
-            var isContinuationStart = dateKey > firstVisibleDate && new Date(dateKey).getDay() === 0;
-            if (dateKey !== firstVisibleDate && !isContinuationStart) return '';
-            var weekRemaining = 7 - new Date(dateKey).getDay();
-            var span = Math.min(getGoalVisibleDuration(goal, dateKey, monthEndKey), weekRemaining);
-            return '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + ' is-period-start' + (isTeamGoal ? ' is-team-goal' : '') + '" draggable="' + canInteract + '" onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')" style="--goal-span:' + span + '">' +
-              (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
-              '<strong>' + escHtml(goal.title) + '</strong>' +
-              (isTeamGoal ? '<span class="goal-team-label">팀: ' + escHtml(goal._projectName || '팀 프로젝트') + '</span>' : '') +
-              (canInteract ? '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>' : '') +
-            '</button>';
-          }).join('') + '</div>' +
+          '<div class="goal-calendar-items">' + laneHtml + '</div>' +
         '</div>');
       }
       document.getElementById('member-goals').innerHTML = goals.length
@@ -679,17 +706,17 @@
       if (memberMeetingsPage < 1) memberMeetingsPage = 1;
       var start = (memberMeetingsPage - 1) * MEMBER_MEETINGS_PAGE_SIZE;
       var visibleMeetings = meetings.slice(start, start + MEMBER_MEETINGS_PAGE_SIZE);
-      document.getElementById('member-meetings').innerHTML = meetings.length ? visibleMeetings.map(function (meeting) {
-        var minutes = labData.minutes.filter(function (item) { return item.eventId === meeting.id || item.meetingDate === meeting.date; });
-        return '<article class="meeting-block">' +
-          '<div class="meeting-block-head plain"><span class="event-type-badge meeting">랩미팅</span>' +
-          '<div><strong>' + escHtml(meeting.title) + '</strong><p>' + escHtml(formatKoreanDate(meeting.date) + ' ' + formatTimeRange(meeting)) + '</p></div></div>' +
-          '<details class="minutes-disclosure"><summary>회의록 펼쳐보기 (' + minutes.length + ')</summary>' +
-          '<div class="minutes-items">' + (minutes.length ? minutes.map(function (item) {
-            return '<div class="minutes-card"><strong>' + escHtml(item.title) + '</strong><p>' + escHtml(item.summary) + '</p></div>';
-          }).join('') : '<p class="lab-empty compact">연결된 회의록이 없습니다.</p>') + '</div></details>' +
-        '</article>';
-      }).join('') + renderMemberMeetingsPagination(totalPages, meetings.length) : '<p class="lab-empty">참석자로 등록된 랩미팅이 없습니다.</p>';
+      document.getElementById('member-meetings').innerHTML = meetings.length
+        ? '<div class="meeting-mini-grid">' + visibleMeetings.map(function (meeting) {
+            var minutes = labData.minutes.filter(function (item) { return item.eventId === meeting.id || item.meetingDate === meeting.date; });
+            var firstMinute = minutes[0];
+            return '<article class="meeting-mini-card">' +
+              '<strong>' + escHtml(meeting.title) + '</strong>' +
+              '<span>' + escHtml(formatKoreanDate(meeting.date)) + '</span>' +
+              (firstMinute ? '<div class="meeting-mini-minutes">' + escHtml(firstMinute.title) + (minutes.length > 1 ? ' 외 ' + (minutes.length - 1) + '건' : '') + '</div>' : '') +
+            '</article>';
+          }).join('') + '</div>' + renderMemberMeetingsPagination(totalPages, meetings.length)
+        : '<p class="lab-empty">참석자로 등록된 랩미팅이 없습니다.</p>';
     }
 
     function renderMemberMeetingsPagination(totalPages, totalCount) {
@@ -706,29 +733,86 @@
       renderMeetings();
     }
 
+    var selectedNoteId = null;
+
     function renderNotes() {
       var notes = labData.memberNotes
         .filter(function (note) { return note.memberId === currentMember.id; })
         .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); });
-      document.getElementById('member-note-list').innerHTML = notes.length ? notes.map(function (note) {
-        var canManage = canManageNote(note);
-        return '<article class="note-card' + (note.done ? ' is-done' : '') + '">' +
-          '<div class="note-card-head">' +
-            '<label class="note-check"><input type="checkbox" ' + (note.done ? 'checked ' : '') + 'onchange="toggleNoteDone(\'' + escHtml(note.id) + '\')"> <span>' + (note.done ? '확인 완료' : '확인 필요') + '</span></label>' +
-            '<span>' + escHtml(noteLabel(note)) + ' · ' + escHtml(formatKoreanDateTime(note.createdAt)) + '</span>' +
+      var grid = document.getElementById('member-note-list');
+      if (!notes.length) {
+        grid.innerHTML = '<p class="lab-empty">저장된 메모나 피드백이 없습니다.</p>';
+        var detailEl = document.getElementById('member-note-detail');
+        if (detailEl) { detailEl.hidden = true; selectedNoteId = null; }
+        return;
+      }
+      grid.innerHTML = notes.map(function(note) {
+        var typeLabel = note.type === 'feedback' ? '피드백' : '메모';
+        var preview = (note.text || '').slice(0, 100);
+        var isSel = selectedNoteId === note.id;
+        return '<article class="note-sticky type-' + escHtml(note.type || 'memo') + (note.done ? ' is-done' : '') + (isSel ? ' is-selected' : '') + '" onclick="selectMemberNote(\'' + escHtml(note.id) + '\')">' +
+          '<div class="note-sticky-type">' +
+            '<span>' + escHtml(typeLabel) + '</span>' +
+            (note.done ? '<span style="color:var(--navy)">✓</span>' : '') +
           '</div>' +
-          '<p>' + escHtml(note.text) + '</p>' +
-          (canManage ? '<div class="note-card-actions">' +
-            '<button type="button" class="btn-sm" onclick="editMemberNote(\'' + escHtml(note.id) + '\')">수정</button>' +
-            '<button type="button" class="btn-sm danger" onclick="deleteMemberNote(\'' + escHtml(note.id) + '\')">삭제</button>' +
-          '</div>' : '') +
+          '<div class="note-sticky-body">' + escHtml(preview) + '</div>' +
+          '<div class="note-sticky-foot">' +
+            '<span>' + escHtml(formatKoreanDateTime(note.createdAt)) + '</span>' +
+            '<span class="note-sticky-reply-badge">' + escHtml(note.authorName || '') + '</span>' +
+          '</div>' +
         '</article>';
-      }).join('') : '<p class="lab-empty">저장된 메모나 피드백이 없습니다.</p>';
+      }).join('');
+      if (selectedNoteId) {
+        var sel = notes.find(function(n) { return n.id === selectedNoteId; });
+        if (sel) { renderMemberNoteDetail(sel); } else { selectedNoteId = null; document.getElementById('member-note-detail').hidden = true; }
+      }
+    }
+
+    function selectMemberNote(noteId) {
+      if (selectedNoteId === noteId) {
+        selectedNoteId = null;
+        document.getElementById('member-note-detail').hidden = true;
+        renderNotes();
+        return;
+      }
+      selectedNoteId = noteId;
+      var note = labData.memberNotes.find(function(n) { return n.id === noteId; });
+      if (!note) return;
+      renderNotes();
+      renderMemberNoteDetail(note);
+      document.getElementById('member-note-detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderMemberNoteDetail(note) {
+      var detailEl = document.getElementById('member-note-detail');
+      if (!detailEl) return;
+      var isAuthor = currentSession && note.authorId === currentSession.userId;
+      var typeLabel = note.type === 'feedback' ? '피드백' : '개인 메모';
+      detailEl.innerHTML =
+        '<div class="note-detail-head">' +
+          '<div>' +
+            '<strong style="font-size:0.82rem;color:var(--navy)">' + escHtml(typeLabel) + '</strong>' +
+            '<span class="note-detail-meta">' + escHtml(note.authorName || '') + ' · ' + escHtml(formatKoreanDateTime(note.createdAt)) + '</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;align-items:center">' +
+            '<label style="font-size:0.78rem;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer">' +
+              '<input type="checkbox" ' + (note.done ? 'checked ' : '') + 'onchange="toggleNoteDone(\'' + escHtml(note.id) + '\')" style="accent-color:var(--navy)"> ' +
+              (note.done ? '확인 완료' : '확인 필요') +
+            '</label>' +
+            '<button type="button" class="note-detail-close" onclick="selectMemberNote(\'' + escHtml(note.id) + '\')">닫기 ✕</button>' +
+          '</div>' +
+        '</div>' +
+        '<p class="note-detail-text">' + escHtml(note.text || '') + '</p>' +
+        '<div class="note-detail-actions">' +
+          (isAuthor ? '<button type="button" class="btn-sm" onclick="editMemberNote(\'' + escHtml(note.id) + '\')">수정</button>' : '') +
+          (isAuthor ? '<button type="button" class="btn-sm danger" onclick="deleteMemberNote(\'' + escHtml(note.id) + '\')">삭제</button>' : '') +
+        '</div>';
+      detailEl.hidden = false;
     }
 
     function canManageNote(note) {
       if (!currentSession) return false;
-      return currentSession.role === 'admin' || note.authorId === currentSession.userId;
+      return note.authorId === currentSession.userId;
     }
 
     function noteLabel(note) {
@@ -839,21 +923,16 @@
       var projectStatusLabel = function(s) {
         return { active: '진행 중', completed: '완료', paused: '일시 중단' }[s] || '진행 중';
       };
-      list.innerHTML = projects.map(function(p) {
+      var statusLabel = function(s) { return { active: '진행 중', completed: '완료', paused: '중단' }[s] || '진행 중'; };
+      list.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + projects.map(function(p) {
         var myProgress = (p.progress || []).find(function(item) { return item.memberId === currentMember.id; });
-        return '<article class="progress-card">' +
-          '<div class="progress-avatar" aria-hidden="true">팀</div>' +
-          '<div>' +
-            '<strong>' + escHtml(p.name) + '</strong>' +
-            '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + (p.memberIds || []).length + '명</span>' +
-            '<p>' + escHtml(p.description || '') + '</p>' +
-            (myProgress ? '<p style="font-size:0.8rem;color:var(--muted)">내 과제: ' + escHtml(myProgress.status || '') + '</p>' : '') +
-            '<div class="progress-actions">' +
-              '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '">프로젝트 방 →</a>' +
-            '</div>' +
-          '</div>' +
+        return '<article style="padding:10px;border:1px solid var(--line);background:#fff">' +
+          '<strong style="font-size:0.82rem;display:block;color:var(--navy);margin-bottom:3px">' + escHtml(p.name) + '</strong>' +
+          '<span style="font-size:0.72rem;color:var(--muted);font-weight:700">' + statusLabel(p.status) + ' · ' + (p.memberIds || []).length + '명</span>' +
+          (myProgress && myProgress.status ? '<p style="font-size:0.72rem;color:var(--ink);margin:4px 0 0">내 과제: ' + escHtml(myProgress.status) + '</p>' : '') +
+          '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '" style="margin-top:8px;display:inline-block">방 →</a>' +
         '</article>';
-      }).join('');
+      }).join('') + '</div>';
     }
 
     function formatKoreanDate(value) {
