@@ -350,10 +350,10 @@
         var actions = isAdminView ? '' : (isTeamGoal
           ? '<div class="goal-row-actions"><a class="btn-sm" href="lab-project.html?id=' + escHtml(goal._projectId) + '">프로젝트 방</a></div>'
           : '<div class="goal-row-actions">' +
-              '<button type="button" class="btn-sm" onclick="editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
-              '<button type="button" class="btn-sm danger" onclick="deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
+              '<button type="button" class="btn-sm" onclick="event.stopPropagation();editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
+              '<button type="button" class="btn-sm danger" onclick="event.stopPropagation();deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
             '</div>');
-        return '<tr>' +
+        return '<tr onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" style="cursor:pointer">' +
           '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong>' +
             '<span>' + escHtml(goal.category || '목표') + '</span>' +
             (isTeamGoal ? '<span class="goal-source-badge">팀: ' + escHtml(goal._projectName || '팀 프로젝트') + '</span>' : '') +
@@ -465,8 +465,10 @@
             ' style="grid-row:' + (item.lane + 2) + ';grid-column:' + item.sc + '/' + (item.ec + 1) + '"' +
             ' onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')"' +
             ' draggable="' + canInteract + '" ondragstart="dragGoal(event,\'' + escHtml(goal.id) + '\')">' +
+            (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
             '<strong>' + escHtml(goal.title) + '</strong>' +
             (isTeamGoal ? '<span class="goal-team-label">' + escHtml(goal._projectName || '팀') + '</span>' : '') +
+            (canInteract ? '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>' : '') +
           '</button>';
         });
         whtml += '</div>';
@@ -538,14 +540,9 @@
       if (isAdminView) return;
       var personalGoal = labData.memberGoals.find(function(g) { return g.id === goalId && g.memberId === currentMember.id; });
       if (personalGoal) {
-        if (selectedGoalId === goalId) {
-          closeGoalNotesPanel();
-          editGoal(goalId);
-        } else {
-          selectedGoalId = goalId;
-          renderGoalNotesPanel(goalId, personalGoal.title);
-          editGoal(goalId);
-        }
+        selectedGoalId = goalId;
+        renderGoalNotesPanel(goalId, personalGoal.title);
+        editGoal(goalId);
         return;
       }
       var foundProjectId = null;

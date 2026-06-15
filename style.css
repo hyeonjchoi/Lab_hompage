@@ -1848,19 +1848,18 @@ main { background: var(--bg); }
 .goal-calendar-cell.is-empty { background: #F9FAFB; }
 .goal-lane-bg {
   height: 28px;
-  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
-  background: #fff;
+  background: #fff; /* no borders — invisible, just a spacer for chip positioning */
 }
 .goal-lane-bg.is-empty { background: #F9FAFB; }
 .goal-calendar-chip {
-  display: flex; align-items: center; gap: 4px;
-  padding: 2px 6px; border-radius: 2px; border: 1px solid transparent;
+  display: flex; align-items: center; gap: 0;
+  padding: 0; border-radius: 2px; border: 1px solid transparent;
   margin: 2px 3px; cursor: pointer; font-family: inherit;
   font-size: 0.72rem; font-weight: 700; text-align: left;
   min-height: 22px; overflow: hidden; position: relative; z-index: 5;
 }
 .goal-calendar-chip strong {
-  flex: 1; min-width: 0;
+  flex: 1; min-width: 0; padding: 2px 4px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: inherit;
 }
 .goal-calendar-chip:hover { outline: 2px solid rgba(0,0,0,0.22); outline-offset: -1px; }
@@ -1868,7 +1867,12 @@ main { background: var(--bg); }
 .goal-calendar-chip.doing { border-color: #BFDBFE; }
 .goal-calendar-chip.done  { border-color: #BFE7CD; }
 .goal-calendar-chip.hold  { border-color: #F3C2C7; }
-.goal-resize-handle { display: none; }
+.goal-resize-handle {
+  display: block; width: 7px; height: 100%; min-height: 18px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.55); cursor: ew-resize;
+}
+.goal-resize-handle:hover { background: rgba(255,255,255,0.92); }
 .is-resizing-goal,
 .is-resizing-goal * { cursor: ew-resize !important; user-select: none; }
 .timeline-item,

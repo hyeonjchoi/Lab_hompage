@@ -507,8 +507,10 @@
             ' style="grid-row:' + (item.lane + 2) + ';grid-column:' + item.sc + '/' + (item.ec + 1) + '"' +
             ' onclick="editProjectGoal(\'' + escHtml(goal.id) + '\')"' +
             ' draggable="' + canInteract + '" ondragstart="dragPGoal(event,\'' + escHtml(goal.id) + '\')">' +
+            (canInteract ? '<span class="goal-resize-handle start" draggable="false" ondragstart="return false" onmousedown="startPGoalResize(event,\'' + escHtml(goal.id) + '\',\'start\')" aria-hidden="true"></span>' : '') +
             '<strong>' + escHtml(goal.title) + '</strong>' +
-            (assignee ? '<span class="goal-team-label">' + escHtml(assignee.name) + '</span>' : '') +
+            (assignee ? '<span class="goal-team-label" style="padding:2px 4px 2px 0">' + escHtml(assignee.name) + '</span>' : '') +
+            (canInteract ? '<span class="goal-resize-handle end" draggable="false" ondragstart="return false" onmousedown="startPGoalResize(event,\'' + escHtml(goal.id) + '\',\'end\')" aria-hidden="true"></span>' : '') +
           '</button>';
         });
         whtml += '</div>';
