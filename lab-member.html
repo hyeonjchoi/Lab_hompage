@@ -353,7 +353,7 @@
               '<button type="button" class="btn-sm" onclick="event.stopPropagation();editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
               '<button type="button" class="btn-sm danger" onclick="event.stopPropagation();deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
             '</div>');
-        return '<tr onclick="showGoalDetail(\'' + escHtml(goal.id) + '\')" style="cursor:pointer">' +
+        return '<tr onclick="selectGoalNotes(\'' + escHtml(goal.id) + '\')" style="cursor:pointer">' +
           '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong>' +
             '<span>' + escHtml(goal.category || '목표') + '</span>' +
             (isTeamGoal ? '<span class="goal-source-badge">팀: ' + escHtml(goal._projectName || '팀 프로젝트') + '</span>' : '') +
@@ -535,6 +535,24 @@
     }
 
     var selectedGoalId = null;
+
+    // List-view row click: show notes panel only (no edit form)
+    function selectGoalNotes(goalId) {
+      if (isAdminView) return;
+      var personalGoal = labData.memberGoals.find(function(g) { return g.id === goalId && g.memberId === currentMember.id; });
+      if (personalGoal) {
+        selectedGoalId = goalId;
+        renderGoalNotesPanel(goalId, personalGoal.title);
+        return;
+      }
+      // team goal → go to project page
+      var foundProjectId = null;
+      (labData.teamProjects || []).forEach(function(p) {
+        if (foundProjectId) return;
+        if ((p.goals || []).some(function(g) { return g.id === goalId; })) foundProjectId = p.id;
+      });
+      if (foundProjectId) window.location.href = 'lab-project.html?id=' + foundProjectId;
+    }
 
     function showGoalDetail(goalId) {
       if (isAdminView) return;

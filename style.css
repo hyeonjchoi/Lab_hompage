@@ -1842,9 +1842,10 @@ main { background: var(--bg); }
 .calendar-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .goal-calendar-cell {
   min-height: 34px; padding: 5px 6px;
-  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line); border-top: 1px solid var(--line);
   background: #fff;
 }
+.calendar-weekday-row .calendar-weekday { border-bottom: none; }
 .goal-calendar-cell.is-empty { background: #F9FAFB; }
 .goal-lane-bg {
   height: 28px;
