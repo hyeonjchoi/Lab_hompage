@@ -1119,3 +1119,93 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 | 파일 | 주요 변경 |
 |------|----------|
 | `sw.js` | `CACHE_NAME` v11 → v12 (캐시 강제 정리) |
+
+---
+
+## 2026-06-16 — 공동작업자 연결 및 main 브랜치 보호 설정
+
+### 진행 사항
+
+1. **GitHub 공동작업자 연결 확인**
+   - 저장소 `hyeonjchoi/Lab_hompage`에 협업자 `hbrim15` 계정이 등록됨
+   - 권한: Write (`push: true, admin: false`) — 브랜치 push·PR 생성 가능, main 직접 push 및 PR 자체 승인은 불가
+
+2. **gh CLI 로컬 설치**
+   - Homebrew 미설치 환경이라 `~/.local/bin/gh`에 바이너리 직접 설치 (v2.94.0)
+   - `gh auth login`으로 `hyeonjchoi` 계정 인증 완료 (SSH 프로토콜, 웹 브라우저 인증)
+
+3. **main 브랜치 보호 규칙 적용**
+   - `gh api -X PUT repos/hyeonjchoi/Lab_hompage/branches/main/protection` 실행
+   - 적용된 규칙:
+     - PR 없이 직접 push 차단
+     - 리뷰 승인 1명 이상 필수 (`required_approving_review_count: 1`)
+     - force push 차단 (`allow_force_pushes: false`)
+     - 브랜치 삭제 차단 (`allow_deletions: false`)
+     - `enforce_admins: false` — owner(hyeonjchoi)는 필요 시 우회 가능하나, 동일한 PR 흐름을 따르는 것을 권장
+
+### 협업 워크플로 (확정)
+
+```
+협업자/본인 모두: git checkout -b feature/이름-작업내용
+→ 작업 후 push
+→ GitHub에서 Pull Request 생성
+→ 서로 리뷰 승인 (자기 PR은 자기 승인 불가 — GitHub 기본 정책)
+→ 승인 후 main에 merge
+```
+
+### 메모
+
+- 협업자(`hbrim15`)는 Supabase 백엔드 연동 작업을 데스크탑에서 준비 중 (2026-06-16 기준).
+- 협업자가 작업한 내용은 브랜치 push → PR 생성까지는 자동 가능하지만, main 병합에는 본인(hyeonjchoi)의 리뷰 승인이 필요함.
+- `supabase-schema.sql`의 SQL 변경은 GitHub merge와 별개로 Supabase 대시보드에서 직접 실행해야 반영됨 — PR 머지만으로 DB에 자동 적용되지 않음.
+- `service_role` 키 등 민감한 키는 어떤 브랜치에도 커밋하지 않도록 협업자에게도 안내 필요.
+- 협업자가 본인 데스크탑에서 별도로 `git clone`한 폴더에서 작업하므로, 현재 작업 폴더(Dropbox 동기화 경로)와는 물리적으로 분리되어 있어 로컬 파일에 직접적인 영향은 없음.
+
+### 작업 시작 규칙 (필독)
+
+- **앞으로 이 디렉터리에서 새 작업을 시작할 때는 반드시 가장 먼저 `git pull origin main`을 실행한다.**
+- 이유: 공동작업자(`hbrim15`)가 별도 브랜치에서 작업해 PR로 main에 merge하는 경우, 로컬 Dropbox 폴더는 자동으로 갱신되지 않는다. pull을 생략하면 옛 버전 코드 위에서 작업하다가 나중에 충돌이 발생할 수 있다.
+- 현재(2026-06-16) 협업자는 Supabase 프로젝트 생성 및 백엔드 구현을 진행 중이므로, 다음 작업 시작 시 pull이 특히 중요함.
+
+### Supabase 연동 시 git pull의 범위 (중요)
+
+`git pull origin main`으로 가져와지는 것과 가져와지지 않는 것을 구분해야 한다.
+
+**pull로 동기화되는 것 (git이 추적하는 코드 영역):**
+- `supabase-schema.sql` 파일 내용
+- `supabase-client.js`의 `SUPABASE_URL` / `SUPABASE_ANON_KEY` 등 코드에 커밋된 값
+- `cap-auth.js`, `cap-data.js` 등이 localStorage 방식에서 Supabase 호출 방식으로 바뀐 코드 자체
+
+**pull로 동기화되지 않는 것 (Supabase 클라우드 쪽이라 git 추적 밖):**
+- 실제 Supabase 프로젝트의 테이블·데이터·RLS 정책 — 이건 협업자가 Supabase 대시보드에서 직접 만든 클라우드 리소스이며, git이 관리하는 영역이 아님
+- Supabase 프로젝트에 대한 대시보드 접근 권한 — GitHub 협업자 초대와 완전히 별개 시스템이므로, Supabase 대시보드에서 테이블을 보거나 SQL을 실행하려면 Supabase Organization Team에 별도로 초대받아야 함 (앞서 설명한 Owner/Administrator/Developer 역할)
+
+**결론:** 협업자가 백엔드를 마치고 pull하면, 웹사이트 코드는 협업자가 만든 실제 Supabase 프로젝트를 가리키도록 갱신되어 사이트 자체는 정상 동작할 것이다. 하지만 그 Supabase 프로젝트의 데이터베이스를 직접 들여다보거나 관리하려면 pull과 무관하게 Supabase Organization 초대를 별도로 받아야 한다. 또한 pull 후 `supabase-client.js`에 `service_role` 키가 실수로 커밋되어 있지 않은지 확인이 필요하다.
+
+---
+
+## 2026-06-16 — Supabase Organization 초대 확인
+
+### 진행 사항
+
+1. **Supabase CLI 로컬 설치**
+   - gh CLI와 동일한 방식으로 `~/.local/bin/supabase`에 바이너리 직접 설치 (v2.106.0)
+   - `supabase login`으로 `hyeonjchoi` 계정 인증 완료 (웹 브라우저 인증)
+
+2. **Organization 초대 상태 검증**
+   - `supabase orgs list` 결과 본인 계정이 아래 두 조직에 속해 있음을 확인:
+     - `hyeonjchoi's Org` (`vtuojobgzjghoiueazka`) — 본인 소유, 프로젝트 `kw.psy lab RSVN` (2026-05-20 생성, 실험실 예약 관련 별도 프로젝트로 추정)
+     - `hbrim15's Org` (`hatysunsslijymycabth`) — 협업자 소유, 프로젝트 `hbrim15's Project` (2026-06-15 생성, 서울 리전, `ACTIVE_HEALTHY`)
+   - Supabase Management API(`/v1/organizations/{id}/members`)로 `hbrim15's Org` 멤버 목록 직접 조회해 역할 확정:
+
+     | 계정 | 이메일 | 역할 |
+     |------|--------|------|
+     | `hbrim15` | hyebinrim@gmail.com | Owner |
+     | `hyeonjchoi` | hyeonj.choi@gmail.com | **Administrator** |
+
+### 결론
+
+- 협업자의 Supabase Organization 초대가 정상적으로 처리되어, 본인이 **Administrator** 권한으로 등록되어 있음을 확인함.
+- Administrator 권한이므로 프로젝트 설정 변경, SQL Editor에서 직접 쿼리 실행, API 키 확인이 모두 가능함.
+- 따라서 협업자가 백엔드(테이블·RLS 등) 작업을 마치면, 본인도 동일한 Supabase 프로젝트(`hbrim15's Project`, ref: `pfnqcwamznvaxgqahavi`)에 대시보드 또는 CLI로 직접 접근해 확인·수정할 수 있음.
+- `supabase-client.js`의 `SUPABASE_URL`/`SUPABASE_ANON_KEY`를 채울 때는 이 프로젝트(`pfnqcwamznvaxgqahavi`, host: `db.pfnqcwamznvaxgqahavi.supabase.co`)의 값을 사용해야 함.
