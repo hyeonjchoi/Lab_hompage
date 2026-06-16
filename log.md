@@ -1327,3 +1327,9 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 | `join.html` | 연구실/소속 문구 보강 |
 | `404.html`(신규) | 홈으로 자동 리다이렉트 |
 | `sw.js` | 루트 내비게이션 라우팅 버그 수정, 캐시 버전 v15 |
+
+### 4. Safari에서 "알림 허용" 클릭 시 등록 실패
+
+- 홈 화면에 추가한 PWA에서 "알림 허용"을 누르면 `알림 등록에 실패했습니다: undefined is not an object (evaluating 'subscription.keys.p256dh')` 오류가 발생.
+- **원인**: `pushManager.subscribe()`가 반환하는 `PushSubscription` 객체는 Safari에서 `.keys`를 직접 노출하지 않음(Chrome/Firefox는 편의상 노출하지만 스펙상 보장된 건 아님) — 표준대로라면 `.toJSON()`을 호출해야 `{endpoint, keys:{p256dh, auth}}` 형태를 얻을 수 있는데, `CAPData.addPushSubscription`이 원본 객체에서 바로 `subscription.keys.p256dh`를 읽고 있어 Safari에서만 깨짐.
+- **수정**: `supabase-client.js`의 `addPushSubscription`에서 `subscription.toJSON()`으로 정규화한 뒤 그 결과에서 `endpoint`/`keys`를 읽도록 변경. (`43ac1ea`)
