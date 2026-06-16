@@ -299,7 +299,12 @@
                'onchange="updateStudentId(\'' + escHtml(m.id) + '\',this.value)"></td>' +
           '<td><span class="role-badge ' + (m.role === 'admin' ? 'role-admin' : 'role-member') + '">' + escHtml(m.role) + '</span>' +
                '<button class="btn-sm" style="margin-left:6px" onclick="toggleRole(\'' + escHtml(m.id) + '\')">변경</button></td>' +
-          '<td>' + escHtml(GROUP_LABEL[m.lab_group] || m.lab_group) + '</td>' +
+          '<td><select style="border:1px solid var(--line);border-radius:4px;padding:3px 7px;font-size:0.84rem" ' +
+               'onchange="updateGroup(\'' + escHtml(m.id) + '\',this.value)">' +
+               Object.keys(GROUP_LABEL).map(function (g) {
+                 return '<option value="' + g + '"' + (g === m.lab_group ? ' selected' : '') + '>' + GROUP_LABEL[g] + '</option>';
+               }).join('') +
+               '</select></td>' +
           '<td style="font-size:0.8rem;color:var(--muted)">' + (m.updated_at ? m.updated_at.split('T')[0] : '-') + '</td>' +
           '<td class="action-row">' +
             '<a class="btn-sm primary" href="member-dashboard.html?id=' + escHtml(m.id) + '">편집</a>' +
@@ -313,6 +318,16 @@
       try {
         await CAPData.updateMember(id, { student_id: val.trim() });
         showToast('학번이 업데이트되었습니다.');
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
+    }
+
+    async function updateGroup(id, val) {
+      try {
+        await CAPData.updateMember(id, { lab_group: val });
+        showToast('그룹이 변경되었습니다.');
+        await renderMemberTable();
       } catch (e) {
         alert('오류: ' + e.message);
       }
