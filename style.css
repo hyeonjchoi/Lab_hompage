@@ -809,16 +809,14 @@ main { background: var(--bg); }
 }
 .nav-user a:hover { color: var(--navy-2); }
 .nav-logout,
-.nav-notification,
-.nav-notification-settings {
+.nav-notification {
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--line); background: none; cursor: pointer;
   padding: 4px 10px; border-radius: 0; font-size: 0.78rem;
   color: var(--muted); font-family: inherit;
 }
 .nav-logout:hover,
-.nav-notification:hover,
-.nav-notification-settings:hover { background: var(--bg); }
+.nav-notification:hover { background: var(--bg); }
 .nav-notification {
   color: var(--navy); font-weight: 800;
 }
@@ -1143,17 +1141,6 @@ main { background: var(--bg); }
   border: 1px solid var(--line);
 }
 .inline-form h4 { margin: 0 0 16px; font-size: 0.95rem; color: var(--navy); }
-.notif-settings-overlay {
-  position: fixed; inset: 0; z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
-  background: rgba(15, 23, 42, 0.5);
-}
-.notif-settings-panel {
-  width: min(420px, 100%);
-  background: #fff; margin-top: 0;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
-}
 .form-row {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
 }

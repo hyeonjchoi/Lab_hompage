@@ -228,6 +228,30 @@ CREATE TABLE IF NOT EXISTS site_content (
 );
 
 -- ══════════════════════════════════════════════
+-- 15. 푸시 구독 정보 (push_subscriptions)
+-- 구성원이 "알림 허용"을 누르면 기기별로 한 행씩 저장됨
+-- ══════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id  UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  endpoint   TEXT NOT NULL UNIQUE,
+  p256dh     TEXT NOT NULL,
+  auth       TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ══════════════════════════════════════════════
+-- 16. 알림 발송 기록 (notification_dispatch_log)
+-- 일정/목표 마감 같은 시간 기반 알림의 중복 발송을 막기 위한 기록
+-- ══════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS notification_dispatch_log (
+  kind    TEXT NOT NULL,
+  ref_id  UUID NOT NULL,
+  sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (kind, ref_id)
+);
+
+-- ══════════════════════════════════════════════
 -- Row Level Security (RLS)
 -- ══════════════════════════════════════════════
 ALTER TABLE members                   ENABLE ROW LEVEL SECURITY;
@@ -244,6 +268,8 @@ ALTER TABLE team_project_note_replies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_progress     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE publications              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_content              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE push_subscriptions         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notification_dispatch_log  ENABLE ROW LEVEL SECURITY;
 
 -- ──────────────────────────────────────────────
 -- 헬퍼 함수
@@ -478,6 +504,22 @@ CREATE POLICY "site_content_upsert" ON site_content FOR INSERT
   WITH CHECK (current_member_role() IN ('professor', 'admin'));
 CREATE POLICY "site_content_update" ON site_content FOR UPDATE
   USING (current_member_role() IN ('professor', 'admin'));
+
+-- ──────────────────────────────────────────────
+-- push_subscriptions: 본인 구독만 조회/추가/삭제 (Edge Function은 service_role로 RLS 우회)
+-- ──────────────────────────────────────────────
+CREATE POLICY "push_subscriptions_select_own" ON push_subscriptions FOR SELECT
+  USING (member_id = current_member_id());
+CREATE POLICY "push_subscriptions_insert_own" ON push_subscriptions FOR INSERT
+  WITH CHECK (member_id = current_member_id());
+CREATE POLICY "push_subscriptions_delete_own" ON push_subscriptions FOR DELETE
+  USING (member_id = current_member_id());
+
+-- ──────────────────────────────────────────────
+-- notification_dispatch_log: 클라이언트는 접근 불필요 (Edge Function이 service_role로만 읽고 씀)
+-- ──────────────────────────────────────────────
+CREATE POLICY "notification_dispatch_log_no_access" ON notification_dispatch_log FOR SELECT
+  USING (false);
 
 -- ══════════════════════════════════════════════
 -- updated_at 자동 갱신 트리거

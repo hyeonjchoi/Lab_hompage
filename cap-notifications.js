@@ -1,7 +1,20 @@
 /**
- * cap-notifications.js — local PWA notification helpers.
- * Current reminders are based on this device's local LAB data.
+ * cap-notifications.js — Web Push 구독 관리 + (보조용) 로컬 알림 헬퍼.
+ * 실제 알림 발송은 서버(Edge Function + DB 트리거/cron)가 담당하며,
+ * 이 파일은 "알림 허용" 클릭 시 이 기기를 push_subscriptions에 등록/해지하는 역할을 한다.
  */
+
+// supabase/functions/_shared/push.ts 의 VAPID_PRIVATE_KEY와 짝을 이루는 공개키 (공개되어도 안전)
+const VAPID_PUBLIC_KEY = 'BL3h0AMJexi3nUJSEUCoNJEDR0eWElH_i81jkE9cEqpKLAUsjsFEOG7FSOtxzrY31r8Zhn8_FbCNU8h7Q2owzIU';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
 
 const CAPNotifications = {
   SETTINGS_KEY: 'cap_notification_settings',
@@ -52,24 +65,47 @@ const CAPNotifications = {
       this.renderNavButton();
       return;
     }
+    const session = window.CAPAuth && CAPAuth.getSession();
+    if (!session) {
+      showToast('로그인 후 알림을 켤 수 있습니다.');
+      return;
+    }
     const permission = await Notification.requestPermission();
     const settings = this.getSettings();
     settings.enabled = permission === 'granted';
     this.saveSettings(settings);
     if (settings.enabled) {
-      await navigator.serviceWorker.ready;
-      showToast('알림을 켰습니다.');
-      this.scanAndNotify();
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        await CAPData.addPushSubscription(session.userId, subscription);
+        showToast('알림을 켰습니다.');
+      } catch (e) {
+        showToast('알림 등록에 실패했습니다: ' + e.message);
+        settings.enabled = false;
+        this.saveSettings(settings);
+      }
     } else {
       showToast('알림 권한이 허용되지 않았습니다.');
     }
     this.renderNavButton();
   },
 
-  disable() {
+  async disable() {
     const settings = this.getSettings();
     settings.enabled = false;
     this.saveSettings(settings);
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await CAPData.removePushSubscription(subscription.endpoint);
+        await subscription.unsubscribe();
+      }
+    } catch (e) { /* 구독 해지 실패는 조용히 무시 — 다음 enable 시 upsert로 정리됨 */ }
     this.renderNavButton();
     showToast('알림을 껐습니다.');
   },
@@ -96,57 +132,6 @@ const CAPNotifications = {
       button.textContent = this.getNavLabel();
       button.disabled = !this.isSupported();
     });
-  },
-
-  // 교수/관리자만 알림 세부 설정(알림 시점, 피드백 포함 여부)을 변경할 수 있음
-  canConfigure() {
-    return !!(window.CAPAuth && CAPAuth.isAdmin && CAPAuth.isAdmin());
-  },
-
-  openSettings() {
-    if (!this.canConfigure()) return;
-    this.closeSettings();
-    const s = this.getSettings();
-    const overlay = document.createElement('div');
-    overlay.className = 'notif-settings-overlay';
-    overlay.id = 'notif-settings-overlay';
-    overlay.innerHTML =
-      '<div class="notif-settings-panel inline-form">' +
-        '<h4>알림 세부 설정</h4>' +
-        '<div class="form-row">' +
-          '<div class="form-group"><label>일정 알림 (몇 시간 전)</label>' +
-            '<input type="number" min="1" id="ns-eventHours" value="' + s.eventHours + '"></div>' +
-          '<div class="form-group"><label>긴급 일정 알림 (몇 시간 전)</label>' +
-            '<input type="number" min="1" id="ns-urgentEventHours" value="' + s.urgentEventHours + '"></div>' +
-        '</div>' +
-        '<div class="form-group"><label>목표 마감 알림 (며칠 전)</label>' +
-          '<input type="number" min="1" id="ns-goalDays" value="' + s.goalDays + '"></div>' +
-        '<div class="form-group">' +
-          '<label style="display:flex;align-items:center;gap:8px;">' +
-            '<input type="checkbox" id="ns-feedback" style="width:auto;margin:0;"' + (s.feedback ? ' checked' : '') + '> 피드백 알림 포함' +
-          '</label>' +
-        '</div>' +
-        '<button class="save-btn" type="button" onclick="CAPNotifications.saveSettingsFromPanel()">저장</button>' +
-        '<button class="btn-sm" type="button" style="margin-left:8px" onclick="CAPNotifications.closeSettings()">취소</button>' +
-      '</div>';
-    overlay.addEventListener('click', e => { if (e.target === overlay) this.closeSettings(); });
-    document.body.appendChild(overlay);
-  },
-
-  closeSettings() {
-    const overlay = document.getElementById('notif-settings-overlay');
-    if (overlay) overlay.remove();
-  },
-
-  saveSettingsFromPanel() {
-    const settings = this.getSettings();
-    settings.eventHours = Math.max(1, parseInt(document.getElementById('ns-eventHours').value, 10) || settings.eventHours);
-    settings.urgentEventHours = Math.max(1, parseInt(document.getElementById('ns-urgentEventHours').value, 10) || settings.urgentEventHours);
-    settings.goalDays = Math.max(1, parseInt(document.getElementById('ns-goalDays').value, 10) || settings.goalDays);
-    settings.feedback = document.getElementById('ns-feedback').checked;
-    this.saveSettings(settings);
-    this.closeSettings();
-    if (window.showToast) showToast('알림 설정이 저장되었습니다.');
   },
 
   async sendTest() {

@@ -1250,3 +1250,50 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 - `cap-notifications.js`가 여전히 `localStorage`의 `cap_lab_data`를 읽도록 되어 있어 Supabase 마이그레이션 이후 알림(리마인더) 기능이 사실상 동작하지 않음. 이벤트/목표/메모를 Supabase에서 직접 불러오도록 별도 리팩터링 필요.
 - LAB 페이지의 "구성원별 진행 상황" 카드(`labData.progress`)는 팀 프로젝트에 속하지 않는 개인 단위 진행 상황 표시용인데, 이를 위한 Supabase 테이블이 마이그레이션 때 만들어지지 않아 항상 빈 배열로 처리됨. 기능을 유지하려면 별도 테이블 설계가 필요.
 - `cap-data.js`/`cap-auth.js`는 이제 어떤 HTML도 로드하지 않는 죽은 코드 — 혼동 방지를 위해 삭제 검토 가능.
+
+---
+
+## 2026-06-16 — 작은 UI 수정 6건 + 실시간 Web Push 알림 인프라 구축
+
+### 작은 수정 6건
+
+1. **구성원 정렬 순서**: `supabase-client.js`의 `getMembers()`가 이름 가나다순 단일 정렬에서 `lab_group` 우선순위(지도교수 → 박사/석박통합 → 석사 → 학부연구생 → 졸업생) 후 가나다순으로 변경. 데이터 레이어 한 곳만 수정해 admin.html/lab.html/people.html 등 모든 소비처에 자동 반영.
+2. **모바일 LAB 퀵액션 버튼**: `style.css`의 `@media max-width:640px` 룰에서 `flex-1 + ellipsis`로 텍스트가 잘리던 것을 2줄 줄바꿈 + `align-items:stretch`로 높이 통일하도록 수정.
+3. **홈 히어로 버튼**: "진행 연구 보기"를 `btn-block primary`(빨간 배경)에서 `secondary`(테두리만)로 변경해 "연구실 지원하기"와 통일.
+4. **연구실 문의**: `join.html`에서 "전화" 항목 삭제, "연구실" 항목에 "한울관 509호" 추가.
+5. **PWA manifest 경로 버그**: `manifest.json`의 `start_url`/`scope`/`shortcuts[].url`이 옛 GitHub Pages 경로(`/Lab_hompage/`)를 가리키고 있어 커스텀 도메인(`kwcaplab.co.kr`)에서 PWA standalone 모드가 깨지고 있었음 — 전부 `/`로 수정. `sw.js`의 `CACHE_NAME`도 올려서 기존에 설치된 기기에도 반영되게 함. (이미 홈 화면에 추가해둔 기존 아이콘은 재설치해야 효과를 봄.)
+6. **알림 설정 패널**: 처음에 추가했던 admin 전용 "⚙ 알림 설정"(이벤트/목표 임계값 조절 UI)은 사용자가 불필요하다고 판단해 다시 제거함(아래 진짜 푸시 알림으로 대체).
+
+### 실시간 Web Push 알림 인프라
+
+**배경**: 기존 `cap-notifications.js`는 진짜 푸시가 아니라 `lab.html`이 열려 있을 때만 다가오는 일정을 로컬로 확인해 보여주는 방식이었음(앱이 닫혀 있으면 전혀 동작 안 함). 사용자가 기기가 닫혀 있어도 서버가 직접 알려주는 진짜 푸시를 요청해, Web Push 표준(VAPID) 기반 인프라를 새로 구축함. 계획 전체는 `/Users/mac/.claude/plans/floating-sniffing-hippo.md`에 남아 있음.
+
+**대상 알림 4종**
+1. 다가오는 일정 — 참석자 지정 시 참석자에게만, 없으면 전체 구성원에게 (24시간 전 + 1시간 전 긴급 알림)
+2. 새 공지 생성 — 작성자를 제외한 전체 구성원에게
+3. 연구페이지 피드백/댓글 — `member_notes`(개인 피드백)는 해당 구성원에게, `team_project_notes`/`team_project_note_replies`(팀 메모·답글)는 작성자를 제외한 다른 프로젝트 참여자에게
+4. 연구 목표 마감 임박(2일 전) — 그 목표의 당사자에게
+
+**구축한 것**
+- DB: `push_subscriptions`(기기별 구독 정보), `notification_dispatch_log`(시간 기반 알림 중복 발송 방지) 테이블 추가, `pg_net`/`pg_cron` 익스텐션 활성화, 웹훅 인증용 비밀값은 Supabase Vault(`edge_webhook_secret`)에 저장.
+- Edge Functions 3개(`supabase/functions/` 아래, `create-member`와 동일한 구조로 작성·배포): `push-on-notice`, `push-on-feedback`(member_notes/team_project_notes/team_project_note_replies 공용), `push-reminders`(15분마다 cron이 호출). 공용 발송 로직은 `_shared/push.ts`에서 `npm:web-push`로 VAPID 서명 + payload 암호화 처리 — Deno Edge Function 런타임에서 정상 동작 확인됨.
+- DB 트리거 4개(`notices`/`member_notes`/`team_project_notes`/`team_project_note_replies` INSERT 시 `pg_net.http_post`로 해당 Edge Function 호출)와 `push-reminders-job` cron(15분 주기)을 운영 DB에 직접 적용. 테스트 공지를 실제로 insert해서 트리거 → pg_net → Edge Function 전체 파이프라인이 200으로 응답하는 것까지 확인 후 테스트 데이터는 삭제함.
+- 클라이언트: `CAPData.addPushSubscription`/`removePushSubscription` 추가, `cap-notifications.js`의 `enable()`/`disable()`이 `pushManager.subscribe()`/`unsubscribe()` + DB 등록/삭제까지 수행하도록 변경(로그인 안 한 사용자는 알림을 켤 수 없음), `sw.js`에 `push` 이벤트 리스너 추가.
+- VAPID 키페어와 웹훅 비밀값은 `supabase secrets set`/Vault에만 저장하고 git에는 공개키만 커밋함(`supabase-push-setup.sql`은 비밀값을 플레이스홀더로 남긴 재현용 참고 파일).
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `supabase-client.js` | `getMembers()` 정렬 로직, `addPushSubscription`/`removePushSubscription` |
+| `cap-notifications.js` | VAPID 공개키 상수, `enable()`/`disable()`을 실제 push 구독 연동으로 교체 |
+| `sw.js` | `push` 이벤트 리스너 추가, 캐시 버전 v13→v14 |
+| `style.css` | 모바일 LAB 버튼, 알림 설정 패널 CSS(추가 후 제거) |
+| `index.html`, `join.html`, `manifest.json` | 작은 수정 6건 중 4/5번 |
+| `supabase-schema.sql` | `push_subscriptions`/`notification_dispatch_log` 테이블 + RLS 정의 추가 |
+| `supabase-push-setup.sql`(신규) | 익스텐션/트리거/cron 재현용 참고 스크립트 |
+| `supabase/functions/_shared/push.ts`, `push-on-notice/`, `push-on-feedback/`, `push-reminders/`(신규) | 푸시 발송 Edge Functions |
+
+### 남은 일 / 한계
+
+- 아직 한 명도 "알림 허용"을 눌러 구독한 적이 없어(`push_subscriptions`가 비어 있음), 코드/인프라는 검증됐지만 실제 사람에게 푸시가 도착하는 종단 테스트는 못함 — 사용자가 직접 로그인 후 알림을 켜고 공지를 만들어보는 실사용 테스트가 필요.
+- iOS Safari는 홈 화면에 추가(standalone)된 상태여야 Push API가 동작함(iOS 16.4+) — 일반 Safari 탭에서는 "알림 허용"을 눌러도 동작하지 않음.
+- `push-reminders`의 임계값(24시간/1시간/2일)은 코드에 고정값으로 박혀 있음 — 관리자용 설정 UI는 사용자 요청으로 제거했기 때문에, 바꾸려면 `supabase/functions/push-reminders/index.ts`를 고쳐 재배포해야 함.

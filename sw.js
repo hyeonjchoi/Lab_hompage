@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v13';
+const CACHE_NAME = 'kw-cap-lab-v14';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [
@@ -26,6 +26,20 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(PRECACHE_ASSETS))
       .then(() => self.skipWaiting())
+  );
+});
+
+// 서버(Edge Function)가 보낸 Web Push 수신 — 앱이 닫혀 있어도 동작한다
+self.addEventListener('push', event => {
+  let data = { title: 'KW CAP Lab', body: '새 알림이 있습니다.' };
+  try { if (event.data) data = event.data.json(); } catch (e) { /* keep default */ }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      data: { url: data.url || 'lab.html' }
+    })
   );
 });
 

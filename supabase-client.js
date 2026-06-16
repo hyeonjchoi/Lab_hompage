@@ -152,7 +152,6 @@ const CAPAuth = {
           '<div class="nav-auth-row secondary">' +
             (session.role === 'admin' ? '<a class="nav-admin-link" href="admin.html">관리자</a>' : '') +
             (window.CAPNotifications ? '<button class="nav-notification" type="button" onclick="CAPNotifications.toggle()">' + escHtml(CAPNotifications.getNavLabel()) + '</button>' : '') +
-            (window.CAPNotifications && session.role === 'admin' ? '<button class="nav-notification-settings" type="button" onclick="CAPNotifications.openSettings()" title="알림 세부 설정" aria-label="알림 세부 설정">⚙ 알림 설정</button>' : '') +
             '<button class="nav-logout" onclick="CAPAuth.logout().then(()=>window.location.reload())">로그아웃</button>' +
           '</div>' +
         '</div>';
@@ -207,6 +206,21 @@ const CAPData = {
   },
   async removeMember(id) {
     const { error } = await getSupabase().from('members').delete().eq('id', id);
+    _throw(error);
+  },
+
+  // ── Push Subscriptions ────────────────────
+  async addPushSubscription(memberId, subscription) {
+    const { error } = await getSupabase().from('push_subscriptions').upsert({
+      member_id: memberId,
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth: subscription.keys.auth
+    }, { onConflict: 'endpoint' });
+    _throw(error);
+  },
+  async removePushSubscription(endpoint) {
+    const { error } = await getSupabase().from('push_subscriptions').delete().eq('endpoint', endpoint);
     _throw(error);
   },
 
