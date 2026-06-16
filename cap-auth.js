@@ -70,9 +70,7 @@ const CAPAuth = {
     });
     if (!navAuth) return;
     if (session) {
-      const labPageHref = session.role === 'admin'
-        ? 'lab.html'
-        : 'lab-member.html?id=' + encodeURIComponent(session.userId);
+      const labPageHref = 'lab-member.html?id=' + encodeURIComponent(session.userId);
       navAuth.innerHTML =
         '<div class="nav-auth-stack">' +
           '<div class="nav-auth-row">' +

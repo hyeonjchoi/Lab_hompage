@@ -2173,6 +2173,13 @@ main { background: var(--bg); }
   .page-hero-inner h1 { font-size: clamp(1.5rem, 7vw, 1.9rem); }
   .lab-hero h1 { font-size: clamp(1.5rem, 7vw, 1.9rem); }
   .page-hero-inner p, .lab-hero p { font-size: 0.86rem; }
+  .lab-hero { padding: 28px 20px; }
+  .lab-quick-actions { flex-wrap: nowrap; gap: 6px; }
+  .lab-quick-actions .btn-sm {
+    flex: 1 1 0; min-width: 0; min-height: 36px;
+    padding: 4px 4px; font-size: 0.66rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .goal-view-toggle { width: 100%; }
   .goal-view-toggle .btn-sm { flex: 1 1 auto; justify-content: center; }
   .goal-table-wrap { overflow-x: visible; border: none; }

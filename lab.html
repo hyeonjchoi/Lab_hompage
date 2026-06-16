@@ -178,6 +178,8 @@
         </div>
       </div>
 
+      <div id="team-project-pagination"></div>
+
       <div id="project-create-panel" hidden style="border-top:1px solid var(--line);padding-top:20px;margin-top:4px">
         <form id="project-create-form" onsubmit="saveProjectCreate(event)">
           <div class="form-group">
@@ -291,6 +293,8 @@
     var adminProgressMode = false;
     var minutesPage = 1;
     var MINUTES_PAGE_SIZE = 5;
+    var teamProjectPage = 1;
+    var TEAM_PROJECT_PAGE_SIZE = 4;
     var MINUTES_RETENTION_DAYS = 60;
 
     var EVENT_TYPES = {
@@ -637,6 +641,11 @@
     function changeMinutesPage(delta) {
       minutesPage += delta;
       renderMinutes();
+    }
+
+    function changeTeamProjectPage(delta) {
+      teamProjectPage += delta;
+      renderTeamProjects();
     }
 
     function renderProgress() {
@@ -1069,16 +1078,33 @@
 
     function renderTeamProjects() {
       var list = document.getElementById('team-project-list');
+      var pagWrap = document.getElementById('team-project-pagination');
       if (!list) return;
       var projects = Array.isArray(labData.teamProjects) ? labData.teamProjects : [];
       if (!projects.length) {
         list.innerHTML = '<p class="lab-empty">아직 생성된 팀 프로젝트가 없습니다. 구성원 누구나 프로젝트를 만들 수 있습니다.</p>';
+        if (pagWrap) pagWrap.innerHTML = '';
         return;
       }
-      var session = CAPAuth.getSession();
-      list.innerHTML = projects.slice().sort(function(a, b) {
+      var sortedProjects = projects.slice().sort(function(a, b) {
         return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
-      }).map(function(p) {
+      });
+      var totalProjectPages = Math.max(1, Math.ceil(sortedProjects.length / TEAM_PROJECT_PAGE_SIZE));
+      if (teamProjectPage > totalProjectPages) teamProjectPage = totalProjectPages;
+      if (teamProjectPage < 1) teamProjectPage = 1;
+      var pStart = (teamProjectPage - 1) * TEAM_PROJECT_PAGE_SIZE;
+      var visibleProjects = sortedProjects.slice(pStart, pStart + TEAM_PROJECT_PAGE_SIZE);
+      if (pagWrap) {
+        pagWrap.innerHTML = totalProjectPages > 1
+          ? '<div class="minutes-pagination" aria-label="팀 프로젝트 페이지 이동">' +
+              '<button type="button" class="btn-sm" onclick="changeTeamProjectPage(-1)"' + (teamProjectPage === 1 ? ' disabled' : '') + '>이전</button>' +
+              '<span>' + teamProjectPage + ' / ' + totalProjectPages + ' · 총 ' + sortedProjects.length + '개</span>' +
+              '<button type="button" class="btn-sm" onclick="changeTeamProjectPage(1)"' + (teamProjectPage === totalProjectPages ? ' disabled' : '') + '>다음</button>' +
+            '</div>'
+          : '';
+      }
+      var session = CAPAuth.getSession();
+      list.innerHTML = visibleProjects.map(function(p) {
         var creator = CAPData.getMember(p.createdBy);
         var memberNames = (p.memberIds || []).map(function(id) {
           var m = CAPData.getMember(id);
@@ -1159,6 +1185,7 @@
         meetings: []
       });
       labData = loadLabData();
+      teamProjectPage = 1;
       renderTeamProjects();
       toggleProjectCreateForm();
       document.getElementById('project-create-form').reset();
