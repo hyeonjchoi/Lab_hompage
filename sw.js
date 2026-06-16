@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v14';
+const CACHE_NAME = 'kw-cap-lab-v15';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [
@@ -80,10 +80,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 자주 바뀌는 화면/인증 파일은 모바일 캐시가 오래 남지 않도록 네트워크 우선
+  // 자주 바뀌는 화면/인증 파일은 모바일 캐시가 오래 남지 않도록 네트워크 우선.
+  // 홈 화면(standalone)에서 첫 진입 시 요청되는 "/" 같은 루트 내비게이션도
+  // (확장자가 없어 .html로 안 끝남) 반드시 이 분기를 타야 한다 — 그래야 네트워크
+  // 요청이 실패해도 캐시된 index.html로 안전하게 복구된다.
   if (
     event.request.method === 'GET' &&
-    (url.pathname.endsWith('.html') ||
+    (event.request.mode === 'navigate' ||
+      url.pathname.endsWith('.html') ||
       url.pathname.endsWith('.css') ||
       url.pathname.endsWith('.js'))
   ) {
@@ -94,7 +98,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => caches.match(event.request))
+      }).catch(() => caches.match(event.request).then(cached => cached || caches.match(`${BASE_PATH}/index.html`)))
     );
     return;
   }
@@ -118,7 +122,7 @@ self.addEventListener('fetch', event => {
           return response;
         }).catch(() => {
           // 오프라인 시 캐시된 index.html 반환
-          if (event.request.headers.get('accept').includes('text/html')) {
+          if ((event.request.headers.get('accept') || '').includes('text/html')) {
             return caches.match(`${BASE_PATH}/index.html`);
           }
         });
