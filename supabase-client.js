@@ -11,8 +11,8 @@
  * CAPData, CAPAuth, CAPAvatar, escHtml, showToast 는 동일한 이름으로 유지됩니다.
  */
 
-const SUPABASE_URL      = 'YOUR_SUPABASE_URL';       // 예: https://xxxx.supabase.co
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';  // Project Settings → API → anon public
+const SUPABASE_URL      = 'https://pfnqcwamznvaxgqahavi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmbnFjd2Ftem52YXhncWFoYXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NDc5OTEsImV4cCI6MjA5NzEyMzk5MX0.WzCEyb0WxI_X34d6XG7632Cy31J5_O5Yz58yRUUQygU';
 
 // ──────────────────────────────────────────────
 // 클라이언트 싱글턴
