@@ -199,7 +199,7 @@ function setupMobileNav() {
   button.className = 'nav-toggle';
   button.setAttribute('aria-expanded', 'false');
   button.setAttribute('aria-label', '메뉴 열기');
-  button.textContent = '메뉴';
+  button.innerHTML = '<span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span><span class="nav-toggle-bar"></span>';
   button.addEventListener('click', function () {
     const isOpen = shell.classList.toggle('nav-open');
     button.setAttribute('aria-expanded', String(isOpen));

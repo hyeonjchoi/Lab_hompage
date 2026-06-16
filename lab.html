@@ -185,6 +185,12 @@
             <input id="project-name" required placeholder="예: AI 광고 반응 공동 연구">
           </div>
           <div class="form-group">
+            <label for="project-photo">프로젝트 프로필 사진</label>
+            <input id="project-photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="handleProjectPhoto(event,'project-photoData')">
+            <input id="project-photoData" type="hidden" value="">
+            <p class="form-hint">PNG, JPG, WebP, GIF 파일을 사용할 수 있습니다. 1MB 이하 이미지를 권장합니다.</p>
+          </div>
+          <div class="form-group">
             <label for="project-desc">프로젝트 설명</label>
             <textarea id="project-desc" placeholder="연구 주제나 목표를 간략히 설명해 주세요."></textarea>
           </div>
@@ -1063,7 +1069,7 @@
           return m ? m.name : null;
         }).filter(Boolean).join(', ');
         return '<article class="progress-card">' +
-          '<div class="progress-avatar" aria-hidden="true">팀</div>' +
+          (p.photo ? '<div class="progress-avatar"><img class="avatar-photo" src="' + escHtml(p.photo) + '" alt=""></div>' : '<div class="progress-avatar" aria-hidden="true">팀</div>') +
           '<div>' +
             '<strong>' + escHtml(p.name) + '</strong>' +
             '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + (p.memberIds || []).length + '명</span>' +
@@ -1116,11 +1122,13 @@
       var name = document.getElementById('project-name').value.trim();
       var desc = document.getElementById('project-desc').value.trim();
       var memberIds = getCheckedValues('project-member');
+      var photo = document.getElementById('project-photoData').value;
       if (!name) { showToast('프로젝트 이름을 입력해 주세요.'); return; }
       if (!memberIds.includes(session.userId)) memberIds.push(session.userId);
       var newId = CAPData.addTeamProject({
         name: name,
         description: desc,
+        photo: photo,
         memberIds: memberIds,
         createdBy: session.userId,
         goals: [],
@@ -1132,7 +1140,29 @@
       renderTeamProjects();
       toggleProjectCreateForm();
       document.getElementById('project-create-form').reset();
+      document.getElementById('project-photoData').value = '';
       showToast('팀 프로젝트가 생성됐습니다.');
+    }
+
+    function handleProjectPhoto(e, targetFieldId) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+      if (allowed.indexOf(file.type) === -1) {
+        alert('PNG, JPG, WebP, GIF 이미지만 업로드할 수 있습니다.');
+        e.target.value = '';
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        alert('프로젝트 사진은 1MB 이하 파일을 사용해 주세요.');
+        e.target.value = '';
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById(targetFieldId).value = reader.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function deleteTeamProject(projectId) {

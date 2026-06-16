@@ -976,3 +976,53 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 
 - `main` 브랜치 커밋 후 `git push origin main`
 - GitHub Pages: `https://hyeonjchoi.github.io/Lab_hompage/`
+
+---
+
+## 2026-06-16 진행 요약
+
+### 1. 개인 연구페이지 — 목표 연결 메모 / 페이지네이션 레이아웃 수정
+
+- `renderGoalNotesPanel()`(`lab-member.html`): 목표 클릭 시 뜨는 "관련 메모" 패널에서 그 목표에 `linkedGoalId`로 연결되지 않은 전체(글로벌) 메모를 더 이상 같이 보여주지 않도록 변경. 해당 목표에 명시적으로 연결된 메모만 표시.
+- `.note-sticky-grid .minutes-pagination { grid-column: 1 / -1 }`(`style.css`) 추가 — 메모 그리드(CSS Grid) 안에 페이지네이션 div가 한 칸에 끼어 좌측으로 밀리던 문제 해결, 페이지 표시가 전체 너비를 차지하며 가운데 정렬되도록 수정.
+
+### 2. 로그인 학번/교번 입력 마스킹
+
+- `login.html`: `#input-sid` 입력 타입을 `text` → `password`로 변경(기본값 마스킹). `.input-with-toggle` 래퍼 + `표시/숨김` 토글 버튼(`toggleSidVisibility()`) 추가.
+- `style.css`: `.input-with-toggle`, `.input-toggle-btn` 스타일 추가.
+
+### 3. 팀 프로젝트 프로필 사진 업로드
+
+- `member-dashboard.html`의 기존 프로필 사진 업로드 패턴(FileReader → dataURL → hidden input)을 재사용.
+- `lab.html`(프로젝트 생성 폼) / `lab-project.html`(프로젝트 설정 패널) 모두에 사진 업로드 input 추가, `handleProjectPhoto(e, targetFieldId)` 함수로 타입(PNG/JPG/WebP/GIF) 및 용량(1MB) 검증.
+- `CAPData.addTeamProject` / `updateTeamProject`는 임의 필드를 그대로 저장하므로 데이터 레이어 수정 없이 `photo` 필드만 추가 전달.
+- 프로젝트 카드(`lab.html`) 및 프로젝트 헤더(`lab-project.html`)에서 `photo` 값이 있으면 `<img class="avatar-photo">`로 렌더링, 없으면 기존 "팀" 텍스트 유지.
+- `style.css`: `.progress-avatar img, .member-profile-avatar img { object-fit: cover }` 추가.
+
+### 4. 모바일 반응형 개선 (`style.css`, `@media (max-width:640px)`)
+
+- 페이지 타이틀 축소: `.page-hero-inner h1`, `.lab-hero h1` 에 모바일 전용 `clamp()` 규칙 추가, 리드 문단도 폰트 축소.
+- 연구 목표 리스트뷰(`#member-goals`, `#project-goals`)의 `.goal-table`을 모바일에서 가로 스크롤 표 대신 카드형 스택으로 전환 (`thead` 숨김, `td::before`로 라벨 표시 — 개인/팀 페이지 컬럼 구성이 달라 컨테이너 ID로 라벨 분기).
+- 목표 추가/리스트보기/일정보기 버튼(`.goal-view-toggle`)이 모바일에서 균등한 풀 너비로 배치되도록 보강.
+
+### 5. 모바일 메뉴 버튼 — 햄버거 아이콘 + 로그인 정보 상단 배치
+
+- `cap-auth.js`(`setupMobileNav`): 버튼 텍스트 "메뉴" 대신 3개의 `<span class="nav-toggle-bar">` 막대 아이콘으로 교체 (`aria-label`은 그대로 유지해 접근성 보존).
+- `style.css`: `.nav-toggle` 모바일 스타일을 막대 3개 아이콘에 맞게 재정의, 기존 텍스트 버튼용 중복 규칙 제거.
+- `.nav-shell.nav-open .nav-auth { order: -1 }` 추가 — 모바일 메뉴를 펼쳤을 때 로그인 정보(프로필/연구페이지/로그아웃)가 메뉴 링크보다 항상 위에 표시되도록 그리드 순서만 조정 (DOM 순서는 변경하지 않음).
+
+### 수정 파일 목록
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `login.html` | 학번 입력 마스킹 + 토글 버튼 |
+| `lab.html` | 프로젝트 생성 폼에 사진 업로드, 프로젝트 카드 사진 렌더링 |
+| `lab-project.html` | 프로젝트 설정 패널에 사진 업로드/제거, 헤더 사진 렌더링 |
+| `lab-member.html` | 목표 연결 메모 패널에서 글로벌 메모 제외 |
+| `cap-auth.js` | 모바일 메뉴 버튼을 햄버거 아이콘으로 교체 |
+| `style.css` | 메모 페이지네이션 정렬, input 마스킹 토글, 프로젝트 아바타 이미지, 모바일 타이틀/목표테이블/메뉴 버튼/nav-auth 순서 |
+
+### 배포
+
+- `main` 브랜치 커밋 후 `git push origin main`
+- GitHub Pages: `https://hyeonjchoi.github.io/Lab_hompage/`

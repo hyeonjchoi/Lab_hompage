@@ -898,6 +898,13 @@ main { background: var(--bg); }
   font-size: 0.95rem; font-family: inherit; color: var(--ink);
   background: #fff;
 }
+.input-with-toggle { position: relative; }
+.input-with-toggle input { padding-right: 64px; }
+.input-toggle-btn {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  border: none; background: transparent; color: var(--navy);
+  font-size: 0.78rem; font-weight: 800; cursor: pointer; padding: 4px 6px;
+}
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   outline: none; border-color: var(--navy);
   box-shadow: 0 0 0 3px rgba(24,58,90,0.1);
@@ -1533,6 +1540,9 @@ main { background: var(--bg); }
   border-radius: 0; background: var(--blue-soft); color: var(--navy);
   font-weight: 900; border: 1px solid var(--line);
 }
+.progress-avatar img, .member-profile-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
 .progress-card strong {
   display: block; color: var(--navy);
 }
@@ -2000,10 +2010,6 @@ main { background: var(--bg); }
   .brand-name strong { font-size: 0.82rem; }
   .brand-name span { font-size: 0.58rem; max-width: 230px; }
   .brand-logo { width: 48px; height: 48px; }
-  .nav-toggle {
-    display: inline-flex; align-items: center; justify-content: center;
-    grid-column: 2; justify-self: end;
-  }
   .nav-links {
     grid-column: 1 / -1; width: 100%; display: none;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2146,6 +2152,38 @@ main { background: var(--bg); }
   .drawer-actions .save-btn {
     width: 100%;
   }
+  .page-hero-inner h1 { font-size: clamp(1.5rem, 7vw, 1.9rem); }
+  .lab-hero h1 { font-size: clamp(1.5rem, 7vw, 1.9rem); }
+  .page-hero-inner p, .lab-hero p { font-size: 0.86rem; }
+  .goal-view-toggle { width: 100%; }
+  .goal-view-toggle .btn-sm { flex: 1 1 auto; justify-content: center; }
+  .goal-table-wrap { overflow-x: visible; border: none; }
+  .goal-table { min-width: 0; }
+  .goal-table thead { display: none; }
+  .goal-table, .goal-table tbody, .goal-table tr, .goal-table td { display: block; width: 100%; }
+  .goal-table tr { border: 1px solid var(--line); margin-bottom: 10px; padding: 10px 12px; }
+  .goal-table td { padding: 4px 0; border: none; }
+  .goal-table td::before {
+    display: block; margin-bottom: 2px; color: var(--muted);
+    font-size: 0.7rem; font-weight: 800;
+  }
+  #member-goals .goal-table td:nth-of-type(1)::before { content: "목표"; }
+  #member-goals .goal-table td:nth-of-type(2)::before { content: "상태"; }
+  #member-goals .goal-table td:nth-of-type(3)::before { content: "기간"; }
+  #member-goals .goal-table td:nth-of-type(4)::before { content: "메모"; }
+  #project-goals .goal-table td:nth-of-type(1)::before { content: "담당자"; }
+  #project-goals .goal-table td:nth-of-type(2)::before { content: "목표"; }
+  #project-goals .goal-table td:nth-of-type(3)::before { content: "상태"; }
+  #project-goals .goal-table td:nth-of-type(4)::before { content: "기간"; }
+  #project-goals .goal-table td:nth-of-type(5)::before { content: "메모"; }
+  .nav-toggle {
+    display: inline-flex; flex-direction: column; gap: 4px;
+    width: 34px; height: 34px; padding: 0; align-items: center; justify-content: center;
+    border: 1px solid var(--navy); background: #fff;
+    grid-column: 2; justify-self: end;
+  }
+  .nav-toggle-bar { display: block; width: 18px; height: 2px; background: var(--navy); }
+  .nav-shell.nav-open .nav-auth { order: -1; }
 }
 
 /* Team Project */
