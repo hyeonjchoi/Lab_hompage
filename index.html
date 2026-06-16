@@ -168,8 +168,8 @@
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-      var c = CAPData.getContent();
+    document.addEventListener('DOMContentLoaded', async function () {
+      var c = await CAPData.getContent();
 
       // Hero text
       if (c.home) {
@@ -182,7 +182,7 @@
       if (c.research && c.research.axes) {
         document.getElementById('hero-axis-count').textContent = c.research.axes.length;
       }
-      document.getElementById('hero-member-count').textContent = CAPData.getMembers().length;
+      document.getElementById('hero-member-count').textContent = (await CAPData.getMembers()).length;
 
       // Research snapshot
       var snap = document.getElementById('research-snapshot');
@@ -198,7 +198,7 @@
 
       // Publications snapshot (latest 2 articles)
       var pubSnap = document.getElementById('pub-snapshot');
-      var articles = CAPData.getArticles().slice(0, 2);
+      var articles = (await CAPData.getArticles()).slice(0, 2);
       pubSnap.innerHTML = articles.map(function (a) {
         return '<li>' +
           '<b>' + escHtml(a.title) + '</b>' +

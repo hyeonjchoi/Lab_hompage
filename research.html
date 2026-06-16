@@ -71,9 +71,9 @@
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script src="cap-page-meta.js?v=page-meta-v3"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       var isAdmin = CAPAuth.isAdmin();
-      var c = CAPData.getContent();
+      var c = await CAPData.getContent();
       var container = document.getElementById('axes-container');
       if (!c.research || !c.research.axes) return;
 

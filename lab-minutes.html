@@ -70,74 +70,41 @@
   <script src="supabase-client.js?v=supabase-v1"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
-    var LAB_KEY = 'cap_lab_data';
-    var MINUTES_RETENTION_DAYS = 60;
-
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
-      renderMinutesPage();
+      await renderMinutesPage();
     });
 
-    function renderMinutesPage() {
-      var data = loadLabData();
-      var minutes = data.minutes.slice().sort(function (a, b) {
-        return String(b.createdAt || b.meetingDate || '').localeCompare(String(a.createdAt || a.meetingDate || ''));
+    async function renderMinutesPage() {
+      var minutes = await CAPData.getMeetingMinutes();
+      minutes = minutes.slice().sort(function (a, b) {
+        return String(b.created_at || b.meeting_date || '').localeCompare(String(a.created_at || a.meeting_date || ''));
       });
       document.getElementById('minutes-page-list').innerHTML = minutes.length ? minutes.map(function (item) {
-        var meeting = data.events.find(function (event) {
-          return event.id === item.eventId || event.date === item.meetingDate;
-        }) || {};
-        var attendees = getAttendeeNames(meeting.attendees);
+        var dateStr = formatKoreanDate(item.meeting_date || item.created_at);
+        var timeStr = (item.start_time && item.end_time) ? item.start_time + '-' + item.end_time : '';
         return '<article class="meeting-block">' +
           '<div class="meeting-block-head plain">' +
             '<span class="event-type-badge meeting">랩미팅</span>' +
-            '<div><strong>' + escHtml(item.title) + '</strong><p>' + escHtml(formatKoreanDate(item.meetingDate || meeting.date) + (meeting.id ? ' · ' + formatTimeRange(meeting) : '')) + '</p>' +
-            '<p class="meeting-attendees">' + escHtml(attendees || '참석자 추가 예정') + '</p></div>' +
+            '<div><strong>' + escHtml(item.title) + '</strong>' +
+            '<p>' + escHtml(dateStr + (timeStr ? ' · ' + timeStr : '')) + '</p>' +
+            '</div>' +
           '</div>' +
           '<details class="minutes-disclosure">' +
             '<summary>회의록 펼쳐보기</summary>' +
             '<div class="minutes-items"><div class="minutes-card">' +
-              '<span>' + escHtml(item.createdBy || '구성원') + ' · ' + escHtml(formatKoreanDateTime(item.createdAt)) + '</span>' +
-              '<p>' + escHtml(item.summary || '내용이 없습니다.') + '</p>' +
+              '<span>' + escHtml(formatKoreanDateTime(item.created_at)) + '</span>' +
+              '<p>' + escHtml(item.summary || item.content || '내용이 없습니다.') + '</p>' +
             '</div></div>' +
           '</details>' +
         '</article>';
       }).join('') : '<p class="lab-empty">최근 60일 안에 저장된 회의록이 없습니다.</p>';
     }
 
-    function loadLabData() {
-      var raw = localStorage.getItem(LAB_KEY);
-      var data = raw ? JSON.parse(raw) : {};
-      data.events = Array.isArray(data.events) ? data.events : [];
-      data.minutes = pruneExpiredMinutes(Array.isArray(data.minutes) ? data.minutes : []);
-      localStorage.setItem(LAB_KEY, JSON.stringify(data));
-      return data;
-    }
-
-    function pruneExpiredMinutes(minutes) {
-      var cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - MINUTES_RETENTION_DAYS);
-      cutoff.setHours(0, 0, 0, 0);
-      return minutes.filter(function (item) {
-        var basis = item.createdAt || item.meetingDate;
-        if (!basis) return true;
-        var date = new Date(basis);
-        if (isNaN(date.getTime())) return true;
-        date.setHours(0, 0, 0, 0);
-        return date >= cutoff;
-      });
-    }
-
-    function getAttendeeNames(ids) {
-      if (!Array.isArray(ids) || !ids.length) return '';
-      return ids.map(function (id) {
-        var member = CAPData.getMember(id);
-        return member ? member.name : '';
-      }).filter(Boolean).join(', ');
-    }
-
     function formatKoreanDate(value) {
       if (!value) return '-';
+      var d = new Date(value);
+      if (!isNaN(d.getTime())) return d.getFullYear() + '년 ' + (d.getMonth()+1) + '월 ' + d.getDate() + '일';
       var parts = value.split('-');
       return Number(parts[0]) + '년 ' + Number(parts[1]) + '월 ' + Number(parts[2]) + '일';
     }
@@ -147,12 +114,6 @@
       var date = new Date(value);
       if (isNaN(date.getTime())) return value;
       return date.getFullYear() + '년 ' + (date.getMonth() + 1) + '월 ' + date.getDate() + '일';
-    }
-
-    function formatTimeRange(event) {
-      if (!event.startTime && !event.endTime) return '시간 미정';
-      if (event.startTime && event.endTime) return event.startTime + '-' + event.endTime;
-      return event.startTime || event.endTime;
     }
   </script>
   <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>

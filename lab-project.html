@@ -265,9 +265,11 @@
   <script src="supabase-client.js?v=supabase-v1"></script>
   <script src="cap-notifications.js?v=lab-alerts"></script>
   <script>
-    var LAB_KEY = 'cap_lab_data';
-    var labData = null;
     var currentProject = null;
+    var projectGoals = [];
+    var projectNotes = [];
+    var projectProgress = [];
+    var labMembers = [];
     var currentSession = null;
     var isAdminView = false;
     var isMember = false;
@@ -282,7 +284,7 @@
     var resizingPGoal = null;
     var selectedProjectGoalId = null;
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
       currentSession = CAPAuth.getSession();
 
@@ -290,8 +292,7 @@
       var projectId = params.get('id');
       if (!projectId) { window.location.href = 'lab.html'; return; }
 
-      labData = loadLabData();
-      currentProject = (labData.teamProjects || []).find(function(p) { return p.id === projectId; });
+      await loadProjectData(projectId);
 
       if (!currentProject) {
         document.getElementById('main').innerHTML = '<div class="lab-board" style="margin:32px auto;max-width:640px"><p class="lab-empty">프로젝트를 찾을 수 없습니다. <a href="lab.html">LAB 페이지로 돌아가기</a></p></div>';
@@ -299,7 +300,7 @@
       }
 
       isAdminView = !!(currentSession && currentSession.role === 'admin');
-      isMember = Array.isArray(currentProject.memberIds) && currentProject.memberIds.includes(currentSession ? currentSession.userId : '');
+      isMember = Array.isArray(currentProject.member_ids) && currentProject.member_ids.includes(currentSession ? currentSession.userId : '');
 
       if (!isAdminView && !isMember) {
         window.location.href = 'lab.html';
@@ -309,25 +310,23 @@
       renderProjectPage();
     });
 
-    function loadLabData() {
-      var raw = localStorage.getItem(LAB_KEY);
-      var data = {};
-      try { data = raw ? JSON.parse(raw) : {}; } catch(e) {}
-      data.events = Array.isArray(data.events) ? data.events : [];
-      data.minutes = Array.isArray(data.minutes) ? data.minutes : [];
-      data.teamProjects = Array.isArray(data.teamProjects) ? data.teamProjects : [];
-      data.teamProjects.forEach(function(p) {
-        p.goals = Array.isArray(p.goals) ? p.goals : [];
-        p.notes = Array.isArray(p.notes) ? p.notes : [];
-        p.progress = Array.isArray(p.progress) ? p.progress : [];
-        p.memberIds = Array.isArray(p.memberIds) ? p.memberIds : [];
-      });
-      return data;
+    async function loadProjectData(projectId) {
+      var results = await Promise.all([
+        CAPData.getTeamProject(projectId),
+        CAPData.getProjectGoals(projectId),
+        CAPData.getProjectNotes(projectId),
+        CAPData.getProjectProgress(projectId),
+        CAPData.getMembers()
+      ]);
+      currentProject = results[0];
+      projectGoals = results[1] || [];
+      projectNotes = results[2] || [];
+      projectProgress = results[3] || [];
+      labMembers = results[4] || [];
     }
 
-    function reloadProject() {
-      labData = loadLabData();
-      currentProject = (labData.teamProjects || []).find(function(p) { return p.id === currentProject.id; });
+    async function reloadProject() {
+      await loadProjectData(currentProject.id);
     }
 
     function renderProjectPage() {
@@ -350,27 +349,27 @@
       var progressBtn = document.getElementById('progress-update-btn');
       var adminEditBtn = document.getElementById('project-admin-edit-btn');
       if (progressBtn) progressBtn.hidden = !isMember || isAdminView;
-      var isCreator = currentSession && currentProject.createdBy === currentSession.userId;
+      var isCreator = currentSession && currentProject.creator_id === currentSession.userId;
       if (adminEditBtn) adminEditBtn.hidden = !isAdminView && !isCreator;
     }
 
     function renderProjectInfo() {
       var statusLabel = { ready: '준비', active: '진행', completed: '종료', paused: '종료' }[currentProject.status] || '진행';
-      var creator = CAPData.getMember(currentProject.createdBy);
-      var memberChips = (currentProject.memberIds || []).map(function(id) {
-        var m = CAPData.getMember(id);
+      var creator = labMembers.find(function(m) { return m.id === currentProject.creator_id; });
+      var memberChips = (currentProject.member_ids || []).map(function(id) {
+        var m = labMembers.find(function(m) { return m.id === id; });
         var name = m ? m.name : id + '(탈퇴)';
-        var char = m ? (m.profile.avatarEmoji || m.avatarChar || name.charAt(0)) : '?';
+        var char = m ? (m.avatar_emoji || m.avatar_char || name.charAt(0)) : '?';
         return '<span class="project-member-chip" title="' + escHtml(name) + '">' + escHtml(char) + ' ' + escHtml(name) + '</span>';
       }).join('');
 
       document.getElementById('project-info-content').innerHTML =
         (currentProject.photo
           ? '<div class="member-profile-avatar"><img class="avatar-photo" src="' + escHtml(currentProject.photo) + '" alt=""></div>'
-          : '<div class="member-profile-avatar" style="font-size:1.5rem">' + escHtml(currentProject.avatarEmoji || '팀') + '</div>') +
+          : '<div class="member-profile-avatar" style="font-size:1.5rem">' + escHtml(currentProject.avatar_emoji || '팀') + '</div>') +
         '<strong>' + escHtml(currentProject.name) + '</strong>' +
-        '<span>' + escHtml(statusLabel) + ' · 목표 ' + (currentProject.goals || []).length + '개</span>' +
-        '<p style="margin:8px 0 4px;font-size:0.85rem;color:var(--muted)">' + formatKoreanDateTime(currentProject.createdAt) + ' · ' + escHtml(creator ? creator.name : '구성원') + ' 생성</p>' +
+        '<span>' + escHtml(statusLabel) + ' · 목표 ' + projectGoals.length + '개</span>' +
+        '<p style="margin:8px 0 4px;font-size:0.85rem;color:var(--muted)">' + formatKoreanDateTime(currentProject.created_at) + ' · ' + escHtml(creator ? creator.name : '구성원') + ' 생성</p>' +
         '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">' + memberChips + '</div>';
     }
 
@@ -403,8 +402,8 @@
     }
 
     function renderProjectGoalList() {
-      var goals = (currentProject.goals || []).slice().sort(function(a, b) {
-        return String(a.startDate || '').localeCompare(String(b.startDate || ''));
+      var goals = projectGoals.slice().sort(function(a, b) {
+        return String(a.start_date || '').localeCompare(String(b.start_date || ''));
       });
       var totalPages = Math.max(1, Math.ceil(goals.length / GOAL_PAGE_SIZE));
       if (goalPage > totalPages) goalPage = totalPages;
@@ -416,8 +415,8 @@
         ? '<div class="goal-table-wrap"><table class="goal-table">' +
           '<thead><tr><th>담당자</th><th>목표</th><th>상태</th><th>기간</th><th>메모</th><th></th></tr></thead><tbody>' +
           visibleGoals.map(function(goal) {
-            var assignee = CAPData.getMember(goal.assigneeId);
-            var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+            var assignee = labMembers.find(function(m) { return m.id === goal.author_id; });
+            var isMyGoal = currentSession && goal.author_id === currentSession.userId;
             var canAct = isAdminView || isMyGoal;
             var actions = canAct
               ? '<div class="goal-row-actions">' +
@@ -441,13 +440,13 @@
 
     function assignPGoalLanes(goals) {
       var sorted = goals.slice().sort(function(a, b) {
-        return String(a.startDate || a.targetDate || '').localeCompare(String(b.startDate || b.targetDate || ''));
+        return String(a.start_date || a.target_date || '').localeCompare(String(b.start_date || b.target_date || ''));
       });
       var laneEnds = [];
       var result = [];
       sorted.forEach(function(goal) {
-        var start = goal.startDate || goal.targetDate || '';
-        var end = goal.endDate || goal.targetDate || start;
+        var start = goal.start_date || goal.target_date || '';
+        var end = goal.end_date || goal.target_date || start;
         var laneIdx = -1;
         for (var i = 0; i < laneEnds.length; i++) {
           if (laneEnds[i] < start) { laneIdx = i; break; }
@@ -460,7 +459,7 @@
     }
 
     function renderProjectGoalCalendar() {
-      var goals = currentProject.goals || [];
+      var goals = projectGoals;
       if (!goals.length) {
         document.getElementById('project-goals').innerHTML = '<p class="lab-empty">일정에 표시할 연구 목표가 없습니다.</p>';
         return;
@@ -486,16 +485,16 @@
         var weekEnd = realKeys[realKeys.length - 1];
 
         var weekGoals = goals.filter(function(g) {
-          var s = g.startDate || g.targetDate; var e = g.endDate || g.targetDate || s;
+          var s = g.start_date || g.target_date; var e = g.end_date || g.target_date || s;
           return s && s <= weekEnd && e >= weekStart;
         }).sort(function(a, b) {
-          return String(a.startDate || a.targetDate || '').localeCompare(String(b.startDate || b.targetDate || ''));
+          return String(a.start_date || a.target_date || '').localeCompare(String(b.start_date || b.target_date || ''));
         });
 
         var laneEndCols = [];
         var items = weekGoals.map(function(goal) {
-          var gs = goal.startDate || goal.targetDate || '';
-          var ge = goal.endDate || goal.targetDate || gs;
+          var gs = goal.start_date || goal.target_date || '';
+          var ge = goal.end_date || goal.target_date || gs;
           var sc = null, ec = null;
           dayKeys.forEach(function(dk, ci) {
             if (dk && dk >= gs && dk <= ge) { if (sc === null) sc = ci + 1; ec = ci + 1; }
@@ -526,8 +525,8 @@
         }
         items.forEach(function(item) {
           var goal = item.goal;
-          var assignee = CAPData.getMember(goal.assigneeId);
-          var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+          var assignee = labMembers.find(function(m) { return m.id === goal.author_id; });
+          var isMyGoal = currentSession && goal.author_id === currentSession.userId;
           var canInteract = isMyGoal || isAdminView;
           whtml += '<button type="button" class="goal-calendar-chip ' + escHtml(goal.status || 'todo') + '"' +
             ' style="grid-row:' + (item.lane + 2) + ';grid-column:' + item.sc + '/' + (item.ec + 1) + '"' +
@@ -552,9 +551,9 @@
     }
 
     function dragPGoal(e, goalId) {
-      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      var goal = projectGoals.find(function(g) { return g.id === goalId; });
       if (!goal || resizingPGoal) { e.preventDefault(); return; }
-      var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+      var isMyGoal = currentSession && goal.author_id === currentSession.userId;
       if (!isMyGoal && !isAdminView) { e.preventDefault(); return; }
       draggingPGoalId = goalId;
       e.dataTransfer.effectAllowed = 'move';
@@ -563,34 +562,34 @@
 
     function allowPGoalDrop(e) { e.preventDefault(); }
 
-    function dropPGoalOnDate(e, dateKey) {
+    async function dropPGoalOnDate(e, dateKey) {
       e.preventDefault();
       var goalId = e.dataTransfer.getData('text/plain') || draggingPGoalId;
-      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      var goal = projectGoals.find(function(g) { return g.id === goalId; });
       if (!goal) return;
-      var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+      var isMyGoal = currentSession && goal.author_id === currentSession.userId;
       if (!isMyGoal && !isAdminView) return;
       var duration = getGoalDuration(goal);
-      CAPData.updateProjectGoal(currentProject.id, goalId, {
-        startDate: dateKey,
-        endDate: addDaysKey(dateKey, duration - 1),
-        targetDate: addDaysKey(dateKey, duration - 1)
+      await CAPData.updateProjectGoal(currentProject.id, goalId, {
+        start_date: dateKey,
+        end_date: addDaysKey(dateKey, duration - 1),
+        target_date: addDaysKey(dateKey, duration - 1)
       });
       draggingPGoalId = null;
-      reloadProject();
+      await reloadProject();
       renderProjectGoals();
       showToast('목표 기간을 변경했습니다.');
     }
 
     function startPGoalResize(e, goalId, edge) {
-      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      var goal = projectGoals.find(function(g) { return g.id === goalId; });
       if (!goal) return;
-      var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+      var isMyGoal = currentSession && goal.author_id === currentSession.userId;
       if (!isMyGoal && !isAdminView) return;
       e.preventDefault(); e.stopPropagation();
       resizingPGoal = { goalId: goalId, edge: edge, startX: e.clientX,
-        originalStart: goal.startDate || goal.targetDate,
-        originalEnd: goal.endDate || goal.targetDate || goal.startDate };
+        originalStart: goal.start_date || goal.target_date,
+        originalEnd: goal.end_date || goal.target_date || goal.start_date };
       document.body.classList.add('is-resizing-goal');
       document.addEventListener('mousemove', resizePGoalFromPointer);
       document.addEventListener('mouseup', finishPGoalResize);
@@ -598,29 +597,29 @@
 
     function resizePGoalFromPointer(e) {
       if (!resizingPGoal) return;
-      var goal = (currentProject.goals || []).find(function(g) { return g.id === resizingPGoal.goalId; });
+      var goal = projectGoals.find(function(g) { return g.id === resizingPGoal.goalId; });
       if (!goal) return;
       var cell = document.querySelector('.goal-calendar-cell:not(.is-empty)');
       var cellWidth = cell ? cell.getBoundingClientRect().width : 96;
       var deltaDays = Math.round((e.clientX - resizingPGoal.startX) / Math.max(48, cellWidth));
       if (resizingPGoal.edge === 'start') {
         var ns = addDaysKey(resizingPGoal.originalStart, deltaDays);
-        if (ns <= resizingPGoal.originalEnd) goal.startDate = ns;
+        if (ns <= resizingPGoal.originalEnd) goal.start_date = ns;
       } else {
         var ne = addDaysKey(resizingPGoal.originalEnd, deltaDays);
-        if (ne >= resizingPGoal.originalStart) { goal.endDate = ne; goal.targetDate = ne; }
+        if (ne >= resizingPGoal.originalStart) { goal.end_date = ne; goal.target_date = ne; }
       }
       renderProjectGoalCalendar();
     }
 
-    function finishPGoalResize() {
+    async function finishPGoalResize() {
       if (!resizingPGoal) return;
-      var goal = (currentProject.goals || []).find(function(g) { return g.id === resizingPGoal.goalId; });
+      var goal = projectGoals.find(function(g) { return g.id === resizingPGoal.goalId; });
       if (goal) {
-        CAPData.updateProjectGoal(currentProject.id, resizingPGoal.goalId, {
-          startDate: goal.startDate, endDate: goal.endDate, targetDate: goal.targetDate || goal.endDate
+        await CAPData.updateProjectGoal(currentProject.id, resizingPGoal.goalId, {
+          start_date: goal.start_date, end_date: goal.end_date, target_date: goal.target_date || goal.end_date
         });
-        reloadProject();
+        await reloadProject();
         showToast('목표 기간을 조정했습니다.');
       }
       resizingPGoal = null;
@@ -631,20 +630,20 @@
     }
 
     function isDateInGoalRange(dateKey, goal) {
-      var start = goal.startDate || goal.targetDate;
-      var end = goal.endDate || goal.targetDate || start;
+      var start = goal.start_date || goal.target_date;
+      var end = goal.end_date || goal.target_date || start;
       return start && dateKey >= start && dateKey <= end;
     }
 
     function getGoalDuration(goal) {
-      var start = new Date(goal.startDate || goal.targetDate);
-      var end = new Date(goal.endDate || goal.targetDate || goal.startDate);
+      var start = new Date(goal.start_date || goal.target_date);
+      var end = new Date(goal.end_date || goal.target_date || goal.start_date);
       if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
       return Math.max(1, Math.round((end - start) / 86400000) + 1);
     }
 
     function getGoalVisibleDuration(goal, visibleStartKey, monthEndKey) {
-      var endKey = goal.endDate || goal.targetDate || visibleStartKey;
+      var endKey = goal.end_date || goal.target_date || visibleStartKey;
       var visibleEndKey = endKey > monthEndKey ? monthEndKey : endKey;
       var start = new Date(visibleStartKey);
       var end = new Date(visibleEndKey);
@@ -669,8 +668,8 @@
       var select = document.getElementById('pgoal-assignee');
       if (!select) return;
       var myId = currentSession ? currentSession.userId : '';
-      select.innerHTML = (currentProject.memberIds || []).map(function(id) {
-        var m = CAPData.getMember(id);
+      select.innerHTML = (currentProject.member_ids || []).map(function(id) {
+        var m = labMembers.find(function(m) { return m.id === id; });
         return '<option value="' + escHtml(id) + '"' + (id === myId ? ' selected' : '') + '>' + escHtml(m ? m.name : id) + '</option>';
       }).join('');
       select.disabled = false;
@@ -687,7 +686,7 @@
       document.getElementById('pgoal-title').focus();
     }
 
-    function saveProjectGoal(e) {
+    async function saveProjectGoal(e) {
       e.preventDefault();
       var assigneeId = document.getElementById('pgoal-assignee').value;
       var startDate = document.getElementById('pgoal-start-date').value;
@@ -695,43 +694,41 @@
       if (endDate < startDate) { showToast('종료 날짜는 시작 날짜 이후로 입력해 주세요.'); return; }
 
       if (editingGoalId) {
-        CAPData.updateProjectGoal(currentProject.id, editingGoalId, {
-          assigneeId: assigneeId,
+        await CAPData.updateProjectGoal(currentProject.id, editingGoalId, {
+          author_id: assigneeId,
           title: document.getElementById('pgoal-title').value.trim(),
           status: document.getElementById('pgoal-status').value,
-          startDate: startDate,
-          endDate: endDate,
-          targetDate: endDate,
+          start_date: startDate,
+          end_date: endDate,
+          target_date: endDate,
           category: document.getElementById('pgoal-category').value.trim() || '목표',
           memo: document.getElementById('pgoal-memo').value.trim()
         });
         showToast('목표를 수정했습니다.');
       } else {
-        CAPData.addProjectGoal(currentProject.id, {
-          assigneeId: assigneeId,
+        await CAPData.addProjectGoal(currentProject.id, {
+          author_id: assigneeId,
           title: document.getElementById('pgoal-title').value.trim(),
           status: document.getElementById('pgoal-status').value,
-          startDate: startDate,
-          endDate: endDate,
-          targetDate: endDate,
+          start_date: startDate,
+          end_date: endDate,
+          target_date: endDate,
           category: document.getElementById('pgoal-category').value.trim() || '목표',
-          memo: document.getElementById('pgoal-memo').value.trim(),
-          authorId: currentSession ? currentSession.userId : '',
-          authorName: currentSession ? currentSession.name : ''
+          memo: document.getElementById('pgoal-memo').value.trim()
         });
         showToast('목표를 저장했습니다.');
       }
-      reloadProject();
+      await reloadProject();
       cancelProjectGoalEdit();
       renderProjectGoals();
       renderNoteTargetOptions();
     }
 
     function editProjectGoal(goalId) {
-      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+      var goal = projectGoals.find(function(g) { return g.id === goalId; });
       if (!goal) return;
       selectProjectGoalForNotes(goalId);
-      var isMyGoal = currentSession && goal.assigneeId === currentSession.userId;
+      var isMyGoal = currentSession && goal.author_id === currentSession.userId;
       if (!isMyGoal && !isAdminView) {
         return;
       }
@@ -739,8 +736,8 @@
       openProjectGoalForm(true);
       document.getElementById('pgoal-title').value = goal.title || '';
       document.getElementById('pgoal-status').value = goal.status || 'todo';
-      document.getElementById('pgoal-start-date').value = goal.startDate || '';
-      document.getElementById('pgoal-end-date').value = goal.endDate || '';
+      document.getElementById('pgoal-start-date').value = goal.start_date || '';
+      document.getElementById('pgoal-end-date').value = goal.end_date || '';
       document.getElementById('pgoal-category').value = goal.category || '';
       document.getElementById('pgoal-memo').value = goal.memo || '';
       document.getElementById('pgoal-submit-button').textContent = '목표 수정';
@@ -761,15 +758,15 @@
       document.getElementById('project-goal-form').hidden = true;
     }
 
-    function deleteProjectGoal(goalId) {
-      var goal = (currentProject.goals || []).find(function(g) { return g.id === goalId; });
+    async function deleteProjectGoal(goalId) {
+      var goal = projectGoals.find(function(g) { return g.id === goalId; });
       if (!goal) return;
-      var canDelete = isAdminView || (currentSession && goal.assigneeId === currentSession.userId);
+      var canDelete = isAdminView || (currentSession && goal.author_id === currentSession.userId);
       if (!canDelete) { showToast('담당자 또는 관리자만 삭제할 수 있습니다.'); return; }
       if (!confirm('이 목표를 삭제할까요?')) return;
-      CAPData.removeProjectGoal(currentProject.id, goalId);
+      await CAPData.removeProjectGoal(currentProject.id, goalId);
       if (editingGoalId === goalId) cancelProjectGoalEdit();
-      reloadProject();
+      await reloadProject();
       renderProjectGoals();
       renderNoteTargetOptions();
       showToast('목표를 삭제했습니다.');
@@ -793,12 +790,12 @@
       var grid = document.getElementById('project-member-progress');
       if (!grid) return;
       var progressByMember = {};
-      (currentProject.progress || []).forEach(function(item) { progressByMember[item.memberId] = item; });
+      projectProgress.forEach(function(item) { progressByMember[item.member_id] = item; });
 
-      grid.innerHTML = (currentProject.memberIds || []).map(function(memberId) {
-        var m = CAPData.getMember(memberId);
+      grid.innerHTML = (currentProject.member_ids || []).map(function(memberId) {
+        var m = labMembers.find(function(m) { return m.id === memberId; });
         var name = m ? m.name : memberId + '(탈퇴)';
-        var char = m ? (m.profile.avatarEmoji || m.avatarChar || name.charAt(0)) : '?';
+        var char = m ? (m.avatar_emoji || m.avatar_char || name.charAt(0)) : '?';
         var progress = progressByMember[memberId] || { status: '과제 상태 추가 예정', memo: '' };
         var isSelf = currentSession && currentSession.userId === memberId;
         return '<article class="progress-card' + (isSelf ? ' is-self' : '') + '">' +
@@ -817,7 +814,7 @@
       if (!isMember || isAdminView) return;
       var panel = document.getElementById('project-progress-update-form');
       if (!panel) return;
-      var myProgress = (currentProject.progress || []).find(function(item) { return item.memberId === (currentSession ? currentSession.userId : ''); });
+      var myProgress = projectProgress.find(function(item) { return item.member_id === (currentSession ? currentSession.userId : ''); });
       if (myProgress) {
         var statusInput = document.getElementById('pp-status');
         var memoInput = document.getElementById('pp-memo');
@@ -834,13 +831,13 @@
       if (panel) panel.hidden = true;
     }
 
-    function saveProjectProgress(e) {
+    async function saveProjectProgress(e) {
       e.preventDefault();
       if (!currentSession || !isMember) return;
       var status = document.getElementById('pp-status').value.trim();
       var memo = document.getElementById('pp-memo').value.trim();
-      CAPData.updateProjectProgress(currentProject.id, currentSession.userId, status, memo);
-      reloadProject();
+      await CAPData.updateProjectProgress(currentProject.id, currentSession.userId, status, memo);
+      await reloadProject();
       closeProgressUpdatePanel();
       renderProjectMemberProgress();
       showToast('과제 진행상황을 업데이트했습니다.');
@@ -865,7 +862,7 @@
       if (!select) return;
       var currentVal = select.value;
       select.innerHTML = '<option value="">프로젝트 전체</option>' +
-        (currentProject.goals || []).map(function(g) {
+        projectGoals.map(function(g) {
           return '<option value="' + escHtml(g.id) + '">' + escHtml(g.title) + '</option>';
         }).join('');
       select.value = currentVal || '';
@@ -883,19 +880,19 @@
     }
 
     function renderProjectNotes() {
-      var allNotesRaw = (currentProject.notes || []).slice().sort(function(a, b) {
-        return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+      var allNotesRaw = projectNotes.slice().sort(function(a, b) {
+        return String(b.created_at || '').localeCompare(String(a.created_at || ''));
       });
       var grid = document.getElementById('project-note-list');
       var notePanelHead = document.getElementById('project-note-filter-label');
-      var selectedGoal = selectedProjectGoalId ? (currentProject.goals || []).find(function(g) { return g.id === selectedProjectGoalId; }) : null;
+      var selectedGoal = selectedProjectGoalId ? projectGoals.find(function(g) { return g.id === selectedProjectGoalId; }) : null;
       if (notePanelHead) {
         notePanelHead.textContent = selectedGoal ? '「' + selectedGoal.title + '」 관련 메모' : '메모와 피드백';
       }
       var notes;
       if (selectedProjectGoalId) {
-        var goalNotes = allNotesRaw.filter(function(n) { return n.targetId === selectedProjectGoalId; });
-        var globalNotes = allNotesRaw.filter(function(n) { return !n.targetId; }).map(function(n) { return Object.assign({}, n, { _isGlobal: true }); });
+        var goalNotes = allNotesRaw.filter(function(n) { return n.linked_goal_id === selectedProjectGoalId; });
+        var globalNotes = allNotesRaw.filter(function(n) { return !n.linked_goal_id; }).map(function(n) { return Object.assign({}, n, { _isGlobal: true }); });
         notes = goalNotes.concat(globalNotes);
       } else {
         notes = allNotesRaw;
@@ -916,15 +913,15 @@
         var replyCount = (note.replies || []).length;
         var isSel = selectedProjectNoteId === note.id;
         var isGlobal = !!note._isGlobal;
-        return '<article class="note-sticky type-' + escHtml(note.type || 'memo') + (note.done ? ' is-done' : '') + (isSel ? ' is-selected' : '') + (isGlobal ? ' is-global' : '') + '" onclick="selectProjectNote(\'' + escHtml(note.id) + '\')">' +
+        return '<article class="note-sticky type-' + escHtml(note.type || 'note') + (note.done ? ' is-done' : '') + (isSel ? ' is-selected' : '') + (isGlobal ? ' is-global' : '') + '" onclick="selectProjectNote(\'' + escHtml(note.id) + '\')">' +
           '<div class="note-sticky-type">' +
             '<span>' + escHtml(typeLabel) + '</span>' +
             (isGlobal ? '<span style="font-size:0.6rem;color:var(--muted)">전체</span>' : '') +
             (note.done ? '<span style="color:var(--navy)">✓</span>' : '') +
           '</div>' +
-          '<div class="note-sticky-body">' + escHtml((note.text || '').slice(0, 100)) + '</div>' +
+          '<div class="note-sticky-body">' + escHtml((note.content || '').slice(0, 100)) + '</div>' +
           '<div class="note-sticky-foot">' +
-            '<span>' + escHtml(note.authorName || '') + '</span>' +
+            '<span>' + escHtml(note.author_name || '') + '</span>' +
             (replyCount ? '<span class="note-sticky-reply-badge">💬 ' + replyCount + '</span>' : '') +
           '</div>' +
         '</article>';
@@ -936,7 +933,7 @@
           '</div>'
         : '');
       if (selectedProjectNoteId) {
-        var origNote = (currentProject.notes || []).find(function(n) { return n.id === selectedProjectNoteId; });
+        var origNote = projectNotes.find(function(n) { return n.id === selectedProjectNoteId; });
         if (origNote) { renderProjectNoteDetail(origNote); } else { selectedProjectNoteId = null; document.getElementById('project-note-detail').hidden = true; }
       }
     }
@@ -957,7 +954,7 @@
         return;
       }
       selectedProjectNoteId = noteId;
-      var note = (currentProject.notes || []).find(function(n) { return n.id === noteId; });
+      var note = projectNotes.find(function(n) { return n.id === noteId; });
       if (!note) return;
       renderProjectNotes();
       renderProjectNoteDetail(note);
@@ -967,18 +964,18 @@
     function renderProjectNoteDetail(note) {
       var detailEl = document.getElementById('project-note-detail');
       if (!detailEl) return;
-      var isAuthor = currentSession && note.authorId === currentSession.userId;
+      var isAuthor = currentSession && note.author_id === currentSession.userId;
       var canEdit = canManageProjectNote(note);
-      var targetGoal = note.targetType === 'goal' && note.targetId
-        ? (currentProject.goals || []).find(function(g) { return g.id === note.targetId; }) : null;
+      var targetGoal = note.linked_goal_id
+        ? projectGoals.find(function(g) { return g.id === note.linked_goal_id; }) : null;
       var typeLabel = note.type === 'feedback' ? '교수 피드백' : '메모';
       var replies = note.replies || [];
       var replyListHtml = replies.length
         ? '<div class="note-reply-list">' + replies.map(function(r) {
-            var canDelReply = currentSession && r.authorId === currentSession.userId;
+            var canDelReply = currentSession && r.author_id === currentSession.userId;
             return '<div class="note-reply-card">' +
-              '<span class="note-reply-meta">' + escHtml(r.authorName || '') + ' · ' + escHtml(formatKoreanDateTime(r.createdAt)) + '</span>' +
-              '<span>' + escHtml(r.text) + '</span>' +
+              '<span class="note-reply-meta">' + escHtml(r.author_name || '') + ' · ' + escHtml(formatKoreanDateTime(r.created_at)) + '</span>' +
+              '<span>' + escHtml(r.content) + '</span>' +
               (canDelReply ? '<div class="note-reply-actions"><button type="button" class="btn-sm danger" onclick="deleteProjectReply(\'' + escHtml(note.id) + '\',\'' + escHtml(r.id) + '\')">삭제</button></div>' : '') +
             '</div>';
           }).join('') + '</div>' : '';
@@ -986,7 +983,7 @@
         '<div class="note-detail-head">' +
           '<div>' +
             '<strong style="font-size:0.82rem;color:var(--navy)">' + escHtml(typeLabel) + '</strong>' +
-            '<span class="note-detail-meta">' + escHtml(note.authorName || '') + ' · ' + escHtml(formatKoreanDateTime(note.createdAt)) + (targetGoal ? ' · 연결 목표: ' + escHtml(targetGoal.title) : '') + '</span>' +
+            '<span class="note-detail-meta">' + escHtml(note.author_name || '') + ' · ' + escHtml(formatKoreanDateTime(note.created_at)) + (targetGoal ? ' · 연결 목표: ' + escHtml(targetGoal.title) : '') + '</span>' +
           '</div>' +
           '<button type="button" class="note-detail-close" onclick="selectProjectNote(\'' + escHtml(note.id) + '\')">닫기 ✕</button>' +
         '</div>' +
@@ -1000,7 +997,7 @@
             (isAuthor ? '<button type="button" class="btn-sm danger" onclick="deleteProjectNote(\'' + escHtml(note.id) + '\')">삭제</button>' : '') +
           '</div>' +
         '</div>' +
-        '<p class="note-detail-text">' + escHtml(note.text || '') + '</p>' +
+        '<p class="note-detail-text">' + escHtml(note.content || '') + '</p>' +
         '<div class="note-replies" style="margin-top:12px">' +
           replyListHtml +
           (currentSession
@@ -1016,59 +1013,56 @@
 
     function projectNoteLabel(note) {
       var typeLabel = note.type === 'feedback' ? '교수 피드백' : '메모';
-      return note.authorName ? typeLabel + ' · ' + note.authorName : typeLabel;
+      return note.author_name ? typeLabel + ' · ' + note.author_name : typeLabel;
     }
 
     function canManageProjectNote(note) {
       if (!currentSession) return false;
-      return note.authorId === currentSession.userId || currentSession.role === 'admin';
+      return note.author_id === currentSession.userId || currentSession.role === 'admin';
     }
 
-    function saveProjectNote(e) {
+    async function saveProjectNote(e) {
       e.preventDefault();
       if (!currentSession) return;
-      var targetId = document.getElementById('pnote-target').value;
+      var linkedGoalId = document.getElementById('pnote-target').value || null;
       var type = isAdminView ? 'feedback' : document.getElementById('pnote-type').value;
 
       if (editingNoteId) {
-        var existing = (currentProject.notes || []).find(function(n) { return n.id === editingNoteId; });
+        var existing = projectNotes.find(function(n) { return n.id === editingNoteId; });
         if (!existing || !canManageProjectNote(existing)) return;
-        CAPData.updateProjectNote(currentProject.id, editingNoteId, {
+        await CAPData.updateProjectNote(currentProject.id, editingNoteId, {
           type: type,
-          text: document.getElementById('pnote-text').value.trim(),
-          targetType: targetId ? 'goal' : 'project',
-          targetId: targetId || null
+          content: document.getElementById('pnote-text').value.trim(),
+          linked_goal_id: linkedGoalId
         });
         showToast('기록을 수정했습니다.');
       } else {
-        CAPData.addProjectNote(currentProject.id, {
+        await CAPData.addProjectNote(currentProject.id, {
           type: type,
-          text: document.getElementById('pnote-text').value.trim(),
-          authorId: currentSession.userId,
-          authorName: currentSession.name,
-          authorRole: currentSession.role,
-          targetType: targetId ? 'goal' : 'project',
-          targetId: targetId || null,
+          content: document.getElementById('pnote-text').value.trim(),
+          author_id: currentSession.userId,
+          author_name: currentSession.name,
+          linked_goal_id: linkedGoalId,
           done: false
         });
         showToast('기록을 저장했습니다.');
       }
-      reloadProject();
+      await reloadProject();
       cancelProjectNoteEdit();
       renderProjectNotes();
     }
 
     function editProjectNote(noteId) {
-      var note = (currentProject.notes || []).find(function(n) { return n.id === noteId; });
+      var note = projectNotes.find(function(n) { return n.id === noteId; });
       if (!note || !canManageProjectNote(note)) return;
       editingNoteId = noteId;
       if (!isAdminView) {
         var typeSelect = document.getElementById('pnote-type');
-        if (typeSelect) typeSelect.value = note.type || 'memo';
+        if (typeSelect) typeSelect.value = note.type || 'note';
       }
       var targetSelect = document.getElementById('pnote-target');
-      if (targetSelect) targetSelect.value = note.targetId || '';
-      document.getElementById('pnote-text').value = note.text || '';
+      if (targetSelect) targetSelect.value = note.linked_goal_id || '';
+      document.getElementById('pnote-text').value = note.content || '';
       document.getElementById('pnote-submit').textContent = '기록 수정';
       document.getElementById('pnote-cancel').hidden = false;
       var form = document.getElementById('project-note-form-el');
@@ -1076,22 +1070,22 @@
       document.getElementById('pnote-text').focus();
     }
 
-    function deleteProjectNote(noteId) {
-      var note = (currentProject.notes || []).find(function(n) { return n.id === noteId; });
-      if (!note || !currentSession || note.authorId !== currentSession.userId) return;
+    async function deleteProjectNote(noteId) {
+      var note = projectNotes.find(function(n) { return n.id === noteId; });
+      if (!note || !currentSession || note.author_id !== currentSession.userId) return;
       if (!confirm('이 기록을 삭제할까요?')) return;
-      CAPData.removeProjectNote(currentProject.id, noteId);
-      reloadProject();
+      await CAPData.removeProjectNote(currentProject.id, noteId);
+      await reloadProject();
       cancelProjectNoteEdit();
       renderProjectNotes();
       showToast('기록을 삭제했습니다.');
     }
 
-    function toggleProjectNoteDone(noteId) {
-      var note = (currentProject.notes || []).find(function(n) { return n.id === noteId; });
+    async function toggleProjectNoteDone(noteId) {
+      var note = projectNotes.find(function(n) { return n.id === noteId; });
       if (!note) return;
-      CAPData.updateProjectNote(currentProject.id, noteId, { done: !note.done });
-      reloadProject();
+      await CAPData.updateProjectNote(currentProject.id, noteId, { done: !note.done });
+      await reloadProject();
       selectedProjectNoteId = noteId;
       renderProjectNotes();
     }
@@ -1115,28 +1109,27 @@
       }
     }
 
-    function submitProjectReply(noteId) {
+    async function submitProjectReply(noteId) {
       if (!currentSession) return;
       var wrap = document.getElementById('reply-form-' + noteId);
       if (!wrap) return;
       var ta = wrap.querySelector('textarea');
       var text = ta ? ta.value.trim() : '';
       if (!text) return;
-      CAPData.addProjectNoteReply(currentProject.id, noteId, {
-        text: text,
-        authorId: currentSession.userId,
-        authorName: currentSession.name,
-        authorRole: currentSession.role
+      await CAPData.addProjectNoteReply(currentProject.id, noteId, {
+        content: text,
+        author_id: currentSession.userId,
+        author_name: currentSession.name
       });
-      reloadProject();
+      await reloadProject();
       renderProjectNotes();
       showToast('댓글을 등록했습니다.');
     }
 
-    function deleteProjectReply(noteId, replyId) {
+    async function deleteProjectReply(noteId, replyId) {
       if (!confirm('이 댓글을 삭제할까요?')) return;
-      CAPData.removeProjectNoteReply(currentProject.id, noteId, replyId);
-      reloadProject();
+      await CAPData.removeProjectNoteReply(currentProject.id, noteId, replyId);
+      await reloadProject();
       renderProjectNotes();
       showToast('댓글을 삭제했습니다.');
     }
@@ -1169,20 +1162,20 @@
     }
 
     function openProjectEditPanel() {
-      var isCreator = currentSession && currentProject.createdBy === currentSession.userId;
+      var isCreator = currentSession && currentProject.creator_id === currentSession.userId;
       if (!isAdminView && !isCreator) return;
       var panel = document.getElementById('project-edit-panel');
       if (!panel) return;
       document.getElementById('pedit-name').value = currentProject.name || '';
       document.getElementById('pedit-photoData').value = currentProject.photo || '';
       document.getElementById('pedit-photo').value = '';
-      document.getElementById('pedit-avatarEmoji').value = currentProject.avatarEmoji || '';
+      document.getElementById('pedit-avatarEmoji').value = currentProject.avatar_emoji || '';
       document.getElementById('pedit-desc').value = currentProject.description || '';
       document.getElementById('pedit-status').value = currentProject.status || 'active';
       var membersWrap = document.getElementById('pedit-members');
       if (membersWrap) {
-        membersWrap.innerHTML = CAPData.getMembers().filter(function(m) { return m.group !== 'alumni'; }).map(function(m) {
-          var checked = (currentProject.memberIds || []).includes(m.id);
+        membersWrap.innerHTML = labMembers.filter(function(m) { return m.lab_group !== 'alumni'; }).map(function(m) {
+          var checked = (currentProject.member_ids || []).includes(m.id);
           return '<label class="member-check"><input type="checkbox" name="pedit-member" value="' + escHtml(m.id) + '"' + (checked ? ' checked' : '') + '> <span>' + escHtml(m.name) + '</span></label>';
         }).join('');
       }
@@ -1199,20 +1192,20 @@
       Array.from(document.querySelectorAll('input[name="pedit-member"]')).forEach(function(input) { input.checked = true; });
     }
 
-    function saveProjectEdit(e) {
+    async function saveProjectEdit(e) {
       e.preventDefault();
-      var isCreator = currentSession && currentProject.createdBy === currentSession.userId;
+      var isCreator = currentSession && currentProject.creator_id === currentSession.userId;
       if (!isAdminView && !isCreator) return;
       var memberIds = Array.from(document.querySelectorAll('input[name="pedit-member"]:checked')).map(function(input) { return input.value; });
-      CAPData.updateTeamProject(currentProject.id, {
+      await CAPData.updateTeamProject(currentProject.id, {
         name: document.getElementById('pedit-name').value.trim(),
         photo: document.getElementById('pedit-photoData').value,
-        avatarEmoji: document.getElementById('pedit-avatarEmoji').value.trim(),
+        avatar_emoji: document.getElementById('pedit-avatarEmoji').value.trim(),
         description: document.getElementById('pedit-desc').value.trim(),
         status: document.getElementById('pedit-status').value,
-        memberIds: memberIds
+        member_ids: memberIds
       });
-      reloadProject();
+      await reloadProject();
       closeProjectEditPanel();
       renderProjectPage();
       showToast('프로젝트 설정을 저장했습니다.');
@@ -1232,8 +1225,8 @@
     }
 
     function formatGoalDateRange(goal) {
-      var start = goal.startDate || goal.targetDate || '';
-      var end = goal.endDate || goal.targetDate || start;
+      var start = goal.start_date || goal.target_date || '';
+      var end = goal.end_date || goal.target_date || start;
       if (!start) return '-';
       return start === end ? formatKoreanDate(start) : formatKoreanDate(start) + ' - ' + formatKoreanDate(end);
     }

@@ -81,9 +81,9 @@
     };
     var GROUP_ORDER = ['professor', 'phd', 'master', 'ra', 'alumni'];
 
-    function buildPeoplePage() {
+    async function buildPeoplePage() {
       var session  = CAPAuth.getSession();
-      var members  = CAPData.getMembers();
+      var members  = await CAPData.getMembers();
       var container = document.getElementById('people-container');
       var html = '';
 

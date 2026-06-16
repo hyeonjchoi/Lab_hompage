@@ -72,13 +72,13 @@
       btn.setAttribute('aria-pressed', String(show));
     }
 
-    function doLogin(e) {
+    async function doLogin(e) {
       e.preventDefault();
       var name = document.getElementById('input-name').value.trim();
       var sid  = document.getElementById('input-sid').value.trim();
       var errEl = document.getElementById('auth-error');
 
-      var result = CAPAuth.login(name, sid);
+      var result = await CAPAuth.login(name, sid);
       if (result.success) {
         var redirect = getRedirectUrl();
         window.location.href = redirect || 'index.html';

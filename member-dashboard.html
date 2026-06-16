@@ -57,7 +57,7 @@
   <script src="supabase-client.js?v=supabase-v1"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
-    function initDashboard() {
+    async function initDashboard() {
       try {
         CAPAuth.requireLogin(true);
 
@@ -72,7 +72,7 @@
           return;
         }
 
-        var member = CAPData.getMember(targetId);
+        var member = await CAPData.getMember(targetId);
         if (!member) {
           document.getElementById('dashboard-wrap').innerHTML =
             '<p style="color:var(--red)">구성원 정보를 찾을 수 없습니다.</p>';
@@ -337,7 +337,7 @@
       return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + label + '</option>';
     }
 
-    function saveProfile(id) {
+    async function saveProfile(id) {
       var updates = {
         enName:    document.getElementById('f-enName').value.trim(),
         position:  document.getElementById('f-position').value.trim(),
@@ -348,8 +348,8 @@
         avatarEmoji: document.getElementById('f-avatarEmoji') ? document.getElementById('f-avatarEmoji').value.trim() : '',
         characterAvatar: getCharacterAvatar()
       };
-      var ok = CAPData.updateMemberProfile(id, updates);
-      if (ok) {
+      try {
+        await CAPData.updateMemberProfile(id, updates);
         showToast('프로필이 저장되었습니다.');
         var btn = document.querySelector('.save-btn');
         btn.textContent = '저장 완료 ✓';
@@ -358,6 +358,8 @@
           btn.textContent = '변경사항 저장';
           btn.classList.remove('success');
         }, 2000);
+      } catch (e) {
+        alert('저장 실패: ' + e.message);
       }
     }
   </script>
