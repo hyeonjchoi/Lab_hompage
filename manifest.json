@@ -3,8 +3,8 @@
   "short_name": "CAP Lab",
   "description": "광운대학교 소비자광고심리 연구실",
   "lang": "ko",
-  "start_url": "/Lab_hompage/",
-  "scope": "/Lab_hompage/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#183A5A",
@@ -39,14 +39,14 @@
       "name": "LAB 연구실",
       "short_name": "LAB",
       "description": "구성원 전용 LAB 페이지",
-      "url": "/Lab_hompage/lab.html",
+      "url": "/lab.html",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "실험실 예약",
       "short_name": "예약",
       "description": "실험실 예약 바로가기",
-      "url": "/Lab_hompage/reservation.html",
+      "url": "/reservation.html",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

@@ -152,6 +152,7 @@ const CAPAuth = {
           '<div class="nav-auth-row secondary">' +
             (session.role === 'admin' ? '<a class="nav-admin-link" href="admin.html">관리자</a>' : '') +
             (window.CAPNotifications ? '<button class="nav-notification" type="button" onclick="CAPNotifications.toggle()">' + escHtml(CAPNotifications.getNavLabel()) + '</button>' : '') +
+            (window.CAPNotifications && session.role === 'admin' ? '<button class="nav-notification-settings" type="button" onclick="CAPNotifications.openSettings()" title="알림 세부 설정" aria-label="알림 세부 설정">⚙ 알림 설정</button>' : '') +
             '<button class="nav-logout" onclick="CAPAuth.logout().then(()=>window.location.reload())">로그아웃</button>' +
           '</div>' +
         '</div>';
@@ -164,12 +165,23 @@ const CAPAuth = {
 // ══════════════════════════════════════════════
 // CAPData — 데이터 레이어 (cap-data.js 대체, 모두 async)
 // ══════════════════════════════════════════════
+const MEMBER_GROUP_PRIORITY = { professor: 0, phd: 1, integrated: 1, master: 2, ra: 3, alumni: 4 };
+
+function sortMembersByGroupThenName(members) {
+  return (members || []).slice().sort((a, b) => {
+    const pa = MEMBER_GROUP_PRIORITY[a.lab_group] ?? 99;
+    const pb = MEMBER_GROUP_PRIORITY[b.lab_group] ?? 99;
+    if (pa !== pb) return pa - pb;
+    return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+  });
+}
+
 const CAPData = {
 
   // ── Members ───────────────────────────────
   async getMembers() {
-    const { data, error } = await getSupabase().from('members').select('*').order('name');
-    _throw(error); return data;
+    const { data, error } = await getSupabase().from('members').select('*');
+    _throw(error); return sortMembersByGroupThenName(data);
   },
   async getMember(id) {
     const { data, error } = await getSupabase().from('members').select('*').eq('id', id).single();

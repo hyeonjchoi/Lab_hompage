@@ -809,14 +809,16 @@ main { background: var(--bg); }
 }
 .nav-user a:hover { color: var(--navy-2); }
 .nav-logout,
-.nav-notification {
+.nav-notification,
+.nav-notification-settings {
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--line); background: none; cursor: pointer;
   padding: 4px 10px; border-radius: 0; font-size: 0.78rem;
   color: var(--muted); font-family: inherit;
 }
 .nav-logout:hover,
-.nav-notification:hover { background: var(--bg); }
+.nav-notification:hover,
+.nav-notification-settings:hover { background: var(--bg); }
 .nav-notification {
   color: var(--navy); font-weight: 800;
 }
@@ -1141,6 +1143,17 @@ main { background: var(--bg); }
   border: 1px solid var(--line);
 }
 .inline-form h4 { margin: 0 0 16px; font-size: 0.95rem; color: var(--navy); }
+.notif-settings-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.5);
+}
+.notif-settings-panel {
+  width: min(420px, 100%);
+  background: #fff; margin-top: 0;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+}
 .form-row {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
 }
@@ -2174,11 +2187,11 @@ main { background: var(--bg); }
   .lab-hero h1 { font-size: clamp(1.5rem, 7vw, 1.9rem); }
   .page-hero-inner p, .lab-hero p { font-size: 0.86rem; }
   .lab-hero { padding: 28px 20px; }
-  .lab-quick-actions { flex-wrap: nowrap; gap: 6px; }
+  .lab-quick-actions { flex-wrap: nowrap; gap: 6px; align-items: stretch; }
   .lab-quick-actions .btn-sm {
-    flex: 1 1 0; min-width: 0; min-height: 36px;
-    padding: 4px 4px; font-size: 0.66rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 1 1 0; min-width: 0; min-height: 40px;
+    padding: 4px 4px; font-size: 0.66rem; line-height: 1.25;
+    white-space: normal; text-align: center; word-break: keep-all;
   }
   .goal-view-toggle { width: 100%; }
   .goal-view-toggle .btn-sm { flex: 1 1 auto; justify-content: center; }

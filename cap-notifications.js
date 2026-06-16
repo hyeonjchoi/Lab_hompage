@@ -98,6 +98,57 @@ const CAPNotifications = {
     });
   },
 
+  // 교수/관리자만 알림 세부 설정(알림 시점, 피드백 포함 여부)을 변경할 수 있음
+  canConfigure() {
+    return !!(window.CAPAuth && CAPAuth.isAdmin && CAPAuth.isAdmin());
+  },
+
+  openSettings() {
+    if (!this.canConfigure()) return;
+    this.closeSettings();
+    const s = this.getSettings();
+    const overlay = document.createElement('div');
+    overlay.className = 'notif-settings-overlay';
+    overlay.id = 'notif-settings-overlay';
+    overlay.innerHTML =
+      '<div class="notif-settings-panel inline-form">' +
+        '<h4>알림 세부 설정</h4>' +
+        '<div class="form-row">' +
+          '<div class="form-group"><label>일정 알림 (몇 시간 전)</label>' +
+            '<input type="number" min="1" id="ns-eventHours" value="' + s.eventHours + '"></div>' +
+          '<div class="form-group"><label>긴급 일정 알림 (몇 시간 전)</label>' +
+            '<input type="number" min="1" id="ns-urgentEventHours" value="' + s.urgentEventHours + '"></div>' +
+        '</div>' +
+        '<div class="form-group"><label>목표 마감 알림 (며칠 전)</label>' +
+          '<input type="number" min="1" id="ns-goalDays" value="' + s.goalDays + '"></div>' +
+        '<div class="form-group">' +
+          '<label style="display:flex;align-items:center;gap:8px;">' +
+            '<input type="checkbox" id="ns-feedback" style="width:auto;margin:0;"' + (s.feedback ? ' checked' : '') + '> 피드백 알림 포함' +
+          '</label>' +
+        '</div>' +
+        '<button class="save-btn" type="button" onclick="CAPNotifications.saveSettingsFromPanel()">저장</button>' +
+        '<button class="btn-sm" type="button" style="margin-left:8px" onclick="CAPNotifications.closeSettings()">취소</button>' +
+      '</div>';
+    overlay.addEventListener('click', e => { if (e.target === overlay) this.closeSettings(); });
+    document.body.appendChild(overlay);
+  },
+
+  closeSettings() {
+    const overlay = document.getElementById('notif-settings-overlay');
+    if (overlay) overlay.remove();
+  },
+
+  saveSettingsFromPanel() {
+    const settings = this.getSettings();
+    settings.eventHours = Math.max(1, parseInt(document.getElementById('ns-eventHours').value, 10) || settings.eventHours);
+    settings.urgentEventHours = Math.max(1, parseInt(document.getElementById('ns-urgentEventHours').value, 10) || settings.urgentEventHours);
+    settings.goalDays = Math.max(1, parseInt(document.getElementById('ns-goalDays').value, 10) || settings.goalDays);
+    settings.feedback = document.getElementById('ns-feedback').checked;
+    this.saveSettings(settings);
+    this.closeSettings();
+    if (window.showToast) showToast('알림 설정이 저장되었습니다.');
+  },
+
   async sendTest() {
     if (!this.isSupported() || Notification.permission !== 'granted') {
       await this.enable();
