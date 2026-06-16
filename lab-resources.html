@@ -69,36 +69,27 @@
   <script src="supabase-client.js?v=supabase-v1"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
-    var LAB_KEY = 'cap_lab_data';
-
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
-      renderResourcePage();
+      await renderResourcePage();
     });
 
-    function renderResourcePage() {
-      var data = loadLabData();
-      var resources = data.resources.slice().sort(sortPinnedThenDate);
+    async function renderResourcePage() {
+      var resources = await CAPData.getResources();
+      resources = resources.slice().sort(sortPinnedThenDate);
       document.getElementById('resource-page-list').innerHTML = resources.length ? resources.map(function (resource) {
         return '<article class="lab-page-list-card">' +
           '<span>' + (resource.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
           '<strong>' + escHtml(resource.title) + '</strong>' +
-          '<p>' + escHtml(resource.desc || '설명이 없습니다.') + '</p>' +
+          '<p>' + escHtml(resource.description || resource.desc || '설명이 없습니다.') + '</p>' +
           (resource.url ? '<a class="pub-link" href="' + escHtml(resource.url) + '" target="_blank" rel="noopener">자료 열기</a>' : '') +
         '</article>';
       }).join('') : '<p class="lab-empty">등록된 공유 소스가 없습니다.</p>';
     }
 
-    function loadLabData() {
-      var raw = localStorage.getItem(LAB_KEY);
-      var data = raw ? JSON.parse(raw) : {};
-      data.resources = Array.isArray(data.resources) ? data.resources : [];
-      return data;
-    }
-
     function sortPinnedThenDate(a, b) {
       if (!!a.important !== !!b.important) return a.important ? -1 : 1;
-      return String(b.createdAt || b.title || '').localeCompare(String(a.createdAt || a.title || ''));
+      return String(b.created_at || b.title || '').localeCompare(String(a.created_at || a.title || ''));
     }
   </script>
   <script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>

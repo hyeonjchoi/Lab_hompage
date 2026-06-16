@@ -69,39 +69,32 @@
   <script src="supabase-client.js?v=supabase-v1"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
-    var LAB_KEY = 'cap_lab_data';
-
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
-      renderNoticePage();
+      await renderNoticePage();
     });
 
-    function renderNoticePage() {
-      var data = loadLabData();
-      var notices = data.notices.slice().sort(sortPinnedThenDate);
+    async function renderNoticePage() {
+      var notices = await CAPData.getNotices();
+      notices = notices.slice().sort(sortPinnedThenDate);
       document.getElementById('notice-page-list').innerHTML = notices.length ? notices.map(function (notice) {
         return '<article class="lab-page-list-card">' +
-          '<span>' + (notice.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.date)) + '</span>' +
+          '<span>' + (notice.is_important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.created_at)) + '</span>' +
           '<strong>' + escHtml(notice.title) + '</strong>' +
-          '<p>' + escHtml(notice.summary || '내용이 없습니다.') + '</p>' +
+          '<p>' + escHtml(notice.body || '내용이 없습니다.') + '</p>' +
         '</article>';
       }).join('') : '<p class="lab-empty">등록된 공지사항이 없습니다.</p>';
     }
 
-    function loadLabData() {
-      var raw = localStorage.getItem(LAB_KEY);
-      var data = raw ? JSON.parse(raw) : {};
-      data.notices = Array.isArray(data.notices) ? data.notices : [];
-      return data;
-    }
-
     function sortPinnedThenDate(a, b) {
-      if (!!a.important !== !!b.important) return a.important ? -1 : 1;
-      return String(b.date || '').localeCompare(String(a.date || ''));
+      if (!!a.is_important !== !!b.is_important) return a.is_important ? -1 : 1;
+      return String(b.created_at || '').localeCompare(String(a.created_at || ''));
     }
 
     function formatKoreanDate(value) {
       if (!value) return '-';
+      var d = new Date(value);
+      if (!isNaN(d.getTime())) return d.getFullYear() + '년 ' + (d.getMonth()+1) + '월 ' + d.getDate() + '일';
       var parts = value.split('-');
       return Number(parts[0]) + '년 ' + Number(parts[1]) + '월 ' + Number(parts[2]) + '일';
     }

@@ -280,8 +280,7 @@
   <script src="supabase-client.js?v=supabase-v1"></script>
   <script src="cap-notifications.js?v=lab-alerts"></script>
   <script>
-    var LAB_KEY = 'cap_lab_data';
-    var labData = null;
+    var labData = { events: [], minutes: [], notices: [], resources: [], progress: [], members: [], teamProjects: [] };
     var calendarCursor = new Date();
     var activeDrawerType = null;
     var selectedMeetingId = null;
@@ -303,155 +302,68 @@
       conference: { label: '학회 및 모임', className: 'conference' }
     };
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
-      labData = loadLabData();
+      await loadLabData();
       renderLabPage();
     });
 
-    function loadLabData() {
-      var raw = localStorage.getItem(LAB_KEY);
-      if (raw) {
-        try {
-          var normalized = normalizeLabData(JSON.parse(raw));
-          localStorage.setItem(LAB_KEY, JSON.stringify(normalized));
-          return normalized;
-        } catch (err) {}
-      }
-      var sample = createSampleLabData();
-      localStorage.setItem(LAB_KEY, JSON.stringify(sample));
-      return sample;
-    }
-
-    function normalizeLabData(data) {
-      data = data || {};
-      data.events = Array.isArray(data.events) ? data.events : [];
-      data.minutes = Array.isArray(data.minutes) ? data.minutes : [];
-      data.notices = Array.isArray(data.notices) ? data.notices : [];
-      data.resources = Array.isArray(data.resources) ? data.resources : [];
-      data.progress = Array.isArray(data.progress) ? data.progress : [];
-      data.memberNotes = Array.isArray(data.memberNotes) ? data.memberNotes : [];
-      data.teamProjects = Array.isArray(data.teamProjects) ? data.teamProjects : [];
-      data.minutes = pruneExpiredMinutes(data.minutes);
-      data.events.forEach(function (event) {
-        event.attendees = Array.isArray(event.attendees) ? event.attendees : defaultMeetingAttendees(event.type);
-      });
-      data.notices.forEach(function (notice) { notice.important = !!notice.important; });
-      data.resources.forEach(function (resource) { resource.important = !!resource.important; });
-      return data;
-    }
-
-    function createSampleLabData() {
-      var now = new Date();
-      var y = now.getFullYear();
-      var m = now.getMonth();
-      var d = now.getDate();
-      var iso = function (offset) {
-        var date = new Date(y, m, d + offset);
-        return formatDateKey(date);
-      };
+    function normalizeEvent(row) {
       return {
-        events: [
-          {
-            id: 'event_1',
-            type: 'meeting',
-            title: '정기 랩미팅',
-            date: iso(2),
-            startTime: '14:00',
-            endTime: '16:00',
-            attendees: ['choi-hj', 'kim-mj', 'kim-jy'],
-            memo: '진행 중인 연구별 업데이트와 다음 주 실험 준비 사항을 공유합니다.',
-            zoom: 'https://zoom.us/j/0000000000'
-          },
-          {
-            id: 'event_2',
-            type: 'class',
-            title: '소비자심리 세미나',
-            date: iso(4),
-            startTime: '10:30',
-            endTime: '12:00',
-            memo: '광고 반응 측정 관련 논문을 함께 읽습니다.',
-            zoom: ''
-          },
-          {
-            id: 'event_3',
-            type: 'conference',
-            title: '학회 초록 제출 마감',
-            date: iso(9),
-            startTime: '18:00',
-            endTime: '',
-            memo: '발표 희망자는 초록과 저자 정보를 확인해 주세요.',
-            zoom: ''
-          }
-        ],
-        minutes: [
-          {
-            id: 'minutes_1',
-            eventId: 'event_1',
-            meetingDate: iso(2),
-            title: '정기 랩미팅 회의록',
-            summary: 'AI 서비스 신뢰 연구 설문 문항을 검토하고, 파일럿 테스트 일정을 다음 주로 정했습니다.',
-            createdBy: '샘플',
-            createdAt: new Date().toISOString()
-          }
-        ],
-        notices: [
-          {
-            id: 'notice_1',
-            title: '6월 연구실 공유 일정 확인',
-            date: iso(0),
-            important: true,
-            summary: '캘린더에 등록된 랩미팅과 수업 일정을 확인하고 변경 사항이 있으면 LAB 페이지에 업데이트해 주세요.'
-          },
-          {
-            id: 'notice_2',
-            title: '회의록 작성 규칙',
-            date: iso(-1),
-            important: false,
-            summary: '회의록은 연결된 랩미팅 날짜를 선택한 뒤 핵심 결정과 다음 액션 중심으로 정리합니다.'
-          }
-        ],
-        resources: [
-          {
-            id: 'resource_1',
-            title: 'OSF 프로젝트 정리 예시',
-            url: 'https://osf.io/',
-            desc: '자료 공개와 분석 코드 정리를 위한 참고 링크입니다.',
-            tags: 'OSF, 자료관리',
-            important: true
-          },
-          {
-            id: 'resource_2',
-            title: 'Qualtrics 설문 체크리스트',
-            url: 'https://www.qualtrics.com/',
-            desc: '설문 배포 전 로직, 랜덤화, 모바일 화면을 점검합니다.',
-            tags: '설문, 체크리스트',
-            important: false
-          }
-        ],
-        progress: [
-          {
-            id: 'progress_1',
-            memberId: 'choi-hj',
-            status: '파일럿 설문 준비',
-            memo: '자극물 검토 후 설문 문항을 정리하고 있습니다.',
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: 'progress_2',
-            memberId: 'kim-mj',
-            status: '문헌 리뷰',
-            memo: 'AI 추천 신뢰 관련 선행연구를 테마별로 분류 중입니다.',
-            updatedAt: new Date().toISOString()
-          }
-        ],
-        memberNotes: []
+        id: row.id, type: row.type, title: row.title,
+        date: row.event_date,
+        startTime: row.start_time || '',
+        endTime: row.end_time || '',
+        zoom: row.reference_url || '',
+        memo: row.memo || '',
+        attendees: row.attendee_ids || []
+      };
+    }
+    function normalizeNotice(row) {
+      return {
+        id: row.id, title: row.title,
+        date: (row.created_at || '').split('T')[0],
+        important: !!row.is_important,
+        summary: row.body || ''
+      };
+    }
+    function normalizeResource(row) {
+      return {
+        id: row.id, title: row.title,
+        url: row.url || '',
+        tags: '참고 자료',
+        important: false,
+        desc: row.description || ''
+      };
+    }
+    function normalizeMinute(row) {
+      return {
+        id: row.id, title: row.title,
+        eventId: row.event_id,
+        meetingDate: row.meeting_date,
+        summary: row.summary || '',
+        createdBy: '',
+        createdAt: row.created_at
       };
     }
 
-    function saveLabData() {
-      labData.minutes = pruneExpiredMinutes(labData.minutes);
-      localStorage.setItem(LAB_KEY, JSON.stringify(labData));
+    async function loadLabData() {
+      var results = await Promise.all([
+        CAPData.getLabEvents(),
+        CAPData.getMeetingMinutes(),
+        CAPData.getNotices(),
+        CAPData.getResources(),
+        CAPData.getTeamProjects(),
+        CAPData.getMembers()
+      ]);
+      var events = results[0], minutes = results[1], notices = results[2], resources = results[3], projects = results[4], members = results[5];
+      labData.events = (events || []).map(normalizeEvent);
+      labData.minutes = (minutes || []).map(normalizeMinute);
+      labData.notices = (notices || []).map(normalizeNotice);
+      labData.resources = (resources || []).map(normalizeResource);
+      labData.teamProjects = projects || [];
+      labData.members = members || [];
+      labData.progress = [];
     }
 
     function renderLabPage() {
@@ -650,7 +562,7 @@
 
     function renderProgress() {
       var session = CAPAuth.getSession();
-      var members = CAPData.getMembers().filter(function (member) { return member.group !== 'alumni'; });
+      var members = labData.members.filter(function (member) { return member.group !== 'alumni'; });
       if (selectedMeetingId) {
         var selectedMeeting = labData.events.find(function (event) { return event.id === selectedMeetingId; });
         var attendees = selectedMeeting && Array.isArray(selectedMeeting.attendees) ? selectedMeeting.attendees : [];
@@ -771,16 +683,16 @@
       document.getElementById('content-modal').hidden = false;
     }
 
-    function deleteContentItem(type, id) {
+    async function deleteContentItem(type, id) {
       var isNotice = type === 'notice';
       var label = isNotice ? '공지사항' : '공유 자료';
       if (!confirm(label + '을 삭제할까요?')) return;
       if (isNotice) {
-        labData.notices = labData.notices.filter(function (item) { return item.id !== id; });
+        await CAPData.removeNotice(id);
       } else {
-        labData.resources = labData.resources.filter(function (item) { return item.id !== id; });
+        await CAPData.removeResource(id);
       }
-      saveLabData();
+      await loadLabData();
       closeContentModal();
       renderLabPage();
       showToast(label + '을 삭제했습니다.');
@@ -874,7 +786,7 @@
           drawerActions(editingContentId ? '자료 수정' : '자료 저장');
       }
       var session = CAPAuth.getSession();
-      var me = session ? CAPData.getMember(session.userId) : null;
+      var me = session ? labData.members.find(function(m) { return m.id === session.userId; }) : null;
       return '<div class="lab-self-note">현재 로그인한 구성원: <strong>' + escHtml(me ? me.name : '구성원') + '</strong></div>' +
         '<div class="form-group"><label for="lab-progress-status">진행 상태</label><input id="lab-progress-status" required placeholder="예: 데이터 수집 중"></div>' +
         '<div class="form-group"><label for="lab-progress-memo">공유 메모</label><textarea id="lab-progress-memo" required></textarea></div>' +
@@ -883,7 +795,7 @@
 
     function memberCheckboxes(name, selectedIds) {
       selectedIds = Array.isArray(selectedIds) ? selectedIds : [];
-      return CAPData.getMembers().filter(function (m) { return m.group !== 'alumni'; }).map(function (member) {
+      return labData.members.filter(function (m) { return m.group !== 'alumni'; }).map(function (member) {
         return '<label class="member-check"><input type="checkbox" name="' + name + '" value="' + escHtml(member.id) + '"' + (selectedIds.includes(member.id) ? ' checked' : '') + '> <span>' + escHtml(member.name) + '</span></label>';
       }).join('');
     }
@@ -915,26 +827,25 @@
       }).join('') : '<option value="">연결할 랩미팅 일정이 없습니다.</option>';
     }
 
-    function saveLabForm(e) {
+    async function saveLabForm(e) {
       e.preventDefault();
       var session = CAPAuth.getSession();
       if (activeDrawerType === 'event') {
-        var existingEvent = editingEventId ? labData.events.find(function (event) { return event.id === editingEventId; }) : null;
-        var nextEvent = {
-          id: existingEvent ? existingEvent.id : 'event_' + Date.now(),
+        var eventDate = document.getElementById('lab-event-date').value;
+        var eventPayload = {
           type: document.getElementById('lab-event-type').value,
           title: document.getElementById('lab-event-title').value.trim(),
-          date: document.getElementById('lab-event-date').value,
-          startTime: document.getElementById('lab-event-start').value,
-          endTime: document.getElementById('lab-event-end').value,
-          attendees: getCheckedValues('lab-event-attendee'),
-          zoom: document.getElementById('lab-event-zoom').value.trim(),
-          memo: document.getElementById('lab-event-memo').value.trim()
+          event_date: eventDate,
+          start_time: document.getElementById('lab-event-start').value || null,
+          end_time: document.getElementById('lab-event-end').value || null,
+          attendee_ids: getCheckedValues('lab-event-attendee'),
+          reference_url: document.getElementById('lab-event-zoom').value.trim() || null,
+          memo: document.getElementById('lab-event-memo').value.trim() || null
         };
-        if (existingEvent) {
-          Object.assign(existingEvent, nextEvent);
+        if (editingEventId) {
+          await CAPData.updateLabEvent(editingEventId, eventPayload);
         } else {
-          labData.events.push(nextEvent);
+          await CAPData.addLabEvent(eventPayload);
         }
       } else if (activeDrawerType === 'minutes') {
         var eventId = document.getElementById('lab-minutes-event').value;
@@ -943,68 +854,44 @@
           showToast('연결할 랩미팅 일정을 먼저 추가해 주세요.');
           return;
         }
-        labData.minutes.push({
-          id: 'minutes_' + Date.now(),
-          eventId: eventId,
-          meetingDate: meeting.date,
+        await CAPData.addMeetingMinute({
+          event_id: eventId,
+          meeting_date: meeting.date,
           title: document.getElementById('lab-minutes-title').value.trim(),
           summary: document.getElementById('lab-minutes-summary').value.trim(),
-          createdBy: session ? session.name : '구성원',
-          createdAt: new Date().toISOString()
+          author_id: session ? session.userId : null,
+          attendee_ids: meeting.attendees || []
         });
       } else if (activeDrawerType === 'notice') {
-        var existingNotice = editingContentId ? labData.notices.find(function (item) { return item.id === editingContentId; }) : null;
-        var nextNotice = {
-          id: existingNotice ? existingNotice.id : 'notice_' + Date.now(),
+        var noticePayload = {
           title: document.getElementById('lab-notice-title').value.trim(),
-          date: document.getElementById('lab-notice-date').value,
-          important: document.getElementById('lab-notice-important').checked,
-          summary: document.getElementById('lab-notice-summary').value.trim(),
-          updatedAt: new Date().toISOString()
+          is_important: document.getElementById('lab-notice-important').checked,
+          body: document.getElementById('lab-notice-summary').value.trim()
         };
-        if (existingNotice) {
-          Object.assign(existingNotice, nextNotice);
+        if (editingContentId) {
+          await CAPData.updateNotice(editingContentId, noticePayload);
         } else {
-          labData.notices.push(nextNotice);
+          await CAPData.addNotice(noticePayload);
         }
       } else if (activeDrawerType === 'resource') {
-        var existingResource = editingContentId ? labData.resources.find(function (item) { return item.id === editingContentId; }) : null;
-        var nextResource = {
-          id: existingResource ? existingResource.id : 'resource_' + Date.now(),
+        var resourcePayload = {
           title: document.getElementById('lab-resource-title').value.trim(),
           url: document.getElementById('lab-resource-url').value.trim(),
-          tags: document.getElementById('lab-resource-tags').value.trim(),
-          important: document.getElementById('lab-resource-important').checked,
-          desc: document.getElementById('lab-resource-desc').value.trim(),
-          updatedAt: new Date().toISOString()
+          description: document.getElementById('lab-resource-desc').value.trim() || null
         };
-        if (existingResource) {
-          Object.assign(existingResource, nextResource);
+        if (editingContentId) {
+          await CAPData.removeResource(editingContentId);
+          await CAPData.addResource(resourcePayload);
         } else {
-          labData.resources.push(nextResource);
+          await CAPData.addResource(resourcePayload);
         }
       } else if (activeDrawerType === 'progress') {
-        var memberId = session ? session.userId : '';
-        if (!memberId) {
-          showToast('로그인 정보를 확인할 수 없습니다.');
-          return;
-        }
-        var existing = labData.progress.find(function (item) { return item.memberId === memberId; });
-        var next = {
-          id: existing ? existing.id : 'progress_' + Date.now(),
-          memberId: memberId,
-          status: document.getElementById('lab-progress-status').value.trim(),
-          memo: document.getElementById('lab-progress-memo').value.trim(),
-          updatedAt: new Date().toISOString()
-        };
-        if (existing) {
-          Object.assign(existing, next);
-        } else {
-          labData.progress.push(next);
-        }
+        showToast('진행상황 저장은 개인 연구 페이지에서 업데이트할 수 있습니다.');
+        closeLabDrawer();
+        return;
       }
 
-      saveLabData();
+      await loadLabData();
       closeLabDrawer();
       renderLabPage();
       if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
@@ -1021,13 +908,13 @@
       e.preventDefault();
     }
 
-    function dropEventOnDate(e, dateKey) {
+    async function dropEventOnDate(e, dateKey) {
       e.preventDefault();
       var eventId = e.dataTransfer.getData('text/plain') || draggingEventId;
       var event = labData.events.find(function (item) { return item.id === eventId; });
       if (event && event.date !== dateKey) {
-        event.date = dateKey;
-        saveLabData();
+        await CAPData.updateLabEvent(eventId, { event_date: dateKey });
+        await loadLabData();
         renderLabPage();
         if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
         showToast('일정 날짜를 변경했습니다.');
@@ -1041,28 +928,14 @@
       });
     }
 
-    function pruneExpiredMinutes(minutes) {
-      var cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - MINUTES_RETENTION_DAYS);
-      cutoff.setHours(0, 0, 0, 0);
-      return (Array.isArray(minutes) ? minutes : []).filter(function (item) {
-        var basis = item.createdAt || item.meetingDate;
-        if (!basis) return true;
-        var date = new Date(basis);
-        if (isNaN(date.getTime())) return true;
-        date.setHours(0, 0, 0, 0);
-        return date >= cutoff;
-      });
-    }
-
     function defaultMeetingAttendees(type) {
-      return type === 'meeting' ? CAPData.getMembers().filter(function (m) { return m.group !== 'alumni'; }).slice(0, 3).map(function (m) { return m.id; }) : [];
+      return type === 'meeting' ? labData.members.filter(function (m) { return m.group !== 'alumni'; }).slice(0, 3).map(function (m) { return m.id; }) : [];
     }
 
     function getAttendeeNames(ids) {
       if (!Array.isArray(ids) || !ids.length) return '';
       return ids.map(function (id) {
-        var member = CAPData.getMember(id);
+        var member = labData.members.find(function(m) { return m.id === id; });
         return member ? member.name : '';
       }).filter(Boolean).join(', ');
     }
@@ -1105,21 +978,26 @@
       }
       var session = CAPAuth.getSession();
       list.innerHTML = visibleProjects.map(function(p) {
-        var creator = CAPData.getMember(p.createdBy);
-        var memberNames = (p.memberIds || []).map(function(id) {
-          var m = CAPData.getMember(id);
+        var memberIds = p.member_ids || p.memberIds || [];
+        var creator = labData.members.find(function(m) { return m.id === (p.created_by || p.createdBy); });
+        var memberNames = memberIds.map(function(id) {
+          var m = labData.members.find(function(member) { return member.id === id; });
           return m ? m.name : null;
         }).filter(Boolean).join(', ');
-        var isMember = Array.isArray(p.memberIds) && session && p.memberIds.includes(session.userId);
+        var isMember = Array.isArray(memberIds) && session && memberIds.includes(session.userId);
         var canEnter = isMember || CAPAuth.isAdmin();
+        var photo = (p.profile && p.profile.photo) || p.photo || '';
+        var avatarEmoji = (p.profile && p.profile.avatarEmoji) || p.avatarEmoji || '팀';
+        var createdBy = p.created_by || p.createdBy;
+        var createdAt = p.created_at || p.createdAt;
         return '<article class="progress-card">' +
-          (p.photo ? '<div class="progress-avatar"><img class="avatar-photo" src="' + escHtml(p.photo) + '" alt=""></div>' : '<div class="progress-avatar" aria-hidden="true">' + escHtml(p.avatarEmoji || '팀') + '</div>') +
+          (photo ? '<div class="progress-avatar"><img class="avatar-photo" src="' + escHtml(photo) + '" alt=""></div>' : '<div class="progress-avatar" aria-hidden="true">' + escHtml(avatarEmoji) + '</div>') +
           '<div class="progress-body">' +
             '<div class="progress-info">' +
               '<strong>' + escHtml(p.name) + '</strong>' +
-              '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + (p.memberIds || []).length + '명</span>' +
+              '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + memberIds.length + '명</span>' +
               '<p>' + escHtml(p.description || '') + '</p>' +
-              '<p style="font-size:0.8rem;color:var(--muted)">' + escHtml(formatKoreanDateTime(p.createdAt)) + ' · ' + escHtml(creator ? creator.name : p.createdBy || '구성원') + ' 생성</p>' +
+              '<p style="font-size:0.8rem;color:var(--muted)">' + escHtml(formatKoreanDateTime(createdAt)) + ' · ' + escHtml(creator ? creator.name : createdBy || '구성원') + ' 생성</p>' +
               (memberNames ? '<p style="font-size:0.8rem;color:var(--muted)">' + escHtml(memberNames) + '</p>' : '') +
             '</div>' +
             '<div class="progress-actions">' +
@@ -1146,7 +1024,7 @@
       var wrap = document.getElementById('project-member-checkboxes');
       if (!wrap) return;
       var session = CAPAuth.getSession();
-      wrap.innerHTML = CAPData.getMembers().filter(function(m) { return m.group !== 'alumni'; }).map(function(m) {
+      wrap.innerHTML = labData.members.filter(function(m) { return m.group !== 'alumni'; }).map(function(m) {
         var isMe = session && session.userId === m.id;
         return '<label class="member-check">' +
           '<input type="checkbox" name="project-member" value="' + escHtml(m.id) + '"' + (isMe ? ' checked' : '') + '> ' +
@@ -1161,7 +1039,7 @@
       });
     }
 
-    function saveProjectCreate(e) {
+    async function saveProjectCreate(e) {
       e.preventDefault();
       var session = CAPAuth.getSession();
       if (!session) { showToast('로그인이 필요합니다.'); return; }
@@ -1172,19 +1050,15 @@
       var avatarEmoji = document.getElementById('project-avatarEmoji').value.trim();
       if (!name) { showToast('프로젝트 이름을 입력해 주세요.'); return; }
       if (!memberIds.includes(session.userId)) memberIds.push(session.userId);
-      var newId = CAPData.addTeamProject({
+      await CAPData.addTeamProject({
         name: name,
         description: desc,
-        photo: photo,
-        avatarEmoji: avatarEmoji,
-        memberIds: memberIds,
-        createdBy: session.userId,
-        goals: [],
-        notes: [],
-        progress: [],
-        meetings: []
+        member_ids: memberIds,
+        created_by: session.userId,
+        status: 'active',
+        profile: { photo: photo || null, avatarEmoji: avatarEmoji || null }
       });
-      labData = loadLabData();
+      await loadLabData();
       teamProjectPage = 1;
       renderTeamProjects();
       toggleProjectCreateForm();
@@ -1220,13 +1094,13 @@
       reader.readAsDataURL(file);
     }
 
-    function deleteTeamProject(projectId) {
+    async function deleteTeamProject(projectId) {
       if (!CAPAuth.isAdmin()) return;
       var project = (labData.teamProjects || []).find(function(p) { return p.id === projectId; });
       if (!project) return;
       if (!confirm('「' + project.name + '」 프로젝트를 삭제할까요? 목표, 댓글 등 모든 데이터가 삭제됩니다.')) return;
-      CAPData.removeTeamProject(projectId);
-      labData = loadLabData();
+      await CAPData.removeTeamProject(projectId);
+      await loadLabData();
       renderTeamProjects();
       showToast('팀 프로젝트를 삭제했습니다.');
     }
