@@ -330,7 +330,7 @@
       renderMemberTable();
     }
 
-    function addMember() {
+    async function addMember() {
       var name = document.getElementById('nm-name').value.trim();
       var sid  = document.getElementById('nm-sid').value.trim();
       var group = document.getElementById('nm-group').value;
@@ -339,26 +339,39 @@
       if (!name || (!sid && group !== 'alumni')) { alert('이름과 학번은 필수입니다. 졸업생은 학번 없이 추가할 수 있습니다.'); return; }
       if (group === 'alumni' && (!degree || !affiliation)) { alert('졸업생은 이름, 학위, 현 소속을 입력해야 합니다.'); return; }
       var avatarChar = document.getElementById('nm-avatar').value.trim() || name.charAt(0);
-      CAPData.addMember({
-        name: name,
-        studentId: sid,
-        role: group === 'alumni' ? 'member' : document.getElementById('nm-role').value,
-        group: group,
-        avatarChar: avatarChar,
-        profile: {
-          enName: document.getElementById('nm-enName').value.trim(),
-          position: group === 'alumni' ? degree : (group === 'integrated' ? '석·박통합과정 · Integrated M.A.-Ph.D. Student' : ''),
-          interest: group === 'alumni' ? affiliation : '',
-          email: '',
-          showEmail: false
-        }
-      });
-      showToast('구성원이 추가되었습니다.');
-      renderMemberTable();
-      ['nm-name','nm-sid','nm-enName','nm-avatar','nm-degree','nm-affiliation'].forEach(function (id) {
-        document.getElementById(id).value = '';
-      });
-      updateAlumniFields();
+
+      var btn = document.querySelector('.save-btn');
+      btn.disabled = true; btn.textContent = '등록 중…';
+
+      try {
+        var session = await getSupabase().auth.getSession();
+        var token = session.data.session?.access_token;
+        var res = await fetch('https://pfnqcwamznvaxgqahavi.supabase.co/functions/v1/create-member', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({
+            name: name,
+            studentId: sid || null,
+            group: group,
+            enName: document.getElementById('nm-enName').value.trim(),
+            avatarChar: avatarChar,
+            degree: degree,
+            affiliation: affiliation
+          })
+        });
+        var result = await res.json();
+        if (!res.ok) throw new Error(result.error || '등록 실패');
+        showToast('구성원이 추가되었습니다.');
+        await renderMemberTable();
+        ['nm-name','nm-sid','nm-enName','nm-avatar','nm-degree','nm-affiliation'].forEach(function (id) {
+          document.getElementById(id).value = '';
+        });
+        updateAlumniFields();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      } finally {
+        btn.disabled = false; btn.textContent = '구성원 추가';
+      }
     }
 
     function updateAlumniFields() {
