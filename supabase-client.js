@@ -211,11 +211,13 @@ const CAPData = {
 
   // ── Push Subscriptions ────────────────────
   async addPushSubscription(memberId, subscription) {
+    // Safari의 PushSubscription은 .keys를 직접 노출하지 않음 — toJSON()으로 정규화
+    const json = (typeof subscription.toJSON === 'function') ? subscription.toJSON() : subscription;
     const { error } = await getSupabase().from('push_subscriptions').upsert({
       member_id: memberId,
-      endpoint: subscription.endpoint,
-      p256dh: subscription.keys.p256dh,
-      auth: subscription.keys.auth
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth
     }, { onConflict: 'endpoint' });
     _throw(error);
   },
