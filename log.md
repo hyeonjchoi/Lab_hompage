@@ -1109,3 +1109,13 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 | 파일 | 주요 변경 |
 |------|----------|
 | 전체 HTML 15개 | `cap-auth.js` 캐시버스팅 쿼리스트링을 `?v=navfix2`로 통일 |
+
+## 2026-06-16 — 관리자 연구페이지 링크 재신고 — 코드 검증 및 서비스워커 캐시 강제 갱신
+
+- 동일 증상이 다시 보고되어, GitHub Pages에 실제 배포된 `cap-auth.js`/`lab-member.html`을 `curl`로 직접 확인. `labPageHref`가 `lab-member.html?id=<관리자 id>`로 정확히 생성되고, `lab-member.html`의 리다이렉트 조건(`targetId !== currentSession.userId && role !== 'admin'`)도 본인 id 접근 시 `lab.html`로 보내지 않는 것을 코드 레벨에서 재확인 — 즉 서버에 배포된 코드 자체는 정상.
+- 남은 원인은 PWA 서비스워커(`sw.html`)의 캐시 잔존 가능성으로 판단해 `sw.js`의 `CACHE_NAME`을 `kw-cap-lab-v11` → `kw-cap-lab-v12`로 올려, 활성화 시 이전 캐시를 강제로 정리하도록 함.
+- 사용자에게는 클릭 후 실제 이동된 주소가 `lab-member.html?id=...`인지 `lab.html`인지 확인을 요청 — 만약 여전히 재현된다면 코드가 아닌 해당 기기의 캐시/세션 데이터 문제일 가능성이 높음.
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `sw.js` | `CACHE_NAME` v11 → v12 (캐시 강제 정리) |
