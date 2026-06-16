@@ -1333,3 +1333,8 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 - 홈 화면에 추가한 PWA에서 "알림 허용"을 누르면 `알림 등록에 실패했습니다: undefined is not an object (evaluating 'subscription.keys.p256dh')` 오류가 발생.
 - **원인**: `pushManager.subscribe()`가 반환하는 `PushSubscription` 객체는 Safari에서 `.keys`를 직접 노출하지 않음(Chrome/Firefox는 편의상 노출하지만 스펙상 보장된 건 아님) — 표준대로라면 `.toJSON()`을 호출해야 `{endpoint, keys:{p256dh, auth}}` 형태를 얻을 수 있는데, `CAPData.addPushSubscription`이 원본 객체에서 바로 `subscription.keys.p256dh`를 읽고 있어 Safari에서만 깨짐.
 - **수정**: `supabase-client.js`의 `addPushSubscription`에서 `subscription.toJSON()`으로 정규화한 뒤 그 결과에서 `endpoint`/`keys`를 읽도록 변경. (`43ac1ea`)
+
+### 5. 관리자가 구성원 그룹도 변경할 수 있도록 추가
+
+- `admin.html` 구성원 표의 "그룹" 칸을 일반 텍스트에서 셀렉트박스로 변경. 역할 변경 버튼과 동일한 패턴으로 `onchange` 시 `updateGroup(id, value)` → `CAPData.updateMember(id, { lab_group: value })` 호출.
+- `role`/`profile.position`은 건드리지 않음 — 그룹 재분류가 의도치 않게 관리자 권한을 주거나 빼앗지 않도록 분리해서 처리. (`0981955`)
