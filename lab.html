@@ -1075,6 +1075,7 @@
         list.innerHTML = '<p class="lab-empty">아직 생성된 팀 프로젝트가 없습니다. 구성원 누구나 프로젝트를 만들 수 있습니다.</p>';
         return;
       }
+      var session = CAPAuth.getSession();
       list.innerHTML = projects.slice().sort(function(a, b) {
         return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
       }).map(function(p) {
@@ -1083,16 +1084,20 @@
           var m = CAPData.getMember(id);
           return m ? m.name : null;
         }).filter(Boolean).join(', ');
+        var isMember = Array.isArray(p.memberIds) && session && p.memberIds.includes(session.userId);
+        var canEnter = isMember || CAPAuth.isAdmin();
         return '<article class="progress-card">' +
           (p.photo ? '<div class="progress-avatar"><img class="avatar-photo" src="' + escHtml(p.photo) + '" alt=""></div>' : '<div class="progress-avatar" aria-hidden="true">' + escHtml(p.avatarEmoji || '팀') + '</div>') +
-          '<div>' +
-            '<strong>' + escHtml(p.name) + '</strong>' +
-            '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + (p.memberIds || []).length + '명</span>' +
-            '<p>' + escHtml(p.description || '') + '</p>' +
-            '<p style="font-size:0.8rem;color:var(--muted)">' + escHtml(formatKoreanDateTime(p.createdAt)) + ' · ' + escHtml(creator ? creator.name : p.createdBy || '구성원') + ' 생성</p>' +
-            (memberNames ? '<p style="font-size:0.8rem;color:var(--muted)">' + escHtml(memberNames) + '</p>' : '') +
+          '<div class="progress-body">' +
+            '<div class="progress-info">' +
+              '<strong>' + escHtml(p.name) + '</strong>' +
+              '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + (p.memberIds || []).length + '명</span>' +
+              '<p>' + escHtml(p.description || '') + '</p>' +
+              '<p style="font-size:0.8rem;color:var(--muted)">' + escHtml(formatKoreanDateTime(p.createdAt)) + ' · ' + escHtml(creator ? creator.name : p.createdBy || '구성원') + ' 생성</p>' +
+              (memberNames ? '<p style="font-size:0.8rem;color:var(--muted)">' + escHtml(memberNames) + '</p>' : '') +
+            '</div>' +
             '<div class="progress-actions">' +
-              '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '">프로젝트 방 →</a>' +
+              (canEnter ? '<a class="btn-sm primary" href="lab-project.html?id=' + escHtml(p.id) + '">프로젝트 방 →</a>' : '') +
               (CAPAuth.isAdmin() ? '<button type="button" class="btn-sm danger" onclick="deleteTeamProject(\'' + escHtml(p.id) + '\')">삭제</button>' : '') +
             '</div>' +
           '</div>' +

@@ -1552,9 +1552,18 @@ main { background: var(--bg); }
 .progress-card p {
   margin: 6px 0 0; color: #364152; font-size: 0.84rem; line-height: 1.5;
 }
+.progress-body {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.progress-info {
+  min-width: 0; flex: 1 1 auto;
+}
 .progress-actions {
   display: flex; flex-wrap: wrap; gap: 8px;
   margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line);
+}
+.progress-body .progress-actions {
+  flex-shrink: 0; margin-top: 0; padding-top: 0; border-top: none;
 }
 .progress-actions .btn-sm {
   display: inline-flex; align-items: center; justify-content: center;
@@ -2083,6 +2092,15 @@ main { background: var(--bg); }
   .member-check-grid {
     grid-template-columns: 1fr;
   }
+  .progress-body {
+    flex-direction: column; align-items: stretch;
+  }
+  .progress-actions {
+    width: 100%;
+  }
+  .progress-actions .btn-sm {
+    flex: 1 1 auto; justify-content: center;
+  }
   .lab-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
@@ -2183,7 +2201,6 @@ main { background: var(--bg); }
     grid-column: 2; justify-self: end;
   }
   .nav-toggle-bar { display: block; width: 18px; height: 2px; background: var(--navy); }
-  .nav-shell.nav-open .nav-auth.nav-auth-loggedin { order: -1; }
 }
 
 /* Team Project */
