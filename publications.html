@@ -234,7 +234,7 @@
             : '';
           return renderPublicationEntry({
             title: p.title,
-            meta: [p.presenter, p.venue, p.type].filter(Boolean).join(' · '),
+            meta: [p.presenter, p.venue, p.pres_type].filter(Boolean).join(' · '),
             action: deleteBtn
           });
         }));
@@ -277,7 +277,7 @@
           return renderPublicationEntry({
             title: a.title,
             meta: [a.recipient, a.venue].filter(Boolean).join(' · '),
-            desc: a.desc,
+            desc: a.description,
             action: deleteBtn
           });
         }));
@@ -324,7 +324,7 @@
         presenter: document.getElementById('pr-presenter').value.trim(),
         venue: document.getElementById('pr-venue').value.trim(),
         year: document.getElementById('pr-year').value.trim(),
-        type: document.getElementById('pr-type').value
+        pres_type: document.getElementById('pr-type').value
       });
       showToast('학술발표가 추가되었습니다.');
       renderPresentations();
@@ -343,7 +343,7 @@
         recipient: document.getElementById('awp-recipient').value.trim(),
         venue: document.getElementById('awp-venue').value.trim(),
         year: document.getElementById('awp-year').value.trim(),
-        desc: document.getElementById('awp-desc').value.trim()
+        description: document.getElementById('awp-desc').value.trim()
       });
       showToast('수상내역이 추가되었습니다.');
       renderAwards();

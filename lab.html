@@ -562,7 +562,7 @@
 
     function renderProgress() {
       var session = CAPAuth.getSession();
-      var members = labData.members.filter(function (member) { return member.group !== 'alumni'; });
+      var members = labData.members.filter(function (member) { return member.lab_group !== 'alumni'; });
       if (selectedMeetingId) {
         var selectedMeeting = labData.events.find(function (event) { return event.id === selectedMeetingId; });
         var attendees = selectedMeeting && Array.isArray(selectedMeeting.attendees) ? selectedMeeting.attendees : [];
@@ -590,12 +590,12 @@
           updatedAt: ''
         };
         var isSelf = session && session.userId === member.id;
-        var canEnterAsAdmin = adminProgressMode && isAdmin && member.group !== 'professor';
+        var canEnterAsAdmin = adminProgressMode && isAdmin && member.lab_group !== 'professor';
         var actions = '<div class="progress-actions">' +
           (isSelf ? '<a class="btn-sm" href="lab-member.html?id=' + escHtml(member.id) + '">내 연구페이지</a>' : '') +
           '</div>';
         var cardInner =
-          '<div class="progress-avatar" aria-hidden="true">' + escHtml(member.profile.avatarEmoji || member.avatarChar || member.name.charAt(0)) + '</div>' +
+          '<div class="progress-avatar" aria-hidden="true">' + escHtml(member.profile.avatarEmoji || member.avatar_char || member.name.charAt(0)) + '</div>' +
           '<div>' +
             '<strong>' + escHtml(member.name) + '</strong>' +
             '<span>' + escHtml(progress.status) + '</span>' +
@@ -795,7 +795,7 @@
 
     function memberCheckboxes(name, selectedIds) {
       selectedIds = Array.isArray(selectedIds) ? selectedIds : [];
-      return labData.members.filter(function (m) { return m.group !== 'alumni'; }).map(function (member) {
+      return labData.members.filter(function (m) { return m.lab_group !== 'alumni'; }).map(function (member) {
         return '<label class="member-check"><input type="checkbox" name="' + name + '" value="' + escHtml(member.id) + '"' + (selectedIds.includes(member.id) ? ' checked' : '') + '> <span>' + escHtml(member.name) + '</span></label>';
       }).join('');
     }
@@ -929,7 +929,7 @@
     }
 
     function defaultMeetingAttendees(type) {
-      return type === 'meeting' ? labData.members.filter(function (m) { return m.group !== 'alumni'; }).slice(0, 3).map(function (m) { return m.id; }) : [];
+      return type === 'meeting' ? labData.members.filter(function (m) { return m.lab_group !== 'alumni'; }).slice(0, 3).map(function (m) { return m.id; }) : [];
     }
 
     function getAttendeeNames(ids) {
@@ -978,18 +978,18 @@
       }
       var session = CAPAuth.getSession();
       list.innerHTML = visibleProjects.map(function(p) {
-        var memberIds = p.member_ids || p.memberIds || [];
-        var creator = labData.members.find(function(m) { return m.id === (p.created_by || p.createdBy); });
+        var memberIds = p.member_ids || [];
+        var creator = labData.members.find(function(m) { return m.id === p.creator_id; });
         var memberNames = memberIds.map(function(id) {
           var m = labData.members.find(function(member) { return member.id === id; });
           return m ? m.name : null;
         }).filter(Boolean).join(', ');
         var isMember = Array.isArray(memberIds) && session && memberIds.includes(session.userId);
         var canEnter = isMember || CAPAuth.isAdmin();
-        var photo = (p.profile && p.profile.photo) || p.photo || '';
-        var avatarEmoji = (p.profile && p.profile.avatarEmoji) || p.avatarEmoji || '팀';
-        var createdBy = p.created_by || p.createdBy;
-        var createdAt = p.created_at || p.createdAt;
+        var photo = p.photo || '';
+        var avatarEmoji = p.avatar_emoji || '팀';
+        var createdBy = p.creator_id;
+        var createdAt = p.created_at;
         return '<article class="progress-card">' +
           (photo ? '<div class="progress-avatar"><img class="avatar-photo" src="' + escHtml(photo) + '" alt=""></div>' : '<div class="progress-avatar" aria-hidden="true">' + escHtml(avatarEmoji) + '</div>') +
           '<div class="progress-body">' +
@@ -1024,7 +1024,7 @@
       var wrap = document.getElementById('project-member-checkboxes');
       if (!wrap) return;
       var session = CAPAuth.getSession();
-      wrap.innerHTML = labData.members.filter(function(m) { return m.group !== 'alumni'; }).map(function(m) {
+      wrap.innerHTML = labData.members.filter(function(m) { return m.lab_group !== 'alumni'; }).map(function(m) {
         var isMe = session && session.userId === m.id;
         return '<label class="member-check">' +
           '<input type="checkbox" name="project-member" value="' + escHtml(m.id) + '"' + (isMe ? ' checked' : '') + '> ' +

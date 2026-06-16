@@ -1209,3 +1209,44 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 - Administrator 권한이므로 프로젝트 설정 변경, SQL Editor에서 직접 쿼리 실행, API 키 확인이 모두 가능함.
 - 따라서 협업자가 백엔드(테이블·RLS 등) 작업을 마치면, 본인도 동일한 Supabase 프로젝트(`hbrim15's Project`, ref: `pfnqcwamznvaxgqahavi`)에 대시보드 또는 CLI로 직접 접근해 확인·수정할 수 있음.
 - `supabase-client.js`의 `SUPABASE_URL`/`SUPABASE_ANON_KEY`를 채울 때는 이 프로젝트(`pfnqcwamznvaxgqahavi`, host: `db.pfnqcwamznvaxgqahavi.supabase.co`)의 값을 사용해야 함.
+
+---
+
+## 2026-06-16 — Supabase 마이그레이션 이후 콘텐츠 소실 / 관리자 패널 오류 원인 진단 및 수정
+
+### 증상
+
+- 실서비스(GitHub Pages)에서 기존에 있던 콘텐츠(홈 문구, 페이지 안내문, 구성원 목록)가 보이지 않음.
+- 관리자 패널에서 구성원 추가 시 오류 메시지가 뜸.
+- 관리자 패널에서 보이는 데이터와 실제 페이지에 보이는 데이터가 다름.
+- 관리자 패널에서 각 페이지 문구를 편집해도 반영되지 않음.
+
+### 원인 (5가지가 겹쳐서 발생)
+
+1. **`admin.html`이 비동기 전환 누락**: `supabase-client.js`로 전환되면서 `CAPData`의 모든 메서드가 `async`(Promise 반환)가 됐는데, `admin.html`의 회원 관리·홈 문구·페이지 문구·연구축·논문 관리 코드 전체가 `await` 없이 동기 호출을 하고 있었음 (Promise 객체를 다루다 깨짐).
+2. **`cap-page-meta.js`의 `readMeta()`가 `getPageMeta()`를 `await` 없이 호출**: 관리자가 페이지 문구를 수정해도 People/Research/Publications/예약/지원하기 페이지는 항상 파일 내부 하드코딩된 기본값만 표시.
+3. **컬럼명 불일치(camelCase → snake_case)**: Supabase 마이그레이션 후 DB 컬럼은 `student_id`/`lab_group`/`avatar_char`/`updated_at`/`creator_id`/`avatar_emoji`/`pres_type`/`description`인데, `admin.html`/`people.html`/`lab.html`/`member-dashboard.html`/`publications.html` 곳곳이 옛 camelCase(`studentId`/`group`/`avatarChar`/`type`/`desc` 등)를 그대로 읽고 있었음. 특히 **`people.html`의 `m.group` 참조**는 구성원 그룹 필터링이 항상 빈 배열을 반환하게 만들어 **구성원(People) 페이지가 비로그인/로그인 여부와 관계없이 항상 비어 보이는 핵심 원인**이었음. `publications.html`의 학술발표 저장 시 `type` 필드가 `publications.type`(article/presentation/award 구분 컬럼)과 충돌해 DB CHECK 제약 위반으로 저장이 실패하는 문제도 있었음.
+4. **`members` 테이블 RLS 정책이 로그인 사용자 전용**(`auth.role() = 'authenticated'`): 비로그인 방문자는 홈/People 페이지에서 구성원을 전혀 조회할 수 없었음. 또한 `members` 테이블에 DELETE 정책이 전혀 없어 관리자 패널의 구성원 삭제가 항상 실패했음.
+5. **실제 Supabase DB가 비어있었음** (anon key로 직접 조회해 확인): `site_content`에는 `research` 키 1건만 있고 그 값도 테스트로 입력된 "KKK"/"JLLJL" 같은 임시값이었음. `home`/`pages.*` 키는 전혀 없었고, `publications` 테이블도 완전히 비어 있었음 — `cap-data.js`의 기존 기본 데이터(홈 문구, 페이지 설명, 연구축, 예시 논문, 10명 구성원 명단)가 Supabase로 마이그레이션될 때 한 번도 옮겨지지 않은 것으로 확인됨.
+6. (부수 발견) `create-member` Edge Function이 호출자 권한을 `role === 'admin'`만 허용했는데, 교수 계정의 실제 `role` 값이 `'professor'`로 저장돼 있다면 구성원 추가 시 항상 403 "관리자 권한이 필요합니다" 오류가 났을 것으로 추정됨.
+
+### 수정 내역
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `admin.html` | 모든 `CAPData` 호출에 `await` 추가, 회원/논문/발표/수상 필드명을 DB 컬럼명(snake_case)에 맞게 수정, `CAP_DEFAULTS` 전역 의존(미로드 상태) 제거하고 페이지 문구 기본값을 자체 보유하도록 수정, 인라인 `onclick` 삭제 핸들러를 비동기 안전한 named 함수로 교체 |
+| `cap-page-meta.js` | `readMeta`/`apply`를 `async`로 전환하고 `getPageMeta()` 결과를 `await` |
+| `publications.html` | 학술발표 저장/렌더링 필드를 `type`→`pres_type`, 수상내역을 `desc`→`description`으로 수정 (DB 컬럼명과 일치) |
+| `people.html` | 구성원 그룹 필터링을 `m.group`→`m.lab_group`으로 수정 (People 페이지 핵심 버그) |
+| `lab.html` | `member.group`→`lab_group`(3곳), `avatarChar`→`avatar_char`, 팀 프로젝트 카드의 `created_by`/`avatarEmoji`를 실제 컬럼명 `creator_id`/`avatar_emoji`로 수정 |
+| `member-dashboard.html` | `m.group`→`lab_group`, `m.avatarChar`→`avatar_char` |
+| `lab-member.html` | `currentMember.avatarChar`→`avatar_char` |
+| `supabase-schema.sql` | `members_select` 정책을 공개 조회(`USING (true)`)로 변경, `members_update_own`에 professor/admin 조건 추가, `members_delete_admin` 정책 신설 (신규 설치 기준 정의 — 운영 DB에는 `supabase-seed.sql`로 별도 적용 필요) |
+| `supabase/functions/create-member/index.ts` | 호출자 권한 체크에 `role === 'professor'`도 허용 (재배포 필요: `supabase functions deploy create-member`) |
+| `supabase-seed.sql` (신규) | RLS 정책 패치 + `site_content`(home/pages.*/research) 시드 + `publications` 예시 데이터 + 로그인 계정 없는 구성원 7명 시드. Supabase 대시보드 SQL Editor에서 직접 실행 필요 (재실행해도 안전하도록 `ON CONFLICT`/`NOT EXISTS`로 작성) |
+
+### 남은 과제 (이번 수정 범위 밖, 사용자에게 별도 안내함)
+
+- `cap-notifications.js`가 여전히 `localStorage`의 `cap_lab_data`를 읽도록 되어 있어 Supabase 마이그레이션 이후 알림(리마인더) 기능이 사실상 동작하지 않음. 이벤트/목표/메모를 Supabase에서 직접 불러오도록 별도 리팩터링 필요.
+- LAB 페이지의 "구성원별 진행 상황" 카드(`labData.progress`)는 팀 프로젝트에 속하지 않는 개인 단위 진행 상황 표시용인데, 이를 위한 Supabase 테이블이 마이그레이션 때 만들어지지 않아 항상 빈 배열로 처리됨. 기능을 유지하려면 별도 테이블 설계가 필요.
+- `cap-data.js`/`cap-auth.js`는 이제 어떤 HTML도 로드하지 않는 죽은 코드 — 혼동 방지를 위해 삭제 검토 가능.

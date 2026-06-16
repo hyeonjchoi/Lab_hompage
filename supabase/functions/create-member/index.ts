@@ -48,7 +48,7 @@ serve(async (req) => {
 
     const { data: caller } = await admin
       .from('members').select('role').eq('auth_user_id', user.id).single()
-    if (!caller || caller.role !== 'admin')
+    if (!caller || (caller.role !== 'admin' && caller.role !== 'professor'))
       return json({ error: '관리자 권한이 필요합니다' }, 403)
 
     // 2) 요청 파싱

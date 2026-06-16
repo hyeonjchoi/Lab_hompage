@@ -259,12 +259,15 @@ RETURNS UUID LANGUAGE sql STABLE SECURITY DEFINER AS $$
 $$;
 
 -- ──────────────────────────────────────────────
--- members: 로그인 사용자 전체 조회, 본인만 수정
+-- members: 누구나 조회(공개 구성원 디렉터리), 본인 또는 professor/admin만 수정,
+--          professor/admin만 삭제 (구성원 추가는 create-member Edge Function이 service role로 처리)
 -- ──────────────────────────────────────────────
 CREATE POLICY "members_select" ON members FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (true);
 CREATE POLICY "members_update_own" ON members FOR UPDATE
-  USING (auth_user_id = auth.uid());
+  USING (auth_user_id = auth.uid() OR current_member_role() IN ('professor', 'admin'));
+CREATE POLICY "members_delete_admin" ON members FOR DELETE
+  USING (current_member_role() IN ('professor', 'admin'));
 
 -- ──────────────────────────────────────────────
 -- lab_events: 로그인 사용자 조회, professor/admin만 CUD

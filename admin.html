@@ -251,20 +251,21 @@
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
     /* ---- 초기화 ---- */
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', async function () {
+      await CAPAuth.restoreSession();
       CAPAuth.requireAdmin();
       var session = CAPAuth.getSession();
       document.getElementById('admin-welcome').textContent =
         session ? session.name + ' 님 (관리자)' : '관리자';
 
       // load all tabs
-      renderMemberTable();
-      loadHomeForm();
-      renderPageMetaEditor();
-      renderAxesEdit();
-      renderArticlesTable();
-      renderPresTable();
-      renderAwardsTable();
+      await renderMemberTable();
+      await loadHomeForm();
+      await renderPageMetaEditor();
+      await renderAxesEdit();
+      await renderArticlesTable();
+      await renderPresTable();
+      await renderAwardsTable();
       updateAlumniFields();
       document.getElementById('nm-group').addEventListener('change', updateAlumniFields);
     });
@@ -287,19 +288,19 @@
       alumni: '졸업생'
     };
 
-    function renderMemberTable() {
-      var members = CAPData.getMembers();
+    async function renderMemberTable() {
+      var members = await CAPData.getMembers();
       var tbody = document.getElementById('member-tbody');
       tbody.innerHTML = members.map(function (m) {
         return '<tr>' +
           '<td><strong>' + escHtml(m.name) + '</strong></td>' +
           '<td><input style="border:1px solid var(--line);border-radius:4px;padding:3px 7px;font-size:0.84rem;width:120px" ' +
-               'value="' + escHtml(m.studentId) + '" ' +
+               'value="' + escHtml(m.student_id || '') + '" ' +
                'onchange="updateStudentId(\'' + escHtml(m.id) + '\',this.value)"></td>' +
           '<td><span class="role-badge ' + (m.role === 'admin' ? 'role-admin' : 'role-member') + '">' + escHtml(m.role) + '</span>' +
                '<button class="btn-sm" style="margin-left:6px" onclick="toggleRole(\'' + escHtml(m.id) + '\')">변경</button></td>' +
-          '<td>' + escHtml(GROUP_LABEL[m.group] || m.group) + '</td>' +
-          '<td style="font-size:0.8rem;color:var(--muted)">' + (m.updatedAt ? m.updatedAt.split('T')[0] : '-') + '</td>' +
+          '<td>' + escHtml(GROUP_LABEL[m.lab_group] || m.lab_group) + '</td>' +
+          '<td style="font-size:0.8rem;color:var(--muted)">' + (m.updated_at ? m.updated_at.split('T')[0] : '-') + '</td>' +
           '<td class="action-row">' +
             '<a class="btn-sm primary" href="member-dashboard.html?id=' + escHtml(m.id) + '">편집</a>' +
             '<button class="btn-sm danger" onclick="deleteMember(\'' + escHtml(m.id) + '\',\'' + escHtml(m.name) + '\')">삭제</button>' +
@@ -308,26 +309,38 @@
       }).join('');
     }
 
-    function updateStudentId(id, val) {
-      CAPData.updateMember(id, { studentId: val.trim() });
-      showToast('학번이 업데이트되었습니다.');
+    async function updateStudentId(id, val) {
+      try {
+        await CAPData.updateMember(id, { student_id: val.trim() });
+        showToast('학번이 업데이트되었습니다.');
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
-    function toggleRole(id) {
-      var m = CAPData.getMember(id);
+    async function toggleRole(id) {
+      var m = await CAPData.getMember(id);
       if (!m) return;
       var newRole = m.role === 'admin' ? 'member' : 'admin';
       if (!confirm(m.name + ' 님의 역할을 ' + newRole + '로 변경하시겠습니까?')) return;
-      CAPData.updateMember(id, { role: newRole });
-      showToast('역할이 변경되었습니다.');
-      renderMemberTable();
+      try {
+        await CAPData.updateMember(id, { role: newRole });
+        showToast('역할이 변경되었습니다.');
+        await renderMemberTable();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
-    function deleteMember(id, name) {
+    async function deleteMember(id, name) {
       if (!confirm(name + ' 님을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
-      CAPData.removeMember(id);
-      showToast('구성원이 삭제되었습니다.');
-      renderMemberTable();
+      try {
+        await CAPData.removeMember(id);
+        showToast('구성원이 삭제되었습니다.');
+        await renderMemberTable();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
     async function addMember() {
@@ -383,23 +396,61 @@
     }
 
     /* ---- Tab 2: Home ---- */
-    function loadHomeForm() {
-      var h = CAPData.getContent().home || {};
+    async function loadHomeForm() {
+      var content = await CAPData.getContent();
+      var h = content.home || {};
       document.getElementById('h-title').value  = h.heroTitle  || '';
       document.getElementById('h-lead').value   = h.heroLead   || '';
       document.getElementById('h-leadEn').value = h.heroLeadEn || '';
     }
 
-    function saveHome() {
-      CAPData.updateHomeContent({
-        heroTitle:  document.getElementById('h-title').value,
-        heroLead:   document.getElementById('h-lead').value,
-        heroLeadEn: document.getElementById('h-leadEn').value
-      });
-      showToast('홈 문구가 저장되었습니다. index.html을 새로 고침하면 반영됩니다.');
+    async function saveHome() {
+      try {
+        await CAPData.updateHomeContent({
+          heroTitle:  document.getElementById('h-title').value,
+          heroLead:   document.getElementById('h-lead').value,
+          heroLeadEn: document.getElementById('h-leadEn').value
+        });
+        showToast('홈 문구가 저장되었습니다. index.html을 새로 고침하면 반영됩니다.');
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
     /* ---- Tab 3: Page Meta ---- */
+    // cap-data.js의 CAP_DEFAULTS.content.pages를 대체 (이 페이지는 supabase-client.js만 로드함)
+    var CAP_PAGE_META_DEFAULTS = {
+      people: {
+        eyebrow: 'People', title: '구성원',
+        description: '기본 프로필은 이모지 아바타로 제공하며, 사진과 이메일은 희망자에 한해 공개합니다.\n로그인한 구성원은 자신의 카드에서 직접 정보를 수정할 수 있습니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      research: {
+        eyebrow: 'Research Areas', title: '진행 연구',
+        description: '소비자가 광고, 서비스, AI 기반 상호작용에서 어떻게 생각하고 느끼며 행동하는지 탐구합니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      publications: {
+        eyebrow: 'Publications', title: '연구 성과',
+        description: '논문은 DOI와 저널 링크를 우선 제공합니다. 가능한 경우 학교 도서관 사이트와 연동합니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      reservation: {
+        eyebrow: 'RSVN', title: '실험실 예약',
+        description: '광운대학교 산업심리학과 학생 전용 실험실습실, 한울관 105호 예약 안내입니다.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      },
+      join: {
+        eyebrow: 'Join Us', title: '지원하기',
+        description: '대학원생 지원과 학부연구생 RA 모집은 절차가 다릅니다. 아래 안내를 확인하신 후 지원해 주세요.',
+        titleStyle: { color: '#FFFFFF', fontSize: '', fontWeight: '900', fontStyle: 'normal', textAlign: 'left' },
+        descriptionStyle: { color: '#D9E2EC', fontSize: '', fontWeight: '400', fontStyle: 'normal', textAlign: 'left' }
+      }
+    };
     var PAGE_META_CONFIG = [
       { id: 'people', label: '구성원', url: 'people.html' },
       { id: 'research', label: '진행 연구', url: 'research.html' },
@@ -417,10 +468,11 @@
       return /^\d{0,2}(\.\d{1,2})?$/.test(value) ? value : '';
     }
 
-    function renderPageMetaEditor() {
+    async function renderPageMetaEditor() {
       var editor = document.getElementById('page-meta-editor');
-      editor.innerHTML = PAGE_META_CONFIG.map(function (page) {
-        var meta = CAPData.getPageMeta(page.id);
+      var metas = await Promise.all(PAGE_META_CONFIG.map(function (page) { return CAPData.getPageMeta(page.id); }));
+      editor.innerHTML = PAGE_META_CONFIG.map(function (page, idx) {
+        var meta = metas[idx] || {};
         var titleStyle = meta.titleStyle || {};
         var descStyle = meta.descriptionStyle || {};
         return '<article class="inline-form" id="page-editor-' + page.id + '">' +
@@ -496,32 +548,39 @@
       return allowed.join(';');
     }
 
-    function savePageMeta(pageId) {
-      CAPData.updatePageMeta(pageId, {
-        eyebrow: document.getElementById('pm-' + pageId + '-eyebrow').value.trim(),
-        title: document.getElementById('pm-' + pageId + '-title').value.trim(),
-        description: document.getElementById('pm-' + pageId + '-description').value.trim(),
-        titleStyle: readStyle(pageId, 'title', '#FFFFFF'),
-        descriptionStyle: readStyle(pageId, 'desc', '#D9E2EC')
-      });
-      showToast('페이지 문구와 서식이 저장되었습니다.');
-      renderPageMetaEditor();
+    async function savePageMeta(pageId) {
+      try {
+        await CAPData.updatePageMeta(pageId, {
+          eyebrow: document.getElementById('pm-' + pageId + '-eyebrow').value.trim(),
+          title: document.getElementById('pm-' + pageId + '-title').value.trim(),
+          description: document.getElementById('pm-' + pageId + '-description').value.trim(),
+          titleStyle: readStyle(pageId, 'title', '#FFFFFF'),
+          descriptionStyle: readStyle(pageId, 'desc', '#D9E2EC')
+        });
+        showToast('페이지 문구와 서식이 저장되었습니다.');
+        await renderPageMetaEditor();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
-    function resetPageMeta(pageId) {
+    async function resetPageMeta(pageId) {
       if (!confirm('이 페이지의 제목, 안내문구, 서식을 기본값으로 되돌릴까요?')) return;
-      var defaults = CAP_DEFAULTS.content.pages[pageId];
-      CAPData.updatePageMeta(pageId, JSON.parse(JSON.stringify(defaults)));
-      showToast('기본값으로 복원되었습니다.');
-      renderPageMetaEditor();
+      try {
+        var defaults = CAP_PAGE_META_DEFAULTS[pageId];
+        await CAPData.updatePageMeta(pageId, JSON.parse(JSON.stringify(defaults)));
+        showToast('기본값으로 복원되었습니다.');
+        await renderPageMetaEditor();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
     /* ---- Tab 3: Research Axes ---- */
-    function renderAxesEdit() {
-      var c = CAPData.getContent();
-      if (!c.research || !c.research.axes) return;
+    async function renderAxesEdit() {
+      var axes = await CAPData.getResearchAxes();
       var container = document.getElementById('axes-edit-container');
-      container.innerHTML = c.research.axes.map(function (a) {
+      container.innerHTML = axes.map(function (a) {
         var tagsVal = a.tags.join(', ');
         return '<div class="panel-section" id="axis-panel-' + escHtml(a.id) + '">' +
           '<h3>연구 축 ' + a.axisNum + ' — ' + escHtml(a.title) + '</h3>' +
@@ -541,45 +600,57 @@
       }).join('');
     }
 
-    function saveAxis(id) {
+    async function saveAxis(id) {
       var tags = document.getElementById('ax-' + id + '-tags').value
         .split(',').map(function (t) { return t.trim(); }).filter(Boolean);
-      CAPData.updateResearchAxis(id, {
-        title: document.getElementById('ax-' + id + '-title').value.trim(),
-        en:    document.getElementById('ax-' + id + '-en').value.trim(),
-        desc:  document.getElementById('ax-' + id + '-desc').value.trim(),
-        tags:  tags
-      });
-      showToast('연구 축이 저장되었습니다.');
-      renderAxesEdit();
+      try {
+        await CAPData.updateResearchAxis(id, {
+          title: document.getElementById('ax-' + id + '-title').value.trim(),
+          en:    document.getElementById('ax-' + id + '-en').value.trim(),
+          desc:  document.getElementById('ax-' + id + '-desc').value.trim(),
+          tags:  tags
+        });
+        showToast('연구 축이 저장되었습니다.');
+        await renderAxesEdit();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
-    function addResearchAxisAdmin() {
+    async function addResearchAxisAdmin() {
       var title = document.getElementById('nr-title').value.trim();
       if (!title) { alert('연구 축 제목을 입력하세요.'); return; }
       var tags = document.getElementById('nr-tags').value
         .split(',').map(function (t) { return t.trim(); }).filter(Boolean);
-      CAPData.addResearchAxis({
-        title: title,
-        en: document.getElementById('nr-en').value.trim(),
-        desc: document.getElementById('nr-desc').value.trim(),
-        tags: tags
-      });
-      ['nr-title','nr-en','nr-desc','nr-tags'].forEach(function(id){ document.getElementById(id).value=''; });
-      showToast('연구 축이 추가되었습니다.');
-      renderAxesEdit();
+      try {
+        await CAPData.addResearchAxis({
+          title: title,
+          en: document.getElementById('nr-en').value.trim(),
+          desc: document.getElementById('nr-desc').value.trim(),
+          tags: tags
+        });
+        ['nr-title','nr-en','nr-desc','nr-tags'].forEach(function(id){ document.getElementById(id).value=''; });
+        showToast('연구 축이 추가되었습니다.');
+        await renderAxesEdit();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
-    function deleteAxis(id) {
+    async function deleteAxis(id) {
       if (!confirm('이 연구 축을 삭제하시겠습니까? 관련 페이지에도 바로 반영됩니다.')) return;
-      CAPData.removeResearchAxis(id);
-      showToast('연구 축이 삭제되었습니다.');
-      renderAxesEdit();
+      try {
+        await CAPData.removeResearchAxis(id);
+        showToast('연구 축이 삭제되었습니다.');
+        await renderAxesEdit();
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
     /* ---- Tab 4: Publications ---- */
-    function renderArticlesTable() {
-      var articles = CAPData.getArticles();
+    async function renderArticlesTable() {
+      var articles = await CAPData.getArticles();
       var tbody = document.getElementById('articles-tbody');
       tbody.innerHTML = articles.map(function (a) {
         return '<tr>' +
@@ -587,82 +658,124 @@
           '<td>' + escHtml(a.authors) + '</td>' +
           '<td>' + escHtml(a.journal) + ' · ' + escHtml(a.year) + '</td>' +
           '<td>' + (a.doi ? '<a href="' + escHtml(a.doi) + '" target="_blank" style="color:var(--navy)">링크</a>' : '-') + '</td>' +
-          '<td><button class="btn-sm danger" onclick="CAPData.removeArticle(\'' + escHtml(a.id) + '\');renderArticlesTable();showToast(\'삭제되었습니다.\')">삭제</button></td>' +
+          '<td><button class="btn-sm danger" onclick="removeAdminArticle(\'' + escHtml(a.id) + '\')">삭제</button></td>' +
           '</tr>';
       }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">논문 없음</td></tr>';
     }
 
-    function renderPresTable() {
-      var preses = CAPData.getPresentations();
+    async function renderPresTable() {
+      var preses = await CAPData.getPresentations();
       var tbody = document.getElementById('pres-tbody');
       tbody.innerHTML = preses.map(function (p) {
         return '<tr>' +
           '<td>' + escHtml(p.title) + '</td>' +
           '<td>' + escHtml(p.presenter) + '</td>' +
           '<td>' + escHtml(p.venue) + ' · ' + escHtml(p.year) + '</td>' +
-          '<td>' + escHtml(p.type) + '</td>' +
-          '<td><button class="btn-sm danger" onclick="CAPData.removePresentation(\'' + escHtml(p.id) + '\');renderPresTable();showToast(\'삭제되었습니다.\')">삭제</button></td>' +
+          '<td>' + escHtml(p.pres_type || '') + '</td>' +
+          '<td><button class="btn-sm danger" onclick="removeAdminPres(\'' + escHtml(p.id) + '\')">삭제</button></td>' +
           '</tr>';
       }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">학술발표 없음</td></tr>';
     }
 
-    function renderAwardsTable() {
-      var awards = CAPData.getAwards();
+    async function renderAwardsTable() {
+      var awards = await CAPData.getAwards();
       var tbody = document.getElementById('awards-tbody');
       tbody.innerHTML = awards.map(function (a) {
         return '<tr>' +
           '<td>' + escHtml(a.title) + '</td>' +
           '<td>' + escHtml(a.recipient) + '</td>' +
           '<td>' + escHtml(a.venue) + ' · ' + escHtml(a.year) + '</td>' +
-          '<td>' + escHtml(a.desc || '-') + '</td>' +
-          '<td><button class="btn-sm danger" onclick="CAPData.removeAward(\'' + escHtml(a.id) + '\');renderAwardsTable();showToast(\'삭제되었습니다.\')">삭제</button></td>' +
+          '<td>' + escHtml(a.description || '-') + '</td>' +
+          '<td><button class="btn-sm danger" onclick="removeAdminAward(\'' + escHtml(a.id) + '\')">삭제</button></td>' +
           '</tr>';
       }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">수상내역 없음</td></tr>';
     }
 
-    function addAdminArticle() {
+    async function removeAdminArticle(id) {
+      try {
+        await CAPData.removeArticle(id);
+        await renderArticlesTable();
+        showToast('삭제되었습니다.');
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
+    }
+
+    async function removeAdminPres(id) {
+      try {
+        await CAPData.removePresentation(id);
+        await renderPresTable();
+        showToast('삭제되었습니다.');
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
+    }
+
+    async function removeAdminAward(id) {
+      try {
+        await CAPData.removeAward(id);
+        await renderAwardsTable();
+        showToast('삭제되었습니다.');
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
+    }
+
+    async function addAdminArticle() {
       var title = document.getElementById('pa-title').value.trim();
       if (!title) { alert('제목을 입력하세요.'); return; }
-      CAPData.addArticle({
-        title: title,
-        authors: document.getElementById('pa-authors').value.trim(),
-        journal: document.getElementById('pa-journal').value.trim(),
-        year: document.getElementById('pa-year').value.trim(),
-        doi: document.getElementById('pa-doi').value.trim()
-      });
-      showToast('논문이 추가되었습니다.');
-      renderArticlesTable();
-      ['pa-title','pa-authors','pa-journal','pa-year','pa-doi'].forEach(function(id){ document.getElementById(id).value=''; });
+      try {
+        await CAPData.addArticle({
+          title: title,
+          authors: document.getElementById('pa-authors').value.trim(),
+          journal: document.getElementById('pa-journal').value.trim(),
+          year: document.getElementById('pa-year').value.trim(),
+          doi: document.getElementById('pa-doi').value.trim()
+        });
+        showToast('논문이 추가되었습니다.');
+        await renderArticlesTable();
+        ['pa-title','pa-authors','pa-journal','pa-year','pa-doi'].forEach(function(id){ document.getElementById(id).value=''; });
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
-    function addAdminPres() {
+    async function addAdminPres() {
       var title = document.getElementById('pp-title').value.trim();
       if (!title) { alert('제목을 입력하세요.'); return; }
-      CAPData.addPresentation({
-        title: title,
-        presenter: document.getElementById('pp-presenter').value.trim(),
-        venue: document.getElementById('pp-venue').value.trim(),
-        year: document.getElementById('pp-year').value.trim(),
-        type: document.getElementById('pp-type').value
-      });
-      showToast('학술발표가 추가되었습니다.');
-      renderPresTable();
-      ['pp-title','pp-presenter','pp-venue','pp-year'].forEach(function(id){ document.getElementById(id).value=''; });
+      try {
+        await CAPData.addPresentation({
+          title: title,
+          presenter: document.getElementById('pp-presenter').value.trim(),
+          venue: document.getElementById('pp-venue').value.trim(),
+          year: document.getElementById('pp-year').value.trim(),
+          pres_type: document.getElementById('pp-type').value
+        });
+        showToast('학술발표가 추가되었습니다.');
+        await renderPresTable();
+        ['pp-title','pp-presenter','pp-venue','pp-year'].forEach(function(id){ document.getElementById(id).value=''; });
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
-    function addAdminAward() {
+    async function addAdminAward() {
       var title = document.getElementById('aw-title').value.trim();
       if (!title) { alert('수상명을 입력하세요.'); return; }
-      CAPData.addAward({
-        title: title,
-        recipient: document.getElementById('aw-recipient').value.trim(),
-        venue: document.getElementById('aw-venue').value.trim(),
-        year: document.getElementById('aw-year').value.trim(),
-        desc: document.getElementById('aw-desc').value.trim()
-      });
-      showToast('수상내역이 추가되었습니다.');
-      renderAwardsTable();
-      ['aw-title','aw-recipient','aw-venue','aw-year','aw-desc'].forEach(function(id){ document.getElementById(id).value=''; });
+      try {
+        await CAPData.addAward({
+          title: title,
+          recipient: document.getElementById('aw-recipient').value.trim(),
+          venue: document.getElementById('aw-venue').value.trim(),
+          year: document.getElementById('aw-year').value.trim(),
+          description: document.getElementById('aw-desc').value.trim()
+        });
+        showToast('수상내역이 추가되었습니다.');
+        await renderAwardsTable();
+        ['aw-title','aw-recipient','aw-venue','aw-year','aw-desc'].forEach(function(id){ document.getElementById(id).value=''; });
+      } catch (e) {
+        alert('오류: ' + e.message);
+      }
     }
 
   </script>

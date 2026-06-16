@@ -70,11 +70,12 @@ const CAPPageMeta = (function () {
     };
   }
 
-  function readMeta(pageId) {
+  async function readMeta(pageId) {
     var fallback = DEFAULT_PAGE_META[pageId] || {};
     var dataApi = window.CAPData || (typeof CAPData !== 'undefined' ? CAPData : null);
     if (dataApi && typeof dataApi.getPageMeta === 'function') {
-      return mergeMeta(fallback, dataApi.getPageMeta(pageId));
+      var saved = await dataApi.getPageMeta(pageId);
+      return mergeMeta(fallback, saved);
     }
     try {
       var content = JSON.parse(localStorage.getItem('cap_content') || '{}');
@@ -93,9 +94,9 @@ const CAPPageMeta = (function () {
     });
   }
 
-  function apply(pageId) {
+  async function apply(pageId) {
     if (!pageId) return;
-    var meta = readMeta(pageId);
+    var meta = await readMeta(pageId);
     if (!meta) return;
 
     var root = document.querySelector('.page-hero-inner');
