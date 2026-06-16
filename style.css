@@ -2183,7 +2183,7 @@ main { background: var(--bg); }
     grid-column: 2; justify-self: end;
   }
   .nav-toggle-bar { display: block; width: 18px; height: 2px; background: var(--navy); }
-  .nav-shell.nav-open .nav-auth { order: -1; }
+  .nav-shell.nav-open .nav-auth.nav-auth-loggedin { order: -1; }
 }
 
 /* Team Project */

@@ -69,6 +69,7 @@ const CAPAuth = {
       link.hidden = !session;
     });
     if (!navAuth) return;
+    navAuth.classList.toggle('nav-auth-loggedin', !!session);
     if (session) {
       const labPageHref = session.role === 'admin'
         ? 'lab.html'
