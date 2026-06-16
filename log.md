@@ -1099,3 +1099,13 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 | `lab-member.html` | 참여 팀 프로젝트 페이지 크기 3 → 4 |
 | `cap-auth.js` | 관리자 "내 연구페이지" 링크를 개인 페이지로 수정 |
 | `style.css` | 모바일 LAB 상단 버튼 한 줄 유지 스타일 추가 |
+
+## 2026-06-16 — 관리자 "내 연구페이지" 링크 캐시 문제 재수정
+
+- 위 항목에서 `cap-auth.js`의 `labPageHref` 로직은 이미 고쳤는데도, 관리자 계정에서 "내 프로필"의 "내 연구페이지" 링크가 여전히 LAB 전체 페이지로 연결된다는 재보고가 있었음.
+- 원인은 코드가 아니라 캐싱: `cap-auth.js`를 불러오는 `<script>` 태그의 캐시버스팅 쿼리스트링이 페이지마다 제각각(`?v=lab`, `?v=character-avatar`, 쿼리스트링 없음 등)이었고, 이번 세션에서 `cap-auth.js`를 여러 번 수정하면서도 그 값을 한 번도 올리지 않아 일부 브라우저가 이전 버전을 그대로 캐시해서 쓰고 있었음.
+- 모든 페이지의 `cap-auth.js` 참조를 `cap-auth.js?v=navfix2`로 통일해 강제로 새 버전을 받도록 수정. (index.html, admin.html, login.html, join.html, publications.html, research.html, reservation.html, lab.html, lab-member.html, lab-project.html, lab-notices.html, lab-minutes.html, lab-resources.html, people.html, member-dashboard.html — 총 15개 파일)
+
+| 파일 | 주요 변경 |
+|------|----------|
+| 전체 HTML 15개 | `cap-auth.js` 캐시버스팅 쿼리스트링을 `?v=navfix2`로 통일 |
