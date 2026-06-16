@@ -89,7 +89,7 @@
 
       GROUP_ORDER.forEach(function (grp) {
         var group = members.filter(function (m) {
-          return grp === 'phd' ? (m.group === 'phd' || m.group === 'integrated') : m.group === grp;
+          return grp === 'phd' ? (m.lab_group === 'phd' || m.lab_group === 'integrated') : m.lab_group === grp;
         });
         if (!group.length && grp !== 'alumni') return;
         var meta = GROUP_META[grp];
@@ -115,7 +115,7 @@
           var emailHtml = (m.profile.showEmail && m.profile.email)
             ? '<span class="interest"><a href="mailto:' + escHtml(m.profile.email) + '" style="color:var(--navy)">' + escHtml(m.profile.email) + '</a></span>'
             : '';
-          var avatarChar = m.profile.avatarEmoji || m.avatarChar;
+          var avatarChar = m.profile.avatarEmoji || m.avatar_char;
           var avatarHtml = m.profile.photo
             ? '<img class="avatar avatar-photo" src="' + escHtml(m.profile.photo) + '" alt="' + escHtml(m.name) + ' 프로필 사진">'
             : (grp !== 'alumni' && m.profile.characterAvatar && m.profile.characterAvatar.enabled

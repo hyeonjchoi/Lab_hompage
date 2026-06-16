@@ -97,13 +97,13 @@
     function renderDashboard(m) {
       var wrap = document.getElementById('dashboard-wrap');
       var p = m.profile;
-      var previewClass = 'profile-preview-card' + (m.group === 'professor' ? ' professor' : '');
-      var isAlumni = m.group === 'alumni';
+      var previewClass = 'profile-preview-card' + (m.lab_group === 'professor' ? ' professor' : '');
+      var isAlumni = m.lab_group === 'alumni';
       var positionLabel = isAlumni ? '학위' : '직위 / 과정';
       var interestLabel = isAlumni ? '현재 소속' : '연구 관심사';
       var positionPlaceholder = isAlumni ? '예: 석사 졸업 · M.A.' : '예: 석사과정 · M.A. Student';
       var interestPlaceholder = isAlumni ? '예: 브랜드 전략팀 · ABC Company' : '연구 관심사를 입력하세요. 줄바꿈 가능.';
-      var avatarEmoji = p.avatarEmoji || m.avatarChar || m.name.charAt(0);
+      var avatarEmoji = p.avatarEmoji || m.avatar_char || m.name.charAt(0);
       var character = CAPAvatar.normalize(p.characterAvatar);
       var avatarToolsHtml = isAlumni ? '' :
             '<div class="emoji-builder">' +
