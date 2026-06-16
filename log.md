@@ -1026,3 +1026,15 @@ Supabase 연동으로 실제 멀티유저 환경을 구성한다.
 
 - `main` 브랜치 커밋 후 `git push origin main`
 - GitHub Pages: `https://hyeonjchoi.github.io/Lab_hompage/`
+
+## 2026-06-16 — 팀 프로젝트 이모지 아바타 추가
+
+- 직전 작업에서 추가한 팀 프로젝트 프로필 사진 기능에 이모지 아바타 옵션을 추가. `member-dashboard.html`의 기존 이모지 아바타 패턴(`.emoji-builder`/`.emoji-presets`, 캐릭터 빌더는 제외)을 재사용.
+- `lab.html`(프로젝트 생성 폼), `lab-project.html`(프로젝트 설정 패널)에 `avatarEmoji` 텍스트 입력 + 프리셋 버튼(🙂😎🧠📚🔬✨) 추가. `setProjectAvatarEmoji(value, targetFieldId)` 함수로 입력칸 값 설정.
+- 데이터 레이어 변경 없음 — `CAPData.addTeamProject`/`updateTeamProject`에 `avatarEmoji` 필드만 추가 전달.
+- 아바타 렌더링 우선순위를 `photo` → `avatarEmoji` → `"팀"` 텍스트 순으로 확장 (프로젝트 카드, 프로젝트 헤더 모두 동일하게 적용).
+
+| 파일 | 주요 변경 |
+|------|----------|
+| `lab.html` | 프로젝트 생성 폼에 이모지 아바타 입력, 카드 렌더링에 이모지 우선순위 추가 |
+| `lab-project.html` | 프로젝트 설정 패널에 이모지 아바타 입력, 헤더 렌더링에 이모지 우선순위 추가 |

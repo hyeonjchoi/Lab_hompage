@@ -211,6 +211,21 @@
             <p class="form-hint">PNG, JPG, WebP, GIF 파일을 사용할 수 있습니다. 1MB 이하 이미지를 권장합니다.</p>
             <button type="button" class="btn-sm" onclick="document.getElementById('pedit-photoData').value='';document.getElementById('pedit-photo').value='';">사진 제거</button>
           </div>
+          <div class="emoji-builder">
+            <div class="form-group">
+              <label for="pedit-avatarEmoji">이모지 아바타</label>
+              <input id="pedit-avatarEmoji" maxlength="8" placeholder="예: 🔬">
+              <p class="form-hint">프로필 사진이 없을 때 프로젝트 카드에 표시됩니다.</p>
+            </div>
+            <div class="emoji-presets" aria-label="이모지 프리셋">
+              <button type="button" onclick="setProjectAvatarEmoji('🙂','pedit-avatarEmoji')" aria-label="웃는 얼굴">🙂</button>
+              <button type="button" onclick="setProjectAvatarEmoji('😎','pedit-avatarEmoji')" aria-label="선글라스 얼굴">😎</button>
+              <button type="button" onclick="setProjectAvatarEmoji('🧠','pedit-avatarEmoji')" aria-label="두뇌">🧠</button>
+              <button type="button" onclick="setProjectAvatarEmoji('📚','pedit-avatarEmoji')" aria-label="책">📚</button>
+              <button type="button" onclick="setProjectAvatarEmoji('🔬','pedit-avatarEmoji')" aria-label="현미경">🔬</button>
+              <button type="button" onclick="setProjectAvatarEmoji('✨','pedit-avatarEmoji')" aria-label="반짝임">✨</button>
+            </div>
+          </div>
           <div class="form-group">
             <label for="pedit-desc">설명</label>
             <textarea id="pedit-desc"></textarea>
@@ -352,7 +367,7 @@
       document.getElementById('project-info-content').innerHTML =
         (currentProject.photo
           ? '<div class="member-profile-avatar"><img class="avatar-photo" src="' + escHtml(currentProject.photo) + '" alt=""></div>'
-          : '<div class="member-profile-avatar" style="font-size:1.5rem">팀</div>') +
+          : '<div class="member-profile-avatar" style="font-size:1.5rem">' + escHtml(currentProject.avatarEmoji || '팀') + '</div>') +
         '<strong>' + escHtml(currentProject.name) + '</strong>' +
         '<span>' + escHtml(statusLabel) + ' · 목표 ' + (currentProject.goals || []).length + '개</span>' +
         '<p style="margin:8px 0 4px;font-size:0.85rem;color:var(--muted)">' + formatKoreanDateTime(currentProject.createdAt) + ' · ' + escHtml(creator ? creator.name : '구성원') + ' 생성</p>' +
@@ -1147,6 +1162,12 @@
       reader.readAsDataURL(file);
     }
 
+    function setProjectAvatarEmoji(value, targetFieldId) {
+      var input = document.getElementById(targetFieldId);
+      if (!input) return;
+      input.value = value;
+    }
+
     function openProjectEditPanel() {
       var isCreator = currentSession && currentProject.createdBy === currentSession.userId;
       if (!isAdminView && !isCreator) return;
@@ -1155,6 +1176,7 @@
       document.getElementById('pedit-name').value = currentProject.name || '';
       document.getElementById('pedit-photoData').value = currentProject.photo || '';
       document.getElementById('pedit-photo').value = '';
+      document.getElementById('pedit-avatarEmoji').value = currentProject.avatarEmoji || '';
       document.getElementById('pedit-desc').value = currentProject.description || '';
       document.getElementById('pedit-status').value = currentProject.status || 'active';
       var membersWrap = document.getElementById('pedit-members');
@@ -1185,6 +1207,7 @@
       CAPData.updateTeamProject(currentProject.id, {
         name: document.getElementById('pedit-name').value.trim(),
         photo: document.getElementById('pedit-photoData').value,
+        avatarEmoji: document.getElementById('pedit-avatarEmoji').value.trim(),
         description: document.getElementById('pedit-desc').value.trim(),
         status: document.getElementById('pedit-status').value,
         memberIds: memberIds

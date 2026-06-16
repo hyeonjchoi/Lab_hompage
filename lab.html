@@ -190,6 +190,21 @@
             <input id="project-photoData" type="hidden" value="">
             <p class="form-hint">PNG, JPG, WebP, GIF 파일을 사용할 수 있습니다. 1MB 이하 이미지를 권장합니다.</p>
           </div>
+          <div class="emoji-builder">
+            <div class="form-group">
+              <label for="project-avatarEmoji">이모지 아바타</label>
+              <input id="project-avatarEmoji" maxlength="8" placeholder="예: 🔬">
+              <p class="form-hint">프로필 사진이 없을 때 프로젝트 카드에 표시됩니다.</p>
+            </div>
+            <div class="emoji-presets" aria-label="이모지 프리셋">
+              <button type="button" onclick="setProjectAvatarEmoji('🙂','project-avatarEmoji')" aria-label="웃는 얼굴">🙂</button>
+              <button type="button" onclick="setProjectAvatarEmoji('😎','project-avatarEmoji')" aria-label="선글라스 얼굴">😎</button>
+              <button type="button" onclick="setProjectAvatarEmoji('🧠','project-avatarEmoji')" aria-label="두뇌">🧠</button>
+              <button type="button" onclick="setProjectAvatarEmoji('📚','project-avatarEmoji')" aria-label="책">📚</button>
+              <button type="button" onclick="setProjectAvatarEmoji('🔬','project-avatarEmoji')" aria-label="현미경">🔬</button>
+              <button type="button" onclick="setProjectAvatarEmoji('✨','project-avatarEmoji')" aria-label="반짝임">✨</button>
+            </div>
+          </div>
           <div class="form-group">
             <label for="project-desc">프로젝트 설명</label>
             <textarea id="project-desc" placeholder="연구 주제나 목표를 간략히 설명해 주세요."></textarea>
@@ -1069,7 +1084,7 @@
           return m ? m.name : null;
         }).filter(Boolean).join(', ');
         return '<article class="progress-card">' +
-          (p.photo ? '<div class="progress-avatar"><img class="avatar-photo" src="' + escHtml(p.photo) + '" alt=""></div>' : '<div class="progress-avatar" aria-hidden="true">팀</div>') +
+          (p.photo ? '<div class="progress-avatar"><img class="avatar-photo" src="' + escHtml(p.photo) + '" alt=""></div>' : '<div class="progress-avatar" aria-hidden="true">' + escHtml(p.avatarEmoji || '팀') + '</div>') +
           '<div>' +
             '<strong>' + escHtml(p.name) + '</strong>' +
             '<span>' + escHtml(projectStatusLabel(p.status)) + ' · 구성원 ' + (p.memberIds || []).length + '명</span>' +
@@ -1123,12 +1138,14 @@
       var desc = document.getElementById('project-desc').value.trim();
       var memberIds = getCheckedValues('project-member');
       var photo = document.getElementById('project-photoData').value;
+      var avatarEmoji = document.getElementById('project-avatarEmoji').value.trim();
       if (!name) { showToast('프로젝트 이름을 입력해 주세요.'); return; }
       if (!memberIds.includes(session.userId)) memberIds.push(session.userId);
       var newId = CAPData.addTeamProject({
         name: name,
         description: desc,
         photo: photo,
+        avatarEmoji: avatarEmoji,
         memberIds: memberIds,
         createdBy: session.userId,
         goals: [],
@@ -1142,6 +1159,12 @@
       document.getElementById('project-create-form').reset();
       document.getElementById('project-photoData').value = '';
       showToast('팀 프로젝트가 생성됐습니다.');
+    }
+
+    function setProjectAvatarEmoji(value, targetFieldId) {
+      var input = document.getElementById(targetFieldId);
+      if (!input) return;
+      input.value = value;
     }
 
     function handleProjectPhoto(e, targetFieldId) {
