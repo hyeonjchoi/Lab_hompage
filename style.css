@@ -839,7 +839,7 @@ main { background: var(--bg); }
 .nav-auth-row:first-child {
   gap: 6px;
 }
-.nav-auth-row:first-child a {
+.nav-auth-row:first-child a:not(.nav-user-name) {
   display: inline; min-height: 0; padding: 0;
   border: 0;
   background: transparent;
