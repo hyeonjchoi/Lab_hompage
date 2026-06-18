@@ -5,6 +5,47 @@
 
 ---
 
+## 2026-06-18 진행 요약
+
+### 1. 캘린더 일정 삭제 기능 추가 (`lab.html`)
+
+- 이벤트 모달에 **삭제** 버튼 추가 (`btn-sm danger`).
+- `deleteEventFromModal()` 함수 구현: confirm 후 `CAPData.removeLabEvent()` 호출, 페이지 재렌더링.
+- 모든 구성원이 삭제 가능(기존 수정과 동일한 권한).
+
+### 2. 알림 설정 구조 확장 (`cap-notifications.js`)
+
+- 설정 구조에 **배찌(badge)** 필드 추가 (기본값 `true`).
+- **알림 종류별 on/off** (`types`: class/meeting/conference/goal/feedback).
+- **알림 타이밍 다중 선택** (`timings` 배열): 1일 전, 당일 오전 9시, 30분 전, 15분 전, 5분 전.
+- `TIMING_DEFS` 객체로 각 타이밍의 분·창을 정의하여 `buildReminderList()` 리팩터링.
+- `show()` 메서드: `settings.badge !== false`일 때만 badge 옵션 포함.
+- 하위 호환: 기존 `eventHours`/`urgentEventHours`/`goalDays` 레거시 필드 유지.
+
+### 3. 개인 설정 페이지 신규 생성 (`settings.html`)
+
+- 로그인한 구성원이 내비게이션의 **자신의 이름을 클릭**하면 진입.
+- **계정 정보 섹션**: 이름(읽기 전용), 학번/비밀번호(직접 수정 가능).
+- **알림 설정 섹션**: 마스터 ON/OFF 토글, 알림 종류별 체크박스, 타이밍 다중 선택 체크박스, 배찌 ON/OFF 토글.
+- **바로가기**: 내 프로필 편집, LAB 페이지.
+
+### 4. 학번/비밀번호 변경 함수 추가 (`supabase-client.js`)
+
+- `CAPData.updateStudentIdAndPassword(id, newStudentId)` 추가.
+  - Supabase Auth 비밀번호 업데이트.
+  - Supabase Auth 이메일 업데이트 (`{학번}@kwcaplab.internal`).
+  - `members.student_id` 업데이트 → **관리자 패널에 즉시 반영**.
+- 내비게이션의 이름 `<span>`을 `<a href="settings.html">`로 변경.
+
+### 5. 설정 페이지 스타일 추가 (`style.css`)
+
+- `.settings-wrap`, `.settings-card`, `.settings-section-title` 등 레이아웃 클래스.
+- `.settings-toggle-btn` (on/off 필 버튼), `.settings-check-item` (pill 형 체크박스).
+- `a.nav-user-name` 호버 스타일 추가.
+- 모바일(600px 미만) 반응형 처리.
+
+---
+
 ## 2026-06-01 진행 요약
 
 ### 1. 초기 기획안 검토

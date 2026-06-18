@@ -296,16 +296,16 @@ CREATE POLICY "members_delete_admin" ON members FOR DELETE
   USING (current_member_role() IN ('professor', 'admin'));
 
 -- ──────────────────────────────────────────────
--- lab_events: 로그인 사용자 조회, professor/admin만 CUD
+-- lab_events: 로그인 사용자 조회/삽입/수정/삭제 모두 허용 (모든 구성원)
 -- ──────────────────────────────────────────────
 CREATE POLICY "events_select" ON lab_events FOR SELECT
   USING (auth.role() = 'authenticated');
 CREATE POLICY "events_insert" ON lab_events FOR INSERT
-  WITH CHECK (current_member_role() IN ('professor', 'admin'));
+  WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "events_update" ON lab_events FOR UPDATE
-  USING (current_member_role() IN ('professor', 'admin'));
+  USING (current_member_id() IS NOT NULL);
 CREATE POLICY "events_delete" ON lab_events FOR DELETE
-  USING (current_member_role() IN ('professor', 'admin'));
+  USING (current_member_id() IS NOT NULL);
 
 -- ──────────────────────────────────────────────
 -- meeting_minutes: 로그인 사용자 조회, professor/admin만 CUD

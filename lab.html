@@ -240,6 +240,7 @@
       </dl>
       <div class="event-modal-actions">
         <button type="button" class="btn-sm primary" onclick="editEventFromModal()">수정</button>
+        <button type="button" class="btn-sm danger" onclick="deleteEventFromModal()">삭제</button>
       </div>
     </article>
   </div>
@@ -648,6 +649,22 @@
       var eventId = activeEventId;
       closeEventModal();
       openLabDrawer('event', eventId);
+    }
+
+    async function deleteEventFromModal() {
+      if (!activeEventId) return;
+      if (!confirm('이 일정을 삭제할까요?')) return;
+      var eventId = activeEventId;
+      try {
+        closeEventModal();
+        await CAPData.removeLabEvent(eventId);
+        await loadLabData();
+        renderLabPage();
+        if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
+        showToast('일정이 삭제되었습니다.');
+      } catch (e) {
+        showToast('삭제 실패: ' + (e.message || '권한이 없거나 오류가 발생했습니다.'));
+      }
     }
 
     function openListModal(type) {

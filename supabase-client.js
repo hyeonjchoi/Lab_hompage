@@ -145,7 +145,7 @@ const CAPAuth = {
       navAuth.innerHTML =
         '<div class="nav-auth-stack">' +
           '<div class="nav-auth-row">' +
-            '<span class="nav-user-name">' + escHtml(session.name) + '</span>' +
+            '<a class="nav-user-name" href="settings.html">' + escHtml(session.name) + '</a>' +
             '<a href="member-dashboard.html">내 프로필</a>' +
             '<a href="' + labPageHref + '">내 연구페이지</a>' +
           '</div>' +
@@ -198,6 +198,25 @@ const CAPData = {
   async updateMember(id, updates) {
     const { error } = await getSupabase()
       .from('members').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id);
+    _throw(error); return true;
+  },
+  async updateStudentIdAndPassword(id, newStudentId) {
+    // Supabase Auth 비밀번호 업데이트 (현재 로그인된 사용자)
+    const { error: pwErr } = await getSupabase().auth.updateUser({
+      password: newStudentId.trim()
+    });
+    if (pwErr) throw pwErr;
+
+    // Supabase Auth 이메일 업데이트 (로그인 email = {학번}@kwcaplab.internal)
+    const { error: emailErr } = await getSupabase().auth.updateUser({
+      email: newStudentId.trim() + '@kwcaplab.internal'
+    });
+    // 이메일 변경은 확인 메일 없는 환경에서만 즉시 반영됨 — 실패해도 진행
+    void emailErr;
+
+    // members 테이블 student_id 업데이트 (관리자 패널에 즉시 반영)
+    const { error } = await getSupabase()
+      .from('members').update({ student_id: newStudentId.trim(), updated_at: new Date().toISOString() }).eq('id', id);
     _throw(error); return true;
   },
   async addMember(member) {

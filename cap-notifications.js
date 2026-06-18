@@ -16,6 +16,15 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
+// 각 타이밍 옵션의 설명과 알림 창 정의
+const TIMING_DEFS = {
+  day1:     { label: '1일 전',       minutesBefore: 1440, windowMin: 240 },
+  morning9: { label: '당일 오전 9시', special: 'morning9' },
+  min30:    { label: '30분 전',       minutesBefore: 30,   windowMin: 20 },
+  min15:    { label: '15분 전',       minutesBefore: 15,   windowMin: 10 },
+  min5:     { label: '5분 전',        minutesBefore: 5,    windowMin: 6 },
+};
+
 const CAPNotifications = {
   SETTINGS_KEY: 'cap_notification_settings',
   SENT_KEY: 'cap_notification_sent',
@@ -30,11 +39,26 @@ const CAPNotifications = {
     }
     return {
       enabled: false,
+      badge: true,
+      types: {
+        class: true,
+        meeting: true,
+        conference: true,
+        goal: true,
+        feedback: true,
+      },
+      timings: ['day1'],
+      // 하위 호환 legacy 필드
       eventHours: 24,
       urgentEventHours: 1,
       goalDays: 2,
       feedback: true,
-      ...saved
+      ...saved,
+      // types 객체는 deep merge
+      types: Object.assign(
+        { class: true, meeting: true, conference: true, goal: true, feedback: true },
+        saved.types || {}
+      ),
     };
   },
 
@@ -180,68 +204,98 @@ const CAPNotifications = {
   },
 
   async show(reminder, force) {
+    const settings = this.getSettings();
     const registration = await navigator.serviceWorker.ready;
-    return registration.showNotification(reminder.title, {
+    const notifOptions = {
       body: reminder.body,
       icon: 'icons/icon-192.png',
-      badge: 'icons/icon-192.png',
       tag: force ? reminder.id : 'cap-' + reminder.id,
       renotify: false,
       data: { url: reminder.url || 'lab.html' }
-    });
+    };
+    if (settings.badge !== false) {
+      notifOptions.badge = 'icons/icon-192.png';
+    }
+    return registration.showNotification(reminder.title, notifOptions);
   },
 
   buildReminderList(options) {
     options = options || {};
     const data = this.labData || this.readLabData();
     const settings = this.getSettings();
+    const types = settings.types || {};
+    const timings = Array.isArray(settings.timings) && settings.timings.length > 0
+      ? settings.timings
+      : ['day1'];
     const session = window.CAPAuth && CAPAuth.getSession ? CAPAuth.getSession() : null;
     const now = new Date();
     const reminders = [];
 
     (data.events || []).forEach(event => {
+      const eventType = event.type || 'meeting';
+      if (types[eventType] === false) return;
+
       const eventAt = this.parseDateTime(event.date, event.startTime);
       if (!eventAt) return;
-      const hours = (eventAt - now) / 36e5;
-      const typeLabel = event.type === 'meeting' ? '미팅' : event.type === 'conference' ? '학회/모임' : '일정';
-      if (hours >= 0 && hours <= settings.eventHours) {
-        reminders.push({
-          id: 'event24_' + event.id + '_' + event.date,
-          kind: typeLabel,
-          title: event.title || '다가오는 일정',
-          body: this.formatRelativeTime(eventAt) + ' · ' + this.formatDateTime(event),
-          url: 'lab.html'
-        });
-      }
-      if (hours >= 0 && hours <= settings.urgentEventHours) {
-        reminders.push({
-          id: 'event1_' + event.id + '_' + event.date,
-          kind: '긴급 일정',
-          title: event.title || '곧 시작되는 일정',
-          body: '곧 시작합니다 · ' + this.formatDateTime(event),
-          url: 'lab.html'
-        });
-      }
+
+      const minutesUntil = (eventAt - now) / 60000;
+      const typeLabel = eventType === 'meeting' ? '미팅' : eventType === 'conference' ? '학회/모임' : '일정';
+
+      timings.forEach(timing => {
+        const def = TIMING_DEFS[timing];
+        if (!def) return;
+
+        if (def.special === 'morning9') {
+          // 당일 오전 9:00~9:59 사이에 접속했을 때 알림
+          const today = now.toISOString().slice(0, 10);
+          if (event.date === today) {
+            const totalMin = now.getHours() * 60 + now.getMinutes();
+            if (totalMin >= 9 * 60 && totalMin < 10 * 60) {
+              reminders.push({
+                id: 'event_morning9_' + event.id + '_' + event.date,
+                kind: typeLabel,
+                title: event.title || '오늘의 일정',
+                body: '오늘 일정 · ' + this.formatDateTime(event),
+                url: 'lab.html'
+              });
+            }
+          }
+        } else {
+          const low  = def.minutesBefore - def.windowMin / 2;
+          const high = def.minutesBefore + def.windowMin / 2;
+          if (minutesUntil >= low && minutesUntil < high) {
+            reminders.push({
+              id: 'event_' + timing + '_' + event.id + '_' + event.date,
+              kind: typeLabel,
+              title: event.title || '다가오는 일정',
+              body: this.formatRelativeTime(eventAt) + ' · ' + this.formatDateTime(event),
+              url: 'lab.html'
+            });
+          }
+        }
+      });
     });
 
     if (session) {
-      (data.memberGoals || []).forEach(goal => {
-        if (goal.memberId !== session.userId || goal.status === 'done') return;
-        const endAt = this.parseDateTime(goal.endDate || goal.targetDate, '18:00');
-        if (!endAt) return;
-        const days = (endAt - now) / 864e5;
-        if (days >= 0 && days <= settings.goalDays) {
-          reminders.push({
-            id: 'goal_' + goal.id + '_' + (goal.endDate || goal.targetDate),
-            kind: '목표 마감',
-            title: goal.title || '연구 목표 마감 임박',
-            body: this.formatRelativeTime(endAt) + '까지 · ' + (goal.memo || goal.category || '목표를 확인하세요.'),
-            url: 'lab-member.html?id=' + encodeURIComponent(session.userId)
-          });
-        }
-      });
+      if (types.goal !== false) {
+        (data.memberGoals || []).forEach(goal => {
+          if (goal.memberId !== session.userId || goal.status === 'done') return;
+          const endAt = this.parseDateTime(goal.endDate || goal.targetDate, '18:00');
+          if (!endAt) return;
+          const days = (endAt - now) / 864e5;
+          if (days >= 0 && days <= (settings.goalDays || 2)) {
+            reminders.push({
+              id: 'goal_' + goal.id + '_' + (goal.endDate || goal.targetDate),
+              kind: '목표 마감',
+              title: goal.title || '연구 목표 마감 임박',
+              body: this.formatRelativeTime(endAt) + '까지 · ' + (goal.memo || goal.category || '목표를 확인하세요.'),
+              url: 'lab-member.html?id=' + encodeURIComponent(session.userId)
+            });
+          }
+        });
+      }
 
-      if (settings.feedback) {
+      if (types.feedback !== false) {
         (data.memberNotes || []).forEach(note => {
           if (note.memberId !== session.userId || note.type !== 'feedback' || note.done) return;
           reminders.push({

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>개인 설정 | KW CAP Lab</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#183A5A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CAP Lab">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=magazine-v1-5-wordbreak">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="index.html" aria-label="홈">
+        <span class="brand-mark" aria-hidden="true"><span class="bm-kw">KW</span><span class="bm-cap">CAP</span></span>
+        <span class="brand-name">
+          <strong>광운대학교 소비자광고심리 연구실</strong>
+          <span>Kwangwoon University Consumer Advertising Psychology Lab</span>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="index.html">홈<small>Home</small></a>
+        <a href="people.html">구성원<small>People</small></a>
+        <a href="research.html">진행 연구<small>Research</small></a>
+        <a href="publications.html">연구 성과<small>Publications</small></a>
+        <a href="reservation.html">실험실 예약<small>RSVN</small></a>
+        <a class="apply" href="join.html">지원하기<small>Join Us</small></a>
+        <a class="lab-nav-link" href="lab.html" hidden>LAB<small>Members</small></a>
+      </nav>
+      <div class="nav-auth" id="nav-auth"></div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="page-wrap settings-wrap" id="settings-wrap">
+      <p style="color:var(--muted);">불러오는 중...</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>광운대학교 소비자광고심리 연구실</strong><br>
+        Kwangwoon University Consumer Advertising Psychology Lab · KW CAP Lab
+      </div>
+      <div>서울특별시 노원구 광운로 20, 광운대학교 (01897) · Tel. 02)940-5420</div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js?v=supabase-v1"></script>
+  <script src="cap-notifications.js?v=settings-v1"></script>
+  <script>
+    var currentMember = null;
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg) {
+      var t = document.getElementById('toast-msg');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast-msg';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#183A5A;color:#fff;padding:10px 22px;border-radius:8px;font-size:0.9rem;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.2s';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1';
+      clearTimeout(t._tid);
+      t._tid = setTimeout(function () { t.style.opacity = '0'; }, 2500);
+    }
+
+    async function initSettings() {
+      CAPAuth.requireLogin(true);
+      var session = CAPAuth.getSession();
+      if (!session) return;
+
+      try {
+        currentMember = await CAPData.getMember(session.userId);
+      } catch (e) {
+        document.getElementById('settings-wrap').innerHTML =
+          '<p style="color:var(--red)">구성원 정보를 불러오지 못했습니다.</p>';
+        return;
+      }
+
+      renderSettings();
+    }
+
+    function renderSettings() {
+      var m = currentMember;
+      var settings = CAPNotifications.getSettings();
+
+      var timingOptions = [
+        { key: 'day1',     label: '1일 전' },
+        { key: 'morning9', label: '당일 오전 9시' },
+        { key: 'min30',    label: '30분 전' },
+        { key: 'min15',    label: '15분 전' },
+        { key: 'min5',     label: '5분 전' },
+      ];
+
+      var typeOptions = [
+        { key: 'class',      label: '수업' },
+        { key: 'meeting',    label: '랩미팅' },
+        { key: 'conference', label: '학회 및 모임' },
+        { key: 'goal',       label: '연구 목표' },
+        { key: 'feedback',   label: '피드백' },
+      ];
+
+      var html =
+        '<div class="settings-hero">' +
+          '<h1 class="settings-title">개인 설정</h1>' +
+          '<p class="settings-sub">' + escHtml(m.name) + ' 님의 계정 및 알림 설정</p>' +
+        '</div>' +
+
+        // ── 계정 정보 ──────────────────────────────
+        '<section class="panel-section settings-card" aria-labelledby="sec-account">' +
+          '<h2 id="sec-account" class="settings-section-title">계정 정보</h2>' +
+          '<div class="settings-field-row">' +
+            '<span class="settings-field-label">이름</span>' +
+            '<span class="settings-field-value">' + escHtml(m.name) + '</span>' +
+          '</div>' +
+          '<div class="settings-field-row">' +
+            '<span class="settings-field-label">학번 / 비밀번호</span>' +
+            '<span class="settings-field-value" id="sid-display">' + escHtml(m.student_id || '—') + '</span>' +
+          '</div>' +
+          '<div class="settings-pw-edit" id="pw-edit-area" style="display:none">' +
+            '<div class="form-group" style="margin-bottom:10px">' +
+              '<label for="new-sid">새 학번 / 비밀번호</label>' +
+              '<input id="new-sid" type="text" placeholder="새 학번(비밀번호)을 입력하세요" autocomplete="new-password">' +
+            '</div>' +
+            '<div class="form-group" style="margin-bottom:10px">' +
+              '<label for="new-sid-confirm">확인</label>' +
+              '<input id="new-sid-confirm" type="text" placeholder="다시 입력하세요" autocomplete="new-password">' +
+            '</div>' +
+            '<div class="settings-pw-actions">' +
+              '<button class="btn-sm primary" onclick="saveStudentId()">저장</button>' +
+              '<button class="btn-sm" onclick="cancelPwEdit()">취소</button>' +
+            '</div>' +
+            '<p class="settings-hint">변경한 학번/비밀번호는 다음 로그인 시 적용됩니다. 관리자 패널에도 즉시 반영됩니다.</p>' +
+          '</div>' +
+          '<div style="margin-top:12px">' +
+            '<button class="btn-sm" id="pw-edit-btn" onclick="togglePwEdit()">학번 / 비밀번호 변경</button>' +
+          '</div>' +
+        '</section>' +
+
+        // ── 알림 설정 ──────────────────────────────
+        '<section class="panel-section settings-card" aria-labelledby="sec-notify">' +
+          '<h2 id="sec-notify" class="settings-section-title">알림 설정</h2>' +
+          '<div class="settings-field-row" style="margin-bottom:16px">' +
+            '<span class="settings-field-label">앱 푸시 알림</span>' +
+            '<button class="settings-toggle-btn ' + (settings.enabled ? 'on' : 'off') + '" ' +
+              'id="master-toggle" onclick="toggleMasterNotif()">' +
+              (settings.enabled ? 'ON' : 'OFF') +
+            '</button>' +
+          '</div>' +
+
+          '<div class="settings-sub-section">' +
+            '<h3 class="settings-subsec-title">알림 종류</h3>' +
+            '<div class="settings-check-grid">' +
+              typeOptions.map(function (opt) {
+                var checked = settings.types[opt.key] !== false;
+                return '<label class="settings-check-item">' +
+                  '<input type="checkbox" name="notif-type" value="' + opt.key + '"' + (checked ? ' checked' : '') + ' onchange="saveNotifTypes()">' +
+                  '<span>' + opt.label + '</span>' +
+                '</label>';
+              }).join('') +
+            '</div>' +
+          '</div>' +
+
+          '<div class="settings-sub-section">' +
+            '<h3 class="settings-subsec-title">알림 시간 <span class="settings-hint-inline">(다중 선택 가능)</span></h3>' +
+            '<div class="settings-check-grid">' +
+              timingOptions.map(function (opt) {
+                var checked = settings.timings && settings.timings.indexOf(opt.key) !== -1;
+                return '<label class="settings-check-item">' +
+                  '<input type="checkbox" name="notif-timing" value="' + opt.key + '"' + (checked ? ' checked' : '') + ' onchange="saveNotifTimings()">' +
+                  '<span>' + opt.label + '</span>' +
+                '</label>';
+              }).join('') +
+            '</div>' +
+          '</div>' +
+
+          '<div class="settings-sub-section">' +
+            '<h3 class="settings-subsec-title">앱 아이콘 배찌</h3>' +
+            '<div class="settings-field-row" style="margin-top:8px">' +
+              '<span class="settings-field-label settings-field-label--sm">앱 배찌 표시</span>' +
+              '<button class="settings-toggle-btn ' + (settings.badge !== false ? 'on' : 'off') + '" ' +
+                'id="badge-toggle" onclick="toggleBadge()">' +
+                (settings.badge !== false ? 'ON' : 'OFF') +
+              '</button>' +
+            '</div>' +
+            '<p class="settings-hint" style="margin-top:6px">앱 아이콘에 알림 배찌(뱃지)를 표시합니다. 기본값은 ON입니다.</p>' +
+          '</div>' +
+
+          (CAPNotifications.isSupported() ? '' :
+            '<p class="settings-hint" style="color:var(--red);margin-top:8px">이 브라우저는 웹 푸시 알림을 지원하지 않습니다.</p>') +
+        '</section>' +
+
+        // ── 바로가기 ───────────────────────────────
+        '<section class="panel-section settings-card settings-links-section">' +
+          '<a class="btn-sm primary" href="member-dashboard.html">내 프로필 편집</a>' +
+          '<a class="btn-sm" href="lab.html">LAB 페이지로</a>' +
+        '</section>';
+
+      document.getElementById('settings-wrap').innerHTML = html;
+      CAPAuth.renderNav();
+    }
+
+    // ── 학번/비밀번호 변경 ──────────────────────
+    function togglePwEdit() {
+      var area = document.getElementById('pw-edit-area');
+      var btn  = document.getElementById('pw-edit-btn');
+      var showing = area.style.display !== 'none';
+      area.style.display = showing ? 'none' : 'block';
+      btn.textContent = showing ? '학번 / 비밀번호 변경' : '취소';
+    }
+
+    function cancelPwEdit() {
+      document.getElementById('pw-edit-area').style.display = 'none';
+      document.getElementById('pw-edit-btn').textContent = '학번 / 비밀번호 변경';
+    }
+
+    async function saveStudentId() {
+      var newSid   = (document.getElementById('new-sid').value || '').trim();
+      var confirm_ = (document.getElementById('new-sid-confirm').value || '').trim();
+      if (!newSid) { showToast('새 학번/비밀번호를 입력해주세요.'); return; }
+      if (newSid !== confirm_) { showToast('두 입력값이 일치하지 않습니다.'); return; }
+      if (newSid.length < 4) { showToast('4자 이상 입력해주세요.'); return; }
+
+      var saveBtn = document.querySelector('#pw-edit-area .btn-sm.primary');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '저장 중...';
+
+      try {
+        await CAPData.updateStudentIdAndPassword(currentMember.id, newSid);
+        currentMember.student_id = newSid;
+        document.getElementById('sid-display').textContent = newSid;
+        cancelPwEdit();
+        showToast('학번/비밀번호가 변경되었습니다. 다음 로그인 시 새 값으로 입력하세요.');
+      } catch (e) {
+        showToast('변경 실패: ' + (e.message || '오류가 발생했습니다.'));
+        saveBtn.disabled = false;
+        saveBtn.textContent = '저장';
+      }
+    }
+
+    // ── 알림 마스터 토글 ───────────────────────
+    function toggleMasterNotif() {
+      CAPNotifications.toggle();
+      var settings = CAPNotifications.getSettings();
+      var btn = document.getElementById('master-toggle');
+      if (btn) {
+        btn.textContent = settings.enabled ? 'ON' : 'OFF';
+        btn.className = 'settings-toggle-btn ' + (settings.enabled ? 'on' : 'off');
+      }
+    }
+
+    // ── 알림 종류 저장 ─────────────────────────
+    function saveNotifTypes() {
+      var settings = CAPNotifications.getSettings();
+      var checked = Array.from(document.querySelectorAll('input[name="notif-type"]:checked')).map(function (el) { return el.value; });
+      var all = ['class', 'meeting', 'conference', 'goal', 'feedback'];
+      all.forEach(function (key) {
+        settings.types[key] = checked.indexOf(key) !== -1;
+      });
+      CAPNotifications.saveSettings(settings);
+      showToast('알림 종류 설정이 저장되었습니다.');
+    }
+
+    // ── 알림 타이밍 저장 ───────────────────────
+    function saveNotifTimings() {
+      var settings = CAPNotifications.getSettings();
+      var checked = Array.from(document.querySelectorAll('input[name="notif-timing"]:checked')).map(function (el) { return el.value; });
+      settings.timings = checked.length > 0 ? checked : ['day1'];
+      CAPNotifications.saveSettings(settings);
+      showToast('알림 시간 설정이 저장되었습니다.');
+    }
+
+    // ── 배찌 토글 ──────────────────────────────
+    function toggleBadge() {
+      var settings = CAPNotifications.getSettings();
+      settings.badge = settings.badge === false ? true : false;
+      CAPNotifications.saveSettings(settings);
+      var btn = document.getElementById('badge-toggle');
+      if (btn) {
+        btn.textContent = settings.badge ? 'ON' : 'OFF';
+        btn.className = 'settings-toggle-btn ' + (settings.badge ? 'on' : 'off');
+      }
+      showToast('배찌 표시: ' + (settings.badge ? 'ON' : 'OFF'));
+    }
+
+    document.addEventListener('DOMContentLoaded', async function () {
+      await CAPAuth.restoreSession();
+      await initSettings();
+      CAPNotifications.renderNavButton();
+    });
+  </script>
+</body>
+</html>
