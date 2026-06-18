@@ -801,11 +801,13 @@ main { background: var(--bg); }
   display: flex; align-items: center; gap: 8px; font-size: 0.82rem;
   white-space: nowrap;
 }
-.nav-user-name { color: var(--navy); font-weight: 700; }
 .nav-user a,
 .nav-auth-row a {
   color: var(--navy); font-weight: 700;
   text-decoration: underline; text-underline-offset: 2px; font-size: 0.8rem;
+}
+.nav-auth-row a.nav-user-name {
+  text-decoration: none; color: var(--ink);
 }
 .nav-user a:hover { color: var(--navy-2); }
 .nav-logout,
@@ -847,13 +849,15 @@ main { background: var(--bg); }
   font-weight: 800;
 }
 .nav-auth-row:first-child a:hover { color: var(--red); }
-.nav-user-name {
+.nav-user-name,
+a.nav-user-name {
   display: inline-flex; align-items: center; min-height: 28px;
   padding: 3px 8px 3px 7px;
   border-left: 3px solid var(--red);
   background: transparent;
   font-weight: 900;
-  text-decoration: none; color: inherit;
+  text-decoration: none;
+  color: var(--ink);
 }
 a.nav-user-name:hover { color: var(--red); }
 
