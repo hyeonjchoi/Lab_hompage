@@ -80,7 +80,7 @@
         <div class="lab-panel-head">
           <div>
             <span class="lab-kicker">Calendar</span>
-            <h2 id="calendar-title">연구 일정</h2>
+            <h2 id="calendar-title">연구실 일정</h2>
           </div>
           <div class="calendar-tools">
             <button type="button" class="btn-sm" onclick="moveCalendarMonth(-1)" aria-label="이전 달">&lt;</button>
@@ -307,6 +307,7 @@
       CAPAuth.requireLogin(true);
       await loadLabData();
       renderLabPage();
+      setupRealtimeSync();
     });
 
     function normalizeEvent(row) {
@@ -1120,6 +1121,42 @@
       await loadLabData();
       renderTeamProjects();
       showToast('팀 프로젝트를 삭제했습니다.');
+    }
+
+    function setupRealtimeSync() {
+      // 1. Supabase Realtime — 다른 기기에서 일정이 생성/수정/삭제되면 즉시 반영
+      try {
+        getSupabase()
+          .channel('lab-events-sync')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'lab_events' }, async function () {
+            await loadLabData();
+            if (!activeEventId && !activeDrawerType) {
+              renderCalendar();
+              renderSummary();
+            }
+            if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
+          })
+          .subscribe();
+      } catch (e) { /* Realtime 미지원 시 폴링으로 대체 */ }
+
+      // 2. 앱/탭 전환 후 화면 복귀 시 즉시 갱신
+      document.addEventListener('visibilitychange', async function () {
+        if (document.visibilityState !== 'visible') return;
+        await loadLabData();
+        if (!activeEventId && !activeDrawerType) {
+          renderCalendar();
+          renderSummary();
+        }
+        if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
+      });
+
+      // 3. 60초 주기 폴링 (Realtime 연결 실패 대비 fallback)
+      setInterval(async function () {
+        if (document.visibilityState !== 'visible') return;
+        await loadLabData();
+        if (!activeEventId && !activeDrawerType) renderCalendar();
+        if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
+      }, 60000);
     }
 
     function sortByDateTime(a, b) {
