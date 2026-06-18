@@ -86,6 +86,7 @@
             <button type="button" class="btn-sm" onclick="moveCalendarMonth(-1)" aria-label="이전 달">&lt;</button>
             <strong id="calendar-month-label"></strong>
             <button type="button" class="btn-sm" onclick="moveCalendarMonth(1)" aria-label="다음 달">&gt;</button>
+            <button type="button" class="btn-sm calendar-refresh-btn" id="calendar-refresh-btn" onclick="refreshCalendar()" aria-label="캘린더 새로고침" title="새로고침">&#8635;</button>
           </div>
         </div>
         <div class="calendar-action-row">
@@ -305,6 +306,7 @@
 
     document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
+      if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
       await loadLabData();
       renderLabPage();
       setupRealtimeSync();
@@ -1123,6 +1125,18 @@
       showToast('팀 프로젝트를 삭제했습니다.');
     }
 
+    async function refreshCalendar() {
+      var btn = document.getElementById('calendar-refresh-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '…'; }
+      await loadLabData();
+      if (!activeEventId && !activeDrawerType) {
+        renderCalendar();
+        renderSummary();
+      }
+      if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
+      if (btn) { btn.disabled = false; btn.textContent = '↻'; }
+    }
+
     function setupRealtimeSync() {
       // 1. Supabase Realtime — 다른 기기에서 일정이 생성/수정/삭제되면 즉시 반영
       try {
@@ -1150,13 +1164,13 @@
         if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
       });
 
-      // 3. 60초 주기 폴링 (Realtime 연결 실패 대비 fallback)
+      // 3. 20초 주기 폴링 (Realtime 연결 실패 대비 fallback)
       setInterval(async function () {
         if (document.visibilityState !== 'visible') return;
         await loadLabData();
         if (!activeEventId && !activeDrawerType) renderCalendar();
         if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
-      }, 60000);
+      }, 20000);
     }
 
     function sortByDateTime(a, b) {

@@ -23,6 +23,7 @@ const TIMING_DEFS = {
   min30:    { label: '30분 전',       minutesBefore: 30,   windowMin: 20 },
   min15:    { label: '15분 전',       minutesBefore: 15,   windowMin: 10 },
   min5:     { label: '5분 전',        minutesBefore: 5,    windowMin: 6 },
+  atStart:  { label: '시작 시간',     minutesBefore: 0,    windowMin: 10 },
 };
 
 const CAPNotifications = {
@@ -47,7 +48,7 @@ const CAPNotifications = {
         goal: true,
         feedback: true,
       },
-      timings: ['day1'],
+      timings: ['day1', 'atStart'],
       // 하위 호환 legacy 필드
       eventHours: 24,
       urgentEventHours: 1,
@@ -216,7 +217,9 @@ const CAPNotifications = {
     if (settings.badge !== false) {
       notifOptions.badge = 'icons/icon-192.png';
     }
-    return registration.showNotification(reminder.title, notifOptions);
+    const result = await registration.showNotification(reminder.title, notifOptions);
+    if (settings.badge !== false && navigator.setAppBadge) navigator.setAppBadge().catch(() => {});
+    return result;
   },
 
   buildReminderList(options) {

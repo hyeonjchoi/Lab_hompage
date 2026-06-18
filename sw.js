@@ -39,6 +39,8 @@ self.addEventListener('push', event => {
       icon: 'icons/icon-192.png',
       badge: 'icons/icon-192.png',
       data: { url: data.url || 'lab.html' }
+    }).then(() => {
+      if (self.registration.setAppBadge) return self.registration.setAppBadge();
     })
   );
 });

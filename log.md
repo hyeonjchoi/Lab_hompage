@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-06-19 진행 요약
+
+### 1. 알림 배지(앱 아이콘 뱃지) 수정 (`cap-notifications.js`, `sw.js`, `lab.html`)
+
+- 기존 구현은 `notifOptions.badge = 'icons/icon-192.png'`만 설정하여 알림 이미지만 변경할 뿐 **실제 앱 아이콘 배지**가 표시되지 않는 문제가 있었음.
+- `cap-notifications.js` `show()` — 알림 표시 후 `navigator.setAppBadge()` 호출 (badge 설정 ON일 때).
+- `sw.js` `push` 핸들러 — 서버 푸시 알림 수신 시 `self.registration.setAppBadge()` 호출.
+- `lab.html` DOMContentLoaded — 앱 진입 시 `navigator.clearAppBadge()` 호출하여 배지 자동 해제.
+- `setAppBadge` API는 Chrome/Edge PWA 설치 환경에서만 동작 (Safari/iOS 미지원).
+
+### 2. 알림 시간 '시작 시간' 옵션 추가 + 기본값 변경 (`cap-notifications.js`, `settings.html`)
+
+- `TIMING_DEFS`에 `atStart: { label: '시작 시간', minutesBefore: 0, windowMin: 10 }` 추가.
+- 기본 타이밍 기본값을 `['day1']` → `['day1', 'atStart']`로 변경 (1일 전 + 시작 시간).
+- `settings.html` `timingOptions`에 '시작 시간' 체크박스 항목 추가.
+- 기존 사용자의 저장된 설정에는 영향 없음 (새 기기/첫 설정 시에만 기본값 적용).
+
+### 3. 캘린더 실시간 동기화 개선 (`lab.html`)
+
+- **새로고침 버튼(↻)** 추가: 캘린더 헤더 우측에 버튼 삽입, 클릭 시 즉시 데이터 재로드 및 렌더링.
+- `refreshCalendar()` 함수 신규 구현: 로딩 중 버튼 비활성화, 완료 후 복원.
+- 폴링 간격 **60초 → 20초**로 단축 (Supabase Realtime 불안정 시 fallback 개선).
+- 버튼은 데스크톱/모바일 공통으로 표시되며 별도 CSS 없이 기존 `btn-sm` 스타일 재사용.
+
+---
+
 ## 2026-06-18 진행 요약
 
 ### 1. 캘린더 일정 삭제 기능 추가 (`lab.html`)
