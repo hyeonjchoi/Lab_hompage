@@ -503,7 +503,6 @@
         return '<button type="button" class="lab-list-card resource-card clickable resource-compact" onclick="openDetailModal(\'resource\',\'' + escHtml(resource.id) + '\')">' +
           '<span>' + (resource.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
           '<strong>' + escHtml(resource.title) + '</strong>' +
-          '<p>' + escHtml(resource.desc || '설명이 없습니다.') + '</p>' +
         '</button>';
       }).join('') : '<p class="lab-empty">공유 자료가 없습니다.</p>';
     }
