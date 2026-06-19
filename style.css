@@ -1451,6 +1451,12 @@ a.nav-user-name:hover { color: var(--red); }
 .lab-list-card.notice-card strong {
   margin-top: 0; font-size: 0.98rem; line-height: 1.35; font-weight: 900;
 }
+.lab-list-card.resource-card strong {
+  margin-top: 0; font-size: 0.98rem; line-height: 1.35; font-weight: 900;
+}
+.lab-list-card.resource-card span {
+  margin-top: 5px; font-size: 0.8rem; line-height: 1.45;
+}
 .notice-card-date {
   margin-top: 5px; font-size: 0.8rem !important; line-height: 1.45;
 }
@@ -1522,7 +1528,8 @@ a.nav-user-name:hover { color: var(--red); }
   display: block; color: var(--muted); font-size: 0.76rem; font-weight: 800;
 }
 .minutes-card p {
-  margin: 7px 0 0; color: #364152; font-size: 0.88rem;
+  margin: 7px 0 0; color: #364152; font-size: 0.88rem; line-height: 1.6;
+  white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
 }
 .minutes-actions {
   display: flex; gap: 8px; margin-top: 10px;
