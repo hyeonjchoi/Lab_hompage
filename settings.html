@@ -188,18 +188,6 @@
             '</div>' +
           '</div>' +
 
-          '<div class="settings-sub-section">' +
-            '<h3 class="settings-subsec-title">앱 아이콘 배찌</h3>' +
-            '<div class="settings-field-row" style="margin-top:8px">' +
-              '<span class="settings-field-label settings-field-label--sm">앱 배찌 표시</span>' +
-              '<button class="settings-toggle-btn ' + (settings.badge !== false ? 'on' : 'off') + '" ' +
-                'id="badge-toggle" onclick="toggleBadge()">' +
-                (settings.badge !== false ? 'ON' : 'OFF') +
-              '</button>' +
-            '</div>' +
-            '<p class="settings-hint" style="margin-top:6px">앱 아이콘에 알림 배찌(뱃지)를 표시합니다. 기본값은 ON입니다.</p>' +
-          '</div>' +
-
           (CAPNotifications.isSupported() ? '' :
             '<p class="settings-hint" style="color:var(--red);margin-top:8px">이 브라우저는 웹 푸시 알림을 지원하지 않습니다.</p>') +
         '</section>' +
@@ -282,19 +270,6 @@
       settings.timings = checked.length > 0 ? checked : ['day1'];
       CAPNotifications.saveSettings(settings);
       showToast('알림 시간 설정이 저장되었습니다.');
-    }
-
-    // ── 배찌 토글 ──────────────────────────────
-    function toggleBadge() {
-      var settings = CAPNotifications.getSettings();
-      settings.badge = settings.badge === false ? true : false;
-      CAPNotifications.saveSettings(settings);
-      var btn = document.getElementById('badge-toggle');
-      if (btn) {
-        btn.textContent = settings.badge ? 'ON' : 'OFF';
-        btn.className = 'settings-toggle-btn ' + (settings.badge ? 'on' : 'off');
-      }
-      showToast('배찌 표시: ' + (settings.badge ? 'ON' : 'OFF'));
     }
 
     document.addEventListener('DOMContentLoaded', async function () {

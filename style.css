@@ -984,6 +984,12 @@ a.nav-user-name:hover { color: var(--red); }
 .btn-sm.danger:hover { background: var(--red-soft); }
 .btn-sm.primary { border-color: var(--navy); background: var(--navy); color: #fff; }
 .btn-sm.primary:hover { background: var(--navy-2); }
+.calendar-refresh-btn {
+  border: none; background: transparent; padding: 4px 6px;
+  font-size: 1rem; color: var(--navy); opacity: 0.55;
+  min-height: unset;
+}
+.calendar-refresh-btn:hover { background: transparent; opacity: 1; color: var(--red); }
 
 .panel-section {
   padding: 28px; border: 1px solid var(--line); border-top: 3px solid var(--navy);

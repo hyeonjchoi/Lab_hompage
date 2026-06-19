@@ -40,7 +40,6 @@ const CAPNotifications = {
     }
     return {
       enabled: false,
-      badge: true,
       types: {
         class: true,
         meeting: true,
@@ -214,12 +213,7 @@ const CAPNotifications = {
       renotify: false,
       data: { url: reminder.url || 'lab.html' }
     };
-    if (settings.badge !== false) {
-      notifOptions.badge = 'icons/icon-192.png';
-    }
-    const result = await registration.showNotification(reminder.title, notifOptions);
-    if (settings.badge !== false && navigator.setAppBadge) navigator.setAppBadge().catch(() => {});
-    return result;
+    return registration.showNotification(reminder.title, notifOptions);
   },
 
   buildReminderList(options) {

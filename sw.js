@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v15';
+const CACHE_NAME = 'kw-cap-lab-v16';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [
@@ -37,10 +37,7 @@ self.addEventListener('push', event => {
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: 'icons/icon-192.png',
-      badge: 'icons/icon-192.png',
       data: { url: data.url || 'lab.html' }
-    }).then(() => {
-      if (self.registration.setAppBadge) return self.registration.setAppBadge();
     })
   );
 });
