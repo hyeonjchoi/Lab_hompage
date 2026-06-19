@@ -488,9 +488,9 @@
         return sortPinnedThenDate(a, b);
       }).slice(0, 2);
       list.innerHTML = notices.length ? notices.map(function (notice) {
-        return '<button type="button" class="lab-list-card clickable" onclick="openDetailModal(\'notice\',\'' + escHtml(notice.id) + '\')">' +
-          '<span>' + (notice.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.date)) + '</span>' +
+        return '<button type="button" class="lab-list-card notice-card clickable" onclick="openDetailModal(\'notice\',\'' + escHtml(notice.id) + '\')">' +
           '<strong>' + escHtml(notice.title) + '</strong>' +
+          '<span class="notice-card-date">' + (notice.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.date)) + '</span>' +
           '<p>' + escHtml(notice.summary) + '</p>' +
         '</button>';
       }).join('') : '<p class="lab-empty">공지사항이 없습니다.</p>';
