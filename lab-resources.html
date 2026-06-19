@@ -81,6 +81,7 @@
         return '<article class="lab-page-list-card">' +
           '<span>' + (resource.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
           '<strong>' + escHtml(resource.title) + '</strong>' +
+          '<p>' + escHtml(resource.description || resource.desc || '설명이 없습니다.') + '</p>' +
           (resource.url ? '<a class="pub-link" href="' + escHtml(resource.url) + '" target="_blank" rel="noopener">자료 열기</a>' : '') +
         '</article>';
       }).join('') : '<p class="lab-empty">등록된 공유 소스가 없습니다.</p>';
