@@ -724,15 +724,19 @@
       var isNotice = type === 'notice';
       var label = isNotice ? '공지사항' : '공유 자료';
       if (!confirm(label + '을 삭제할까요?')) return;
-      if (isNotice) {
-        await CAPData.removeNotice(id);
-      } else {
-        await CAPData.removeResource(id);
+      try {
+        if (isNotice) {
+          await CAPData.removeNotice(id);
+        } else {
+          await CAPData.removeResource(id);
+        }
+        await loadLabData();
+        closeContentModal();
+        renderLabPage();
+        showToast(label + '을 삭제했습니다.');
+      } catch (err) {
+        showToast('삭제 실패: ' + (err && err.message ? err.message.slice(0, 80) : '오류가 발생했습니다.'));
       }
-      await loadLabData();
-      closeContentModal();
-      renderLabPage();
-      showToast(label + '을 삭제했습니다.');
     }
 
     function closeContentModal() {
@@ -921,6 +925,7 @@
       } else if (activeDrawerType === 'notice') {
         var noticePayload = {
           title: document.getElementById('lab-notice-title').value.trim(),
+          notice_date: document.getElementById('lab-notice-date').value || null,
           is_important: document.getElementById('lab-notice-important').checked,
           body: document.getElementById('lab-notice-summary').value.trim()
         };
@@ -936,8 +941,7 @@
           description: document.getElementById('lab-resource-desc').value.trim() || null
         };
         if (editingContentId) {
-          await CAPData.removeResource(editingContentId);
-          await CAPData.addResource(resourcePayload);
+          await CAPData.updateResource(editingContentId, resourcePayload);
         } else {
           await CAPData.addResource(resourcePayload);
         }

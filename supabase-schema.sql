@@ -328,21 +328,23 @@ CREATE POLICY "notices_select" ON notices FOR SELECT
 CREATE POLICY "notices_insert" ON notices FOR INSERT
   WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "notices_update" ON notices FOR UPDATE
-  USING (current_member_role() IN ('professor', 'admin'));
+  USING (current_member_id() IS NOT NULL)
+  WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "notices_delete" ON notices FOR DELETE
-  USING (current_member_role() IN ('professor', 'admin'));
+  USING (current_member_id() IS NOT NULL);
 
 -- ──────────────────────────────────────────────
--- resources: 로그인 사용자 조회, professor/admin만 CUD
+-- resources: 로그인 사용자 조회, 인증된 구성원 CUD
 -- ──────────────────────────────────────────────
 CREATE POLICY "resources_select" ON resources FOR SELECT
   USING (auth.role() = 'authenticated');
 CREATE POLICY "resources_insert" ON resources FOR INSERT
   WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "resources_update" ON resources FOR UPDATE
-  USING (current_member_role() IN ('professor', 'admin'));
+  USING (current_member_id() IS NOT NULL)
+  WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "resources_delete" ON resources FOR DELETE
-  USING (current_member_role() IN ('professor', 'admin'));
+  USING (current_member_id() IS NOT NULL);
 
 -- ──────────────────────────────────────────────
 -- member_goals: 본인 또는 professor/admin 조회

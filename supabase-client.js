@@ -411,6 +411,10 @@ const CAPData = {
     const { data, error } = await getSupabase().from('resources').insert(resource).select().single();
     _throw(error); return data;
   },
+  async updateResource(id, updates) {
+    const { error } = await getSupabase().from('resources').update(updates).eq('id', id);
+    _throw(error);
+  },
   async removeResource(id) {
     const { error } = await getSupabase().from('resources').delete().eq('id', id);
     _throw(error);
