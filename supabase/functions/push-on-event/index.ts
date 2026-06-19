@@ -40,7 +40,7 @@ serve(async (req) => {
     const actionLabel = isUpdate ? '일정이 변경되었습니다' : '새 일정이 추가되었습니다'
     const result = await sendPushToMembers(admin, targetIds, {
       title: (event.title || '연구실 일정') + ' · ' + dtLabel,
-      body: actionLabel + ' (' + typeLabel + ')',
+      body: '[' + typeLabel + '] ' + actionLabel,
       url: 'lab.html',
     })
 

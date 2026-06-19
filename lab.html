@@ -325,9 +325,11 @@
       };
     }
     function normalizeNotice(row) {
+      var createdAt = row.created_at || '';
       return {
         id: row.id, title: row.title,
-        date: (row.created_at || '').split('T')[0],
+        date: createdAt.split('T')[0],
+        createdAt: createdAt,
         important: !!row.is_important,
         summary: row.body || ''
       };
@@ -710,7 +712,7 @@
       document.getElementById('content-modal-type').textContent = (item.important ? '중요 · ' : '') + (isNotice ? '공지사항' : '공유 소스');
       document.getElementById('content-modal-title').textContent = item.title;
       var detailHtml = isNotice
-        ? '<dl class="event-detail-list"><div><dt>날짜</dt><dd>' + escHtml(formatKoreanDate(item.date)) + '</dd></div><div><dt>내용</dt><dd>' + escHtml(item.summary || '내용이 없습니다.') + '</dd></div></dl>'
+        ? '<dl class="event-detail-list"><div><dt>작성일</dt><dd>' + escHtml(formatKoreanDate(item.createdAt || item.date)) + '</dd></div><div><dt>내용</dt><dd>' + escHtml(item.summary || '내용이 없습니다.') + '</dd></div></dl>'
         : '<dl class="event-detail-list"><div><dt>태그</dt><dd>' + escHtml(item.tags || '참고 자료') + '</dd></div><div><dt>URL</dt><dd>' + (item.url ? '<a href="' + escHtml(item.url) + '" target="_blank" rel="noopener">' + escHtml(item.url) + '</a>' : 'URL이 없습니다.') + '</dd></div><div><dt>설명</dt><dd>' + escHtml(item.desc || '설명이 없습니다.') + '</dd></div></dl>';
       document.getElementById('content-modal-body').innerHTML = detailHtml +
         '<div class="event-modal-actions">' +
@@ -814,7 +816,6 @@
       if (type === 'notice') {
         var notice = editingContentId ? labData.notices.find(function (item) { return item.id === editingContentId; }) : null;
         return '<div class="form-group"><label for="lab-notice-title">공지 제목</label><input id="lab-notice-title" required value="' + escHtml(notice ? notice.title : '') + '"></div>' +
-          '<div class="form-group"><label for="lab-notice-date">공지 날짜</label><input id="lab-notice-date" type="date" required value="' + escHtml(notice ? notice.date : '') + '"></div>' +
           '<div class="form-check"><input type="checkbox" id="lab-notice-important"' + (notice && notice.important ? ' checked' : '') + '><label for="lab-notice-important">중요 공지로 표시합니다.</label></div>' +
           '<div class="form-group"><label for="lab-notice-summary">공지 내용</label><textarea id="lab-notice-summary" required>' + escHtml(notice ? notice.summary : '') + '</textarea></div>' +
           drawerActions(editingContentId ? '공지 수정' : '공지 저장');
