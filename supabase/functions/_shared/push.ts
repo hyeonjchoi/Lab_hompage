@@ -49,7 +49,7 @@ export function formatKSTDatetime(dateStr: string, timeStr: string): string {
   const m    = at.getUTCMinutes()
   const ampm = hKST < 12 ? '오전' : '오후'
   const h12  = hKST % 12 || 12
-  const mStr = m > 0 ? `:${String(m).padStart(2, '0')}` : ''
+  const mStr = `:${String(m).padStart(2, '0')}`
   const timeLabel = `${ampm} ${h12}${mStr}`
 
   if (dateStr === todayKST)    return `오늘 ${timeLabel}`

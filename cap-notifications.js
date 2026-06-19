@@ -29,7 +29,7 @@ function formatKSTDatetime(dateStr, timeStr) {
   var m    = at.getUTCMinutes();
   var ampm = hKST < 12 ? '오전' : '오후';
   var h12  = hKST % 12 || 12;
-  var mStr = m > 0 ? ':' + String(m).padStart(2, '0') : '';
+  var mStr = ':' + String(m).padStart(2, '0');
   var timeLabel = ampm + ' ' + h12 + mStr;
   if (dateStr === todayKST)    return '오늘 ' + timeLabel;
   if (dateStr === tomorrowKST) return '내일 ' + timeLabel;
