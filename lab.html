@@ -799,8 +799,7 @@
           '<div class="form-group"><label for="lab-event-title">일정 제목</label><input id="lab-event-title" required placeholder="예: 정기 랩미팅" value="' + escHtml(event ? event.title : '') + '"></div>' +
           '<div class="form-row"><div class="form-group"><label for="lab-event-date">날짜</label><input id="lab-event-date" type="date" required value="' + escHtml(event ? event.date : '') + '"></div>' +
           '<div class="form-group"><label for="lab-event-start">시작 시간</label><input id="lab-event-start" type="time" value="' + escHtml(event ? event.startTime : '') + '"></div></div>' +
-          '<div class="form-row"><div class="form-group"><label for="lab-event-end">종료 시간</label><input id="lab-event-end" type="time" value="' + escHtml(event ? event.endTime : '') + '"></div>' +
-          '<div class="form-group"><label for="lab-event-zoom" id="lab-event-link-label">' + linkLabel + '</label><input id="lab-event-zoom" type="url" placeholder="https://..." value="' + escHtml(event ? event.zoom : '') + '"></div></div>' +
+          '<div class="form-group"><label for="lab-event-zoom" id="lab-event-link-label">' + linkLabel + '</label><input id="lab-event-zoom" type="url" placeholder="https://..." value="' + escHtml(event ? event.zoom : '') + '"></div>' +
           '<div class="form-group"><div class="member-check-actions"><label>참석자</label><button type="button" class="btn-sm" onclick="selectAllAttendees()">전체 선택</button></div><div class="member-check-grid">' + memberCheckboxes('lab-event-attendee', selectedAttendees) + '</div></div>' +
           '<div class="form-group"><label for="lab-event-memo">메모</label><textarea id="lab-event-memo" placeholder="일정 설명을 입력하세요.">' + escHtml(event ? event.memo : '') + '</textarea></div>' +
           drawerActions(submitLabel);
@@ -890,7 +889,6 @@
           title: document.getElementById('lab-event-title').value.trim(),
           event_date: eventDate,
           start_time: document.getElementById('lab-event-start').value || null,
-          end_time: document.getElementById('lab-event-end').value || null,
           attendee_ids: getCheckedValues('lab-event-attendee'),
           reference_url: document.getElementById('lab-event-zoom').value.trim() || null,
           memo: document.getElementById('lab-event-memo').value.trim() || null
