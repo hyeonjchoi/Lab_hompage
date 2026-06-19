@@ -33,9 +33,10 @@ export interface PushPayload {
   url?: string
 }
 
-// memberIds 에게 등록된 모든 기기로 발송. 만료된(404/410) 구독은 정리한다.
+// memberIds 에게 등록된 모든 기기로 발송.
+// 4xx 응답(만료·무효·인증실패)은 구독을 삭제하고 errors 배열에 기록한다.
 export async function sendPushToMembers(admin: ReturnType<typeof adminClient>, memberIds: string[], payload: PushPayload) {
-  if (!memberIds.length) return { sent: 0, removed: 0 }
+  if (!memberIds.length) return { sent: 0, removed: 0, errors: [] }
   const { data: subs, error } = await admin
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
@@ -44,6 +45,8 @@ export async function sendPushToMembers(admin: ReturnType<typeof adminClient>, m
 
   let sent = 0
   let removed = 0
+  const errors: string[] = []
+
   await Promise.all((subs ?? []).map(async (sub) => {
     try {
       await webpush.sendNotification(
@@ -51,13 +54,16 @@ export async function sendPushToMembers(admin: ReturnType<typeof adminClient>, m
         JSON.stringify(payload)
       )
       sent++
-    } catch (e) {
-      const status = e?.statusCode
-      if (status === 404 || status === 410) {
+    } catch (e: any) {
+      const status = e?.statusCode ?? e?.status ?? 0
+      const msg = `endpoint=${sub.endpoint.slice(0, 40)} status=${status} body=${String(e?.body ?? e?.message ?? e).slice(0, 120)}`
+      errors.push(msg)
+      // 4xx는 모두 무효 구독 — 삭제해서 다음 방문 시 재등록 유도
+      if (status >= 400 && status < 500) {
         await admin.from('push_subscriptions').delete().eq('id', sub.id)
         removed++
       }
     }
   }))
-  return { sent, removed }
+  return { sent, removed, errors }
 }

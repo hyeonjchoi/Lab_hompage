@@ -30,7 +30,7 @@ serve(async (req) => {
       url: 'lab-notices.html',
     })
 
-    return json({ success: true, ...result, targeted: targetIds.length })
+    return json({ success: true, ...result, targeted: targetIds.length, ok: result.errors.length === 0 })
   } catch (e) {
     return json({ error: (e as Error).message }, 500)
   }

@@ -188,6 +188,13 @@
             '</div>' +
           '</div>' +
 
+          (settings.enabled ?
+            '<div class="settings-sub-section">' +
+              '<button class="btn-sm" onclick="reregisterPush()" style="margin-top:4px">알림 재등록 (이 기기)</button>' +
+              '<p class="settings-hint" style="margin-top:6px">알림이 오지 않으면 이 버튼을 눌러 이 기기에 알림을 다시 등록하세요.</p>' +
+            '</div>'
+            : '') +
+
           (CAPNotifications.isSupported() ? '' :
             '<p class="settings-hint" style="color:var(--red);margin-top:8px">이 브라우저는 웹 푸시 알림을 지원하지 않습니다.</p>') +
         '</section>' +
@@ -272,7 +279,32 @@
       showToast('알림 시간 설정이 저장되었습니다.');
     }
 
+    async function reregisterPush() {
+      if (!CAPNotifications.isSupported()) { showToast('이 브라우저는 푸시 알림을 지원하지 않습니다.'); return; }
+      var session = CAPAuth.getSession();
+      if (!session) { showToast('로그인이 필요합니다.'); return; }
+      try {
+        // 기존 구독 해지
+        var registration = await navigator.serviceWorker.ready;
+        var existing = await registration.pushManager.getSubscription();
+        if (existing) {
+          await CAPData.removePushSubscription(existing.endpoint);
+          await existing.unsubscribe();
+        }
+        // 새 구독 등록
+        var subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array('BL3h0AMJexi3nUJSEUCoNJEDR0eWElH_i81jkE9cEqpKLAUsjsFEOG7FSOtxzrY31r8Zhn8_FbCNU8h7Q2owzIU')
+        });
+        await CAPData.addPushSubscription(session.userId, subscription);
+        showToast('이 기기에 알림을 다시 등록했습니다.');
+      } catch (e) {
+        showToast('재등록 실패: ' + (e.message || e));
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
+      if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
       await CAPAuth.restoreSession();
       await initSettings();
       CAPNotifications.renderNavButton();
