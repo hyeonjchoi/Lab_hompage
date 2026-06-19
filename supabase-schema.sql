@@ -313,7 +313,7 @@ CREATE POLICY "events_delete" ON lab_events FOR DELETE
 CREATE POLICY "minutes_select" ON meeting_minutes FOR SELECT
   USING (auth.role() = 'authenticated');
 CREATE POLICY "minutes_insert" ON meeting_minutes FOR INSERT
-  WITH CHECK (current_member_role() IN ('professor', 'admin'));
+  WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "minutes_delete" ON meeting_minutes FOR DELETE
   USING (current_member_role() IN ('professor', 'admin'));
 
@@ -323,7 +323,7 @@ CREATE POLICY "minutes_delete" ON meeting_minutes FOR DELETE
 CREATE POLICY "notices_select" ON notices FOR SELECT
   USING (auth.role() = 'authenticated');
 CREATE POLICY "notices_insert" ON notices FOR INSERT
-  WITH CHECK (current_member_role() IN ('professor', 'admin'));
+  WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "notices_update" ON notices FOR UPDATE
   USING (current_member_role() IN ('professor', 'admin'));
 CREATE POLICY "notices_delete" ON notices FOR DELETE
@@ -335,7 +335,7 @@ CREATE POLICY "notices_delete" ON notices FOR DELETE
 CREATE POLICY "resources_select" ON resources FOR SELECT
   USING (auth.role() = 'authenticated');
 CREATE POLICY "resources_insert" ON resources FOR INSERT
-  WITH CHECK (current_member_role() IN ('professor', 'admin'));
+  WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "resources_update" ON resources FOR UPDATE
   USING (current_member_role() IN ('professor', 'admin'));
 CREATE POLICY "resources_delete" ON resources FOR DELETE

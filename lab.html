@@ -850,6 +850,7 @@
     async function saveLabForm(e) {
       e.preventDefault();
       var session = CAPAuth.getSession();
+      try {
       if (activeDrawerType === 'event') {
         var eventDate = document.getElementById('lab-event-date').value;
         var eventPayload = {
@@ -916,6 +917,14 @@
       renderLabPage();
       if (window.CAPNotifications) CAPNotifications.init(labData, { scope: 'lab' });
       showToast('LAB 페이지에 저장했습니다.');
+      } catch (err) {
+        var msg = err && err.message ? err.message : String(err);
+        if (msg.includes('row-level') || msg.includes('policy') || msg.includes('violates') || msg.includes('permission')) {
+          showToast('저장 실패: 권한이 없습니다. 관리자에게 문의하세요.', 4000);
+        } else {
+          showToast('저장 실패: ' + msg.slice(0, 80), 4000);
+        }
+      }
     }
 
     function dragEvent(e, eventId) {
