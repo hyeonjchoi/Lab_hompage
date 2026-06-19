@@ -33,6 +33,30 @@ export interface PushPayload {
   url?: string
 }
 
+// KST 기준 자연어 날짜·시간 문자열 반환.
+// 예: "오늘 오후 2:00", "내일 오전 9:30", "06/24 오전 10:00"
+export function formatKSTDatetime(dateStr: string, timeStr: string): string {
+  const timeShort = String(timeStr).slice(0, 5)  // 'HH:MM'
+  const at = new Date(`${dateStr}T${timeShort}:00+09:00`)
+  if (isNaN(at.getTime())) return dateStr
+
+  const nowKST = new Date(Date.now() + 9 * 3600 * 1000)
+  const todayKST    = nowKST.toISOString().slice(0, 10)
+  const tomorrowKST = new Date(nowKST.getTime() + 864e5).toISOString().slice(0, 10)
+
+  const hUTC = at.getUTCHours()
+  const hKST = hUTC + 9  // UTC→KST (+9h)
+  const m    = at.getUTCMinutes()
+  const ampm = hKST < 12 ? '오전' : '오후'
+  const h12  = hKST % 12 || 12
+  const mStr = m > 0 ? `:${String(m).padStart(2, '0')}` : ''
+  const timeLabel = `${ampm} ${h12}${mStr}`
+
+  if (dateStr === todayKST)    return `오늘 ${timeLabel}`
+  if (dateStr === tomorrowKST) return `내일 ${timeLabel}`
+  return `${dateStr.slice(5).replace('-', '/')} ${timeLabel}`  // "06/24 오전 10:00"
+}
+
 // memberIds 에게 등록된 모든 기기로 발송.
 // 4xx 응답(만료·무효·인증실패)은 구독을 삭제하고 errors 배열에 기록한다.
 export async function sendPushToMembers(admin: ReturnType<typeof adminClient>, memberIds: string[], payload: PushPayload) {

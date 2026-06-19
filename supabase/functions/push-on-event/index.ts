@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { CORS, checkWebhookSecret, adminClient, sendPushToMembers } from '../_shared/push.ts'
+import { CORS, checkWebhookSecret, adminClient, sendPushToMembers, formatKSTDatetime } from '../_shared/push.ts'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
@@ -36,9 +36,11 @@ serve(async (req) => {
     const timeStr = event.start_time ? ' ' + String(event.start_time).slice(0, 5) : ''
 
     const isUpdate = action === 'updated'
+    const dtLabel = formatKSTDatetime(event.event_date, event.start_time || '09:00')
+    const actionLabel = isUpdate ? '일정이 변경되었습니다' : '새 일정이 추가되었습니다'
     const result = await sendPushToMembers(admin, targetIds, {
-      title: (isUpdate ? '일정 변경: ' : '새 일정: ') + (event.title || '연구실 일정'),
-      body: '[' + typeLabel + '] ' + dateStr + timeStr,
+      title: (event.title || '연구실 일정') + ' · ' + dtLabel,
+      body: actionLabel + ' (' + typeLabel + ')',
       url: 'lab.html',
     })
 

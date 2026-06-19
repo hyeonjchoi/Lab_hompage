@@ -17,6 +17,25 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 // 각 타이밍 옵션의 설명과 알림 창 정의
+// KST 자연어 날짜·시간 (서버 formatKSTDatetime과 동일 로직)
+function formatKSTDatetime(dateStr, timeStr) {
+  var timeShort = (timeStr || '09:00').slice(0, 5);
+  var at = new Date(dateStr + 'T' + timeShort + ':00+09:00');
+  if (isNaN(at.getTime())) return dateStr;
+  var nowKST = new Date(Date.now() + 9 * 3600 * 1000);
+  var todayKST    = nowKST.toISOString().slice(0, 10);
+  var tomorrowKST = new Date(nowKST.getTime() + 864e5).toISOString().slice(0, 10);
+  var hKST = at.getUTCHours() + 9;
+  var m    = at.getUTCMinutes();
+  var ampm = hKST < 12 ? '오전' : '오후';
+  var h12  = hKST % 12 || 12;
+  var mStr = m > 0 ? ':' + String(m).padStart(2, '0') : '';
+  var timeLabel = ampm + ' ' + h12 + mStr;
+  if (dateStr === todayKST)    return '오늘 ' + timeLabel;
+  if (dateStr === tomorrowKST) return '내일 ' + timeLabel;
+  return dateStr.slice(5).replace('-', '/') + ' ' + timeLabel;
+}
+
 // 서버(push-reminders) 창과 일치: [low, high) 구간이 겹치지 않음.
 const TIMING_DEFS = {
   day1:     { label: '1일 전',       low: 1380, high: 1500 },
@@ -238,22 +257,24 @@ const CAPNotifications = {
 
       const minutesUntil = (eventAt - now) / 60000;
       const typeLabel = eventType === 'meeting' ? '미팅' : eventType === 'conference' ? '학회/모임' : '일정';
+      const dtLabel = formatKSTDatetime(event.date, event.startTime || '09:00');
 
       timings.forEach(timing => {
         const def = TIMING_DEFS[timing];
         if (!def) return;
 
         if (def.special === 'morning9') {
-          // 당일 오전 9:00~9:59 사이에 접속했을 때 알림
-          const today = now.toISOString().slice(0, 10);
-          if (event.date === today) {
-            const totalMin = now.getHours() * 60 + now.getMinutes();
-            if (totalMin >= 9 * 60 && totalMin < 10 * 60) {
+          // 당일 오전 9:00~9:14 사이에 접속했을 때 알림 (서버 창과 동일)
+          const nowKST = new Date(now.getTime() + 9 * 3600 * 1000);
+          const todayKST = nowKST.toISOString().slice(0, 10);
+          if (event.date === todayKST) {
+            const totalMin = nowKST.getUTCHours() * 60 + nowKST.getUTCMinutes();
+            if (totalMin >= 9 * 60 && totalMin < 9 * 60 + 14) {
               reminders.push({
                 id: 'event_morning9_' + event.id + '_' + event.date,
                 kind: typeLabel,
-                title: event.title || '오늘의 일정',
-                body: '오늘 일정 · ' + this.formatDateTime(event),
+                title: (event.title || '오늘의 일정') + ' · ' + dtLabel,
+                body: '오늘의 일정 · ' + typeLabel,
                 url: 'lab.html'
               });
             }
@@ -263,8 +284,8 @@ const CAPNotifications = {
             reminders.push({
               id: 'event_' + timing + '_' + event.id + '_' + event.date,
               kind: typeLabel,
-              title: event.title || '다가오는 일정',
-              body: this.formatRelativeTime(eventAt) + ' · ' + this.formatDateTime(event),
+              title: (event.title || '다가오는 일정') + ' · ' + dtLabel,
+              body: def.label + ' · ' + typeLabel,
               url: 'lab.html'
             });
           }

@@ -25,8 +25,8 @@ serve(async (req) => {
       .filter((id) => id !== notice.created_by)
 
     const result = await sendPushToMembers(admin, targetIds, {
-      title: '새 공지: ' + notice.title,
-      body: (notice.body || '').slice(0, 100) || '새 공지사항이 등록되었습니다.',
+      title: notice.title + ' · 새 공지',
+      body: (notice.body || '새 공지사항이 등록되었습니다.').slice(0, 100),
       url: 'lab-notices.html',
     })
 

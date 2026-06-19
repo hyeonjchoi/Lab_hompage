@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { CORS, checkWebhookSecret, adminClient, sendPushToMembers } from '../_shared/push.ts'
+import { CORS, checkWebhookSecret, adminClient, sendPushToMembers, formatKSTDatetime } from '../_shared/push.ts'
 
 // 크론은 5분마다 실행.
 // 중복 방지: notification_dispatch_log (kind, ref_id) unique constraint.
@@ -65,6 +65,8 @@ serve(async (req) => {
       const typeLabel = TYPE_LABEL[ev.type] || '일정'
       const dateStr = `${ev.event_date} ${timeStr}`
 
+      const dtLabel = formatKSTDatetime(ev.event_date, timeStr)
+
       // ── 당일(KST) 오전 9:00~9:14 알림 ──────────
       if (ev.event_date === todayKST && nowKSTMinutes >= 9 * 60 && nowKSTMinutes < 9 * 60 + 14) {
         const { error: dupErr } = await admin
@@ -72,8 +74,8 @@ serve(async (req) => {
           .insert({ kind: 'event-morning9', ref_id: ev.id })
         if (!dupErr) {
           await sendPushToMembers(admin, targets, {
-            title: `오늘의 일정: ${ev.title}`,
-            body: `[${typeLabel}] ${dateStr}`,
+            title: `${ev.title} · ${dtLabel}`,
+            body: `오늘의 일정 · ${typeLabel}`,
             url: 'lab.html',
           })
           eventSent++
@@ -90,8 +92,8 @@ serve(async (req) => {
           .insert({ kind: t.kind, ref_id: ev.id })
         if (!dupErr) {
           await sendPushToMembers(admin, targets, {
-            title: `[${t.label}] ${ev.title}`,
-            body: `[${typeLabel}] ${dateStr}`,
+            title: `${ev.title} · ${dtLabel}`,
+            body: `${t.label} · ${typeLabel}`,
             url: 'lab.html',
           })
           eventSent++
