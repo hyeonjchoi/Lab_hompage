@@ -17,13 +17,14 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 // 각 타이밍 옵션의 설명과 알림 창 정의
+// 서버(push-reminders) 창과 일치: [low, high) 구간이 겹치지 않음.
 const TIMING_DEFS = {
-  day1:     { label: '1일 전',       minutesBefore: 1440, windowMin: 240 },
+  day1:     { label: '1일 전',       low: 1380, high: 1500 },
   morning9: { label: '당일 오전 9시', special: 'morning9' },
-  min30:    { label: '30분 전',       minutesBefore: 30,   windowMin: 20 },
-  min15:    { label: '15분 전',       minutesBefore: 15,   windowMin: 10 },
-  min5:     { label: '5분 전',        minutesBefore: 5,    windowMin: 6 },
-  atStart:  { label: '시작 시간',     minutesBefore: 0,    windowMin: 10 },
+  min30:    { label: '30분 전',       low: 25,   high: 38 },
+  min15:    { label: '15분 전',       low: 11,   high: 25 },
+  min5:     { label: '5분 전',        low: 5,    high: 11 },
+  atStart:  { label: '시작 시간',     low: 0,    high: 5 },
 };
 
 const CAPNotifications = {
@@ -258,9 +259,7 @@ const CAPNotifications = {
             }
           }
         } else {
-          const low  = def.minutesBefore - def.windowMin / 2;
-          const high = def.minutesBefore + def.windowMin / 2;
-          if (minutesUntil >= low && minutesUntil < high) {
+          if (minutesUntil >= def.low && minutesUntil < def.high) {
             reminders.push({
               id: 'event_' + timing + '_' + event.id + '_' + event.date,
               kind: typeLabel,
