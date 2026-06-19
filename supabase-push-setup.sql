@@ -36,6 +36,25 @@ DROP TRIGGER IF EXISTS notices_push_trigger ON notices;
 CREATE TRIGGER notices_push_trigger AFTER INSERT ON notices FOR EACH ROW EXECUTE FUNCTION trg_push_on_notice();
 
 -- ══════════════════════════════════════════════
+-- 새 공유 자료 → 전체 구성원(작성자 제외) 푸시
+-- ══════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION trg_push_on_resource() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE secret TEXT;
+BEGIN
+  SELECT decrypted_secret INTO secret FROM vault.decrypted_secrets WHERE name = 'edge_webhook_secret';
+  PERFORM net.http_post(
+    url := 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/push-on-resource',
+    headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||secret),
+    body := jsonb_build_object('resourceId', NEW.id)
+  );
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS resources_push_trigger ON resources;
+CREATE TRIGGER resources_push_trigger AFTER INSERT ON resources FOR EACH ROW EXECUTE FUNCTION trg_push_on_resource();
+
+-- ══════════════════════════════════════════════
 -- 개인 피드백(member_notes) → 해당 구성원 푸시
 -- ══════════════════════════════════════════════
 CREATE OR REPLACE FUNCTION trg_push_on_member_note() RETURNS TRIGGER
