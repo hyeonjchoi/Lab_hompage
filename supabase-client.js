@@ -373,6 +373,10 @@ const CAPData = {
     const { data, error } = await getSupabase().from('meeting_minutes').insert(minute).select().single();
     _throw(error); return data;
   },
+  async updateMeetingMinute(id, updates) {
+    const { error } = await getSupabase().from('meeting_minutes').update(updates).eq('id', id);
+    _throw(error);
+  },
   async removeMeetingMinute(id) {
     const { error } = await getSupabase().from('meeting_minutes').delete().eq('id', id);
     _throw(error);

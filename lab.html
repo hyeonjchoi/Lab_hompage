@@ -290,6 +290,7 @@
     var activeEventId = null;
     var editingEventId = null;
     var editingContentId = null;
+    var editingMinutesId = null;
     var draggingEventId = null;
     var adminProgressMode = false;
     var minutesPage = 1;
@@ -538,6 +539,10 @@
               '<div class="minutes-card">' +
                 '<span>' + escHtml(item.createdBy || '구성원') + ' · ' + escHtml(formatKoreanDateTime(item.createdAt)) + '</span>' +
                 '<p>' + escHtml(item.summary) + '</p>' +
+                '<div class="minutes-actions">' +
+                  '<button type="button" class="btn-sm" onclick="openLabDrawer(\'minutes\',\'' + escHtml(item.id) + '\')">수정</button>' +
+                  '<button type="button" class="btn-sm danger" onclick="deleteMinute(\'' + escHtml(item.id) + '\')">삭제</button>' +
+                '</div>' +
               '</div>' +
             '</div>' +
           '</details>' +
@@ -557,6 +562,18 @@
     function changeMinutesPage(delta) {
       minutesPage += delta;
       renderMinutes();
+    }
+
+    async function deleteMinute(id) {
+      if (!confirm('이 회의록을 삭제하시겠습니까?')) return;
+      try {
+        await CAPData.removeMeetingMinute(id);
+        labData.minutes = labData.minutes.filter(function (m) { return m.id !== id; });
+        renderMinutes();
+        showToast('회의록을 삭제했습니다.');
+      } catch (err) {
+        showToast('삭제 실패: ' + (err && err.message ? err.message.slice(0, 80) : err));
+      }
     }
 
     function changeTeamProjectPage(delta) {
@@ -733,9 +750,10 @@
       activeDrawerType = type;
       editingEventId = type === 'event' ? (editId || null) : null;
       editingContentId = (type === 'notice' || type === 'resource') ? (editId || null) : null;
+      editingMinutesId = type === 'minutes' ? (editId || null) : null;
       var titleMap = {
         event: editingEventId ? '일정 수정' : '일정 추가',
-        minutes: '회의록 추가',
+        minutes: editingMinutesId ? '회의록 수정' : '회의록 추가',
         notice: editingContentId ? '공지 수정' : '공지 추가',
         resource: editingContentId ? '공유 자료 수정' : '공유 자료 추가',
         progress: '진행상황 업데이트'
@@ -758,6 +776,7 @@
       activeDrawerType = null;
       editingEventId = null;
       editingContentId = null;
+      editingMinutesId = null;
     }
 
     function getDrawerForm(type) {
@@ -783,10 +802,11 @@
           drawerActions(submitLabel);
       }
       if (type === 'minutes') {
-        return '<div class="form-group"><label for="lab-minutes-event">연결 랩미팅</label><select id="lab-minutes-event" required></select></div>' +
-          '<div class="form-group"><label for="lab-minutes-title">회의명</label><input id="lab-minutes-title" required placeholder="예: 정기 랩미팅 회의록"></div>' +
-          '<div class="form-group"><label for="lab-minutes-summary">회의록 요약</label><textarea id="lab-minutes-summary" required placeholder="핵심 결정과 다음 액션을 적어주세요."></textarea></div>' +
-          drawerActions('회의록 저장');
+        var minute = editingMinutesId ? labData.minutes.find(function (m) { return m.id === editingMinutesId; }) : null;
+        return '<div class="form-group"><label for="lab-minutes-event">연결 랩미팅</label><select id="lab-minutes-event"' + (minute ? ' disabled' : ' required') + '></select></div>' +
+          '<div class="form-group"><label for="lab-minutes-title">회의명</label><input id="lab-minutes-title" required placeholder="예: 정기 랩미팅 회의록" value="' + escHtml(minute ? minute.title : '') + '"></div>' +
+          '<div class="form-group"><label for="lab-minutes-summary">회의록 요약</label><textarea id="lab-minutes-summary" required placeholder="핵심 결정과 다음 액션을 적어주세요.">' + escHtml(minute ? minute.summary : '') + '</textarea></div>' +
+          drawerActions(minute ? '회의록 수정' : '회의록 저장');
       }
       if (type === 'notice') {
         var notice = editingContentId ? labData.notices.find(function (item) { return item.id === editingContentId; }) : null;
@@ -842,9 +862,17 @@
       var select = document.getElementById('lab-minutes-event');
       if (!select) return;
       var meetings = labData.events.filter(function (event) { return event.type === 'meeting'; }).sort(sortByDateTime);
-      select.innerHTML = meetings.length ? meetings.map(function (meeting) {
-        return '<option value="' + escHtml(meeting.id) + '">' + escHtml(formatKoreanDate(meeting.date) + ' · ' + meeting.title) + '</option>';
-      }).join('') : '<option value="">연결할 랩미팅 일정이 없습니다.</option>';
+      var editMinute = editingMinutesId ? labData.minutes.find(function (m) { return m.id === editingMinutesId; }) : null;
+      if (editMinute) {
+        var linkedMeeting = labData.events.find(function (e) { return e.id === editMinute.eventId; });
+        select.innerHTML = linkedMeeting
+          ? '<option value="' + escHtml(linkedMeeting.id) + '">' + escHtml(formatKoreanDate(linkedMeeting.date) + ' · ' + linkedMeeting.title) + '</option>'
+          : '<option value="">연결된 랩미팅</option>';
+      } else {
+        select.innerHTML = meetings.length ? meetings.map(function (meeting) {
+          return '<option value="' + escHtml(meeting.id) + '">' + escHtml(formatKoreanDate(meeting.date) + ' · ' + meeting.title) + '</option>';
+        }).join('') : '<option value="">연결할 랩미팅 일정이 없습니다.</option>';
+      }
     }
 
     async function saveLabForm(e) {
@@ -869,20 +897,27 @@
           await CAPData.addLabEvent(eventPayload);
         }
       } else if (activeDrawerType === 'minutes') {
-        var eventId = document.getElementById('lab-minutes-event').value;
-        var meeting = labData.events.find(function (event) { return event.id === eventId; });
-        if (!meeting) {
-          showToast('연결할 랩미팅 일정을 먼저 추가해 주세요.');
-          return;
+        if (editingMinutesId) {
+          await CAPData.updateMeetingMinute(editingMinutesId, {
+            title: document.getElementById('lab-minutes-title').value.trim(),
+            summary: document.getElementById('lab-minutes-summary').value.trim()
+          });
+        } else {
+          var eventId = document.getElementById('lab-minutes-event').value;
+          var meeting = labData.events.find(function (event) { return event.id === eventId; });
+          if (!meeting) {
+            showToast('연결할 랩미팅 일정을 먼저 추가해 주세요.');
+            return;
+          }
+          await CAPData.addMeetingMinute({
+            event_id: eventId,
+            meeting_date: meeting.date,
+            title: document.getElementById('lab-minutes-title').value.trim(),
+            summary: document.getElementById('lab-minutes-summary').value.trim(),
+            author_id: session ? session.userId : null,
+            attendee_ids: meeting.attendees || []
+          });
         }
-        await CAPData.addMeetingMinute({
-          event_id: eventId,
-          meeting_date: meeting.date,
-          title: document.getElementById('lab-minutes-title').value.trim(),
-          summary: document.getElementById('lab-minutes-summary').value.trim(),
-          author_id: session ? session.userId : null,
-          attendee_ids: meeting.attendees || []
-        });
       } else if (activeDrawerType === 'notice') {
         var noticePayload = {
           title: document.getElementById('lab-notice-title').value.trim(),

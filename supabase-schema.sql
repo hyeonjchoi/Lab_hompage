@@ -314,8 +314,11 @@ CREATE POLICY "minutes_select" ON meeting_minutes FOR SELECT
   USING (auth.role() = 'authenticated');
 CREATE POLICY "minutes_insert" ON meeting_minutes FOR INSERT
   WITH CHECK (current_member_id() IS NOT NULL);
+CREATE POLICY "minutes_update" ON meeting_minutes FOR UPDATE
+  USING (current_member_id() IS NOT NULL)
+  WITH CHECK (current_member_id() IS NOT NULL);
 CREATE POLICY "minutes_delete" ON meeting_minutes FOR DELETE
-  USING (current_member_role() IN ('professor', 'admin'));
+  USING (current_member_id() IS NOT NULL);
 
 -- ──────────────────────────────────────────────
 -- notices: 로그인 사용자 조회, professor/admin만 CUD

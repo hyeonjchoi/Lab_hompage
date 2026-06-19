@@ -1515,6 +1515,9 @@ a.nav-user-name:hover { color: var(--red); }
 .minutes-card p {
   margin: 7px 0 0; color: #364152; font-size: 0.88rem;
 }
+.minutes-actions {
+  display: flex; gap: 8px; margin-top: 10px;
+}
 .minutes-pagination {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   padding-top: 4px;
