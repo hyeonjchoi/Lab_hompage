@@ -93,6 +93,51 @@ DROP TRIGGER IF EXISTS team_project_note_replies_push_trigger ON team_project_no
 CREATE TRIGGER team_project_note_replies_push_trigger AFTER INSERT ON team_project_note_replies FOR EACH ROW EXECUTE FUNCTION trg_push_on_team_project_note_reply();
 
 -- ══════════════════════════════════════════════
+-- 새 캘린더 일정 → 전체 구성원(작성자 제외) 즉시 푸시
+-- ══════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION trg_push_on_lab_event() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE secret TEXT;
+BEGIN
+  SELECT decrypted_secret INTO secret FROM vault.decrypted_secrets WHERE name = 'edge_webhook_secret';
+  PERFORM net.http_post(
+    url := 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/push-on-event',
+    headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||secret),
+    body := jsonb_build_object('eventId', NEW.id)
+  );
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS lab_events_push_trigger ON lab_events;
+CREATE TRIGGER lab_events_push_trigger AFTER INSERT ON lab_events FOR EACH ROW EXECUTE FUNCTION trg_push_on_lab_event();
+
+-- ══════════════════════════════════════════════
+-- 캘린더 일정 날짜/시간 변경 → 전체 구성원(작성자 제외) 즉시 푸시
+-- ══════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION trg_push_on_lab_event_update() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE secret TEXT;
+BEGIN
+  SELECT decrypted_secret INTO secret FROM vault.decrypted_secrets WHERE name = 'edge_webhook_secret';
+  PERFORM net.http_post(
+    url := 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/push-on-event',
+    headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer '||secret),
+    body := jsonb_build_object('eventId', NEW.id, 'action', 'updated')
+  );
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS lab_events_update_push_trigger ON lab_events;
+CREATE TRIGGER lab_events_update_push_trigger
+  AFTER UPDATE ON lab_events
+  FOR EACH ROW
+  WHEN (
+    OLD.event_date IS DISTINCT FROM NEW.event_date OR
+    OLD.start_time IS DISTINCT FROM NEW.start_time
+  )
+  EXECUTE FUNCTION trg_push_on_lab_event_update();
+
+-- ══════════════════════════════════════════════
 -- 15분마다: 다가오는 일정(참석자 또는 전체) / 목표 마감 임박 푸시
 -- 중복 발송 방지는 notification_dispatch_log 테이블로 처리 (push-reminders 함수 내부 로직)
 -- ══════════════════════════════════════════════
