@@ -1436,8 +1436,16 @@ a.nav-user-name:hover { color: var(--red); }
 .lab-list-card.resource-compact {
   min-height: 78px;
 }
+.lab-list-card.notice-card,
+.lab-list-card.resource-card {
+  padding: 18px; border-left-color: var(--navy);
+}
 .lab-list-card span {
   display: block; color: var(--muted); font-size: 0.76rem; font-weight: 800;
+}
+.lab-list-card.notice-card span,
+.lab-list-card.resource-card span {
+  font-size: 0.8rem;
 }
 .important-mark {
   display: inline-flex; align-items: center; min-height: 20px;
@@ -1448,23 +1456,16 @@ a.nav-user-name:hover { color: var(--red); }
 .lab-list-card strong {
   display: block; margin-top: 4px; color: var(--navy); line-height: 1.35;
 }
-.lab-list-card.notice-card strong {
-  margin-top: 0; font-size: 0.98rem; line-height: 1.35; font-weight: 900;
-}
+.lab-list-card.notice-card strong,
 .lab-list-card.resource-card strong {
-  margin-top: 0; font-size: 0.98rem; line-height: 1.35; font-weight: 900;
-}
-.lab-list-card.resource-card span {
-  margin-top: 5px; font-size: 0.8rem; line-height: 1.45;
-}
-.notice-card-date {
-  margin-top: 5px; font-size: 0.8rem !important; line-height: 1.45;
+  margin-top: 6px; font-size: 1.02rem; line-height: 1.35;
 }
 .lab-list-card p {
   margin: 8px 0 0; color: #364152; font-size: 0.86rem; line-height: 1.55;
 }
-.lab-list-card.notice-card p {
-  margin-top: 7px; font-size: 0.88rem; line-height: 1.5;
+.lab-list-card.notice-card p,
+.lab-list-card.resource-card p {
+  margin-top: 10px; font-size: 0.88rem; line-height: 1.55;
 }
 .lab-list-card a {
   color: var(--navy); text-decoration: underline; text-underline-offset: 2px;
