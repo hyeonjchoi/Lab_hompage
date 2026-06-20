@@ -259,7 +259,7 @@
     }
 
     // ── 알림 종류 저장 ─────────────────────────
-    function saveNotifTypes() {
+    async function saveNotifTypes() {
       var settings = CAPNotifications.getSettings();
       var checked = Array.from(document.querySelectorAll('input[name="notif-type"]:checked')).map(function (el) { return el.value; });
       var all = ['class', 'meeting', 'conference', 'goal', 'feedback'];
@@ -267,15 +267,29 @@
         settings.types[key] = checked.indexOf(key) !== -1;
       });
       CAPNotifications.saveSettings(settings);
+      // DB에도 저장하여 서버 알림 발송 시 반영
+      var session = CAPAuth.getSession();
+      if (session) {
+        try {
+          await CAPData.upsertNotificationSettings(session.userId, settings.timings, settings.types);
+        } catch (e) { /* 네트워크 오류 — localStorage 저장은 완료됨 */ }
+      }
       showToast('알림 종류 설정이 저장되었습니다.');
     }
 
     // ── 알림 타이밍 저장 ───────────────────────
-    function saveNotifTimings() {
+    async function saveNotifTimings() {
       var settings = CAPNotifications.getSettings();
       var checked = Array.from(document.querySelectorAll('input[name="notif-timing"]:checked')).map(function (el) { return el.value; });
       settings.timings = checked.length > 0 ? checked : ['day1'];
       CAPNotifications.saveSettings(settings);
+      // DB에도 저장하여 서버 알림 발송 시 반영
+      var session = CAPAuth.getSession();
+      if (session) {
+        try {
+          await CAPData.upsertNotificationSettings(session.userId, settings.timings, settings.types);
+        } catch (e) { /* 네트워크 오류 — localStorage 저장은 완료됨 */ }
+      }
       showToast('알림 시간 설정이 저장되었습니다.');
     }
 

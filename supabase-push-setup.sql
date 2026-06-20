@@ -162,7 +162,7 @@ CREATE TRIGGER lab_events_update_push_trigger
 -- ══════════════════════════════════════════════
 SELECT cron.schedule(
   'push-reminders-job',
-  '*/15 * * * *',
+  '*/5 * * * *',
   $$
   SELECT net.http_post(
     url := 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/push-reminders',

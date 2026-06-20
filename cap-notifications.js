@@ -40,8 +40,8 @@ function formatKSTDatetime(dateStr, timeStr) {
 const TIMING_DEFS = {
   day1:     { label: '1일 전',       low: 1380, high: 1500 },
   morning9: { label: '당일 오전 9시', special: 'morning9' },
-  min30:    { label: '30분 전',       low: 25,   high: 38 },
-  min15:    { label: '15분 전',       low: 11,   high: 25 },
+  min30:    { label: '30분 전',       low: 27,   high: 33 },
+  min15:    { label: '15분 전',       low: 12,   high: 18 },
   min5:     { label: '5분 전',        low: 5,    high: 11 },
   atStart:  { label: '시작 시간',     low: 0,    high: 5 },
 };

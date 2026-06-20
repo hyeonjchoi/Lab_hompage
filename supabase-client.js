@@ -245,6 +245,14 @@ const CAPData = {
     _throw(error);
   },
 
+  // ── Notification Settings ─────────────────
+  async upsertNotificationSettings(memberId, timings, types) {
+    const { error } = await getSupabase()
+      .from('notification_settings')
+      .upsert({ member_id: memberId, timings, types, updated_at: new Date().toISOString() }, { onConflict: 'member_id' });
+    _throw(error);
+  },
+
   // ── Site Content ──────────────────────────
   async getContent() {
     const { data, error } = await getSupabase().from('site_content').select('*');

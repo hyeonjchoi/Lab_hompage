@@ -12,15 +12,18 @@ const TYPE_LABEL: Record<string, string> = {
 }
 
 // 시간대별 알림 창 (단위: 분). 5분 크론 대비 최소 6분 창 확보.
-// Windows are non-overlapping; low inclusive, high exclusive.
-// 창이 겹치지 않도록 설계: [low, high) 구간이 연속하여 각 이벤트가 최대 1개 창에 해당.
+// settingsKey: 사용자 notification_settings.timings 배열과 대응하는 키.
+// 창은 비중첩 [low, high) 구간 — 각 이벤트가 최대 1개 창에만 해당.
 const TIMING_WINDOWS = [
-  { kind: 'event-day1',    low: 1380, high: 1500, label: '내일 일정' },   // 23~25h
-  { kind: 'event-min30',   low: 25,   high: 38,   label: '30분 후 시작' }, // 25~38분
-  { kind: 'event-min15',   low: 11,   high: 25,   label: '15분 후 시작' }, // 11~25분
-  { kind: 'event-min5',    low: 5,    high: 11,   label: '5분 후 시작' },  // 5~11분
-  { kind: 'event-atStart', low: 0,    high: 5,    label: '지금 시작' },    // 0~5분
+  { kind: 'event-day1',    settingsKey: 'day1',    low: 1380, high: 1500, label: '내일 일정' },    // 23~25h
+  { kind: 'event-min30',   settingsKey: 'min30',   low: 27,   high: 33,   label: '30분 후 시작' }, // ±3분 / 30분
+  { kind: 'event-min15',   settingsKey: 'min15',   low: 12,   high: 18,   label: '15분 후 시작' }, // ±3분 / 15분
+  { kind: 'event-min5',    settingsKey: 'min5',    low: 5,    high: 11,   label: '5분 후 시작' },  // 5~11분
+  { kind: 'event-atStart', settingsKey: 'atStart', low: 0,    high: 5,    label: '지금 시작' },    // 0~5분
 ] as const
+
+const DEFAULT_TIMINGS = ['day1', 'atStart']
+const DEFAULT_TYPES: Record<string, boolean> = { class: true, meeting: true, conference: true, goal: true, feedback: true }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
@@ -42,6 +45,29 @@ serve(async (req) => {
     if (membersErr) return json({ error: membersErr.message }, 500)
     const allMemberIds = (allMembers ?? []).map((m: any) => m.id)
 
+    // 사용자별 알림 설정 로드 (없으면 기본값 사용)
+    const { data: notifSettings } = await admin
+      .from('notification_settings')
+      .select('member_id, timings, types')
+    const memberSettings: Record<string, { timings: string[], types: Record<string, boolean> }> = {}
+    for (const ns of notifSettings ?? []) {
+      memberSettings[ns.member_id] = {
+        timings: Array.isArray(ns.timings) && ns.timings.length > 0 ? ns.timings : DEFAULT_TIMINGS,
+        types: (ns.types && typeof ns.types === 'object') ? ns.types : DEFAULT_TYPES,
+      }
+    }
+
+    // 사용자 설정 기반 타겟 필터: timing 키와 이벤트 타입 모두 확인
+    function filterTargets(candidateIds: string[], settingsKey: string, eventType: string): string[] {
+      return candidateIds.filter(memberId => {
+        const ms = memberSettings[memberId]
+        if (!ms) return true  // 설정 없음 → 기본값 포함
+        if (!ms.timings.includes(settingsKey)) return false
+        if (ms.types[eventType] === false) return false
+        return true
+      })
+    }
+
     // 오늘(KST) 이후 일정 조회
     const { data: events, error: eventsErr } = await admin
       .from('lab_events')
@@ -61,31 +87,36 @@ serve(async (req) => {
       if (isNaN(at.getTime())) continue  // 파싱 실패 건너뜀
 
       const minutesUntil = (at.getTime() - now.getTime()) / 60000
-      const targets: string[] = (ev.attendee_ids?.length) ? ev.attendee_ids : allMemberIds
-      const typeLabel = TYPE_LABEL[ev.type] || '일정'
-      const dateStr = `${ev.event_date} ${timeStr}`
-
+      const allTargets: string[] = (ev.attendee_ids?.length) ? ev.attendee_ids : allMemberIds
+      const eventType = ev.type || 'meeting'
+      const typeLabel = TYPE_LABEL[eventType] || '일정'
       const dtLabel = formatKSTDatetime(ev.event_date, timeStr)
 
       // ── 당일(KST) 오전 9:00~9:14 알림 ──────────
       if (ev.event_date === todayKST && nowKSTMinutes >= 9 * 60 && nowKSTMinutes < 9 * 60 + 14) {
-        const { error: dupErr } = await admin
-          .from('notification_dispatch_log')
-          .insert({ kind: 'event-morning9', ref_id: ev.id })
-        if (!dupErr) {
-          await sendPushToMembers(admin, targets, {
-            title: `${ev.title} · ${dtLabel}`,
-            body: `오늘의 일정 · ${typeLabel}`,
-            url: 'lab.html',
-          })
-          eventSent++
-          details.push(`morning9: ${ev.title}`)
+        const targets = filterTargets(allTargets, 'morning9', eventType)
+        if (targets.length > 0) {
+          const { error: dupErr } = await admin
+            .from('notification_dispatch_log')
+            .insert({ kind: 'event-morning9', ref_id: ev.id })
+          if (!dupErr) {
+            await sendPushToMembers(admin, targets, {
+              title: `${ev.title} · ${dtLabel}`,
+              body: `오늘의 일정 · ${typeLabel}`,
+              url: 'lab.html',
+            })
+            eventSent++
+            details.push(`morning9: ${ev.title}`)
+          }
         }
       }
 
       // ── 시간대별 미리알림 ─────────────────────────
       for (const t of TIMING_WINDOWS) {
         if (minutesUntil < t.low || minutesUntil >= t.high) continue
+
+        const targets = filterTargets(allTargets, t.settingsKey, eventType)
+        if (targets.length === 0) continue
 
         const { error: dupErr } = await admin
           .from('notification_dispatch_log')
@@ -113,10 +144,13 @@ serve(async (req) => {
     for (const goal of goals ?? []) {
       const deadline = goal.target_date || goal.end_date
       if (!deadline) continue
-      // 마감일 23:59 KST 기준 계산
       const deadlineAt = new Date(`${deadline}T23:59:59+09:00`)
       const daysUntil = (deadlineAt.getTime() - now.getTime()) / 864e5
       if (daysUntil < 0 || daysUntil > 2) continue
+
+      // goal 알림은 types.goal 설정만 확인
+      const ms = memberSettings[goal.member_id]
+      if (ms && ms.types['goal'] === false) continue
 
       const { error: dupErr } = await admin
         .from('notification_dispatch_log')
