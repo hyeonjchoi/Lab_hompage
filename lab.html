@@ -317,8 +317,8 @@
       return {
         id: row.id, type: row.type, title: row.title,
         date: row.event_date,
-        startTime: row.start_time || '',
-        endTime: row.end_time || '',
+        startTime: row.start_time ? String(row.start_time).slice(0, 5) : '',
+        endTime: row.end_time ? String(row.end_time).slice(0, 5) : '',
         zoom: row.reference_url || '',
         memo: row.memo || '',
         attendees: row.attendee_ids || []
