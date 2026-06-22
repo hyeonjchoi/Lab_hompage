@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-06-22 진행 요약
+
+### 1. 알림 5분 전 타이밍 오류 수정 (`supabase/functions/push-reminders/index.ts`, `cap-notifications.js`)
+
+- **증상**: "5분 전" 알림이 실제로는 10분 전에 도착하는 버그.
+- **원인**: `event-min5` 창이 `[5, 11)`로 설정되어 있어, 5분마다 실행되는 크론이 10분 전에 실행될 때도 범위에 포함됨. 첫 번째 실행(10분 전)에서 `notification_dispatch_log`에 기록되고 발송되어, 5분 후 재시도는 중복으로 차단됨.
+- **수정**: `event-min5` 창을 `[5, 11)` → `[5, 10)`으로 변경. 10분 전 크론 실행 시 범위 밖이 되어 건너뜀, 5분 전 실행에서만 발송.
+- 클라이언트 측 `cap-notifications.js` `TIMING_DEFS.min5`도 동일하게 `high: 11 → 10` 수정.
+
+### 2. 알림 미수신(구독 만료 시 재시도 불가) 버그 수정 (`push-reminders/index.ts`)
+
+- **증상**: "1일 전" 등 알림이 오지 않는 경우 발생.
+- **원인**: push 발송 시 구독이 만료(4xx)되어 실패하더라도 `notification_dispatch_log`에는 발송 성공으로 기록됨 → 사용자가 구독을 재등록해도 7일 이내에는 재발송 불가.
+- **수정**: `sendPushToMembers()` 반환값 캡처 후 `sent === 0 && removed > 0`(전체 구독 만료) 조건에서 dispatch_log 항목 삭제 → 구독 재등록 후 크론 재시도 허용. 이벤트·목표·morning9 알림 모두 동일하게 적용.
+- Edge Function 배포 완료 (`npx supabase functions deploy push-reminders`).
+
+### 3. 모바일 일정 추가 폼 날짜·시간 입력 화면 이탈 수정 (`style.css`)
+
+- **증상**: iOS Safari에서 드로어의 날짜·시간 입력칸이 화면 오른쪽으로 벗어남.
+- **원인**: iOS Safari가 `type="date"` / `type="time"` 입력에 네이티브 chrome(아이콘·버튼)을 추가하여 CSS `width: 100%`를 초과하는 고유 최소 너비를 강제함. 또한 `position: fixed` 요소에서 `width: 100%`가 뷰포트 너비를 정확히 참조하지 않는 Safari 이슈.
+- **수정**:
+  - `.lab-drawer` width: `min(460px, 100%)` → `min(460px, 100vw)` (뷰포트 너비 명시)
+  - `.lab-drawer`에 `overflow-x: hidden` 추가 (내부 요소가 드로어 우측 경계 밖으로 넘어가지 않도록 클리핑)
+  - `.lab-drawer input[type="date"]`, `.lab-drawer input[type="time"]`에 `-webkit-appearance: none; appearance: none` 적용 → 네이티브 chrome 강제 최소 너비 해제, CSS 박스모델 준수. 입력 탭 시 iOS 날짜·시간 선택 UI(하단 시트)는 그대로 동작함.
+
+### 4. 모바일 날짜·시간 입력 높이 조정 (`style.css`)
+
+- `-webkit-appearance: none` 적용 후 패딩이 초기화되어 다른 입력칸보다 세로가 짧아지는 문제 수정.
+- `.lab-drawer input[type="date"]`, `.lab-drawer input[type="time"]`에 `padding: 10px 14px; line-height: 1.5; min-height: 44px` 명시하여 다른 입력칸과 동일한 높이로 맞춤.
+
+---
+
 ## 2026-06-19 진행 요약
 
 ### 1. 알림 배지(앱 아이콘 뱃지) 수정 (`cap-notifications.js`, `sw.js`, `lab.html`)
