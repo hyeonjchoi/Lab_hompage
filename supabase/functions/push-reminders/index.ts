@@ -18,7 +18,7 @@ const TIMING_WINDOWS = [
   { kind: 'event-day1',    settingsKey: 'day1',    low: 1380, high: 1500, label: '내일 일정' },    // 23~25h
   { kind: 'event-min30',   settingsKey: 'min30',   low: 27,   high: 33,   label: '30분 후 시작' }, // ±3분 / 30분
   { kind: 'event-min15',   settingsKey: 'min15',   low: 12,   high: 18,   label: '15분 후 시작' }, // ±3분 / 15분
-  { kind: 'event-min5',    settingsKey: 'min5',    low: 5,    high: 11,   label: '5분 후 시작' },  // 5~11분
+  { kind: 'event-min5',    settingsKey: 'min5',    low: 5,    high: 10,   label: '5분 후 시작' },  // 5~9분
   { kind: 'event-atStart', settingsKey: 'atStart', low: 0,    high: 5,    label: '지금 시작' },    // 0~5분
 ] as const
 
@@ -100,13 +100,17 @@ serve(async (req) => {
             .from('notification_dispatch_log')
             .insert({ kind: 'event-morning9', ref_id: ev.id })
           if (!dupErr) {
-            await sendPushToMembers(admin, targets, {
+            const r = await sendPushToMembers(admin, targets, {
               title: `${ev.title} · ${dtLabel}`,
               body: `오늘의 일정 · ${typeLabel}`,
               url: 'lab.html',
             })
-            eventSent++
-            details.push(`morning9: ${ev.title}`)
+            if (r.sent === 0 && r.removed > 0) {
+              await admin.from('notification_dispatch_log').delete().eq('kind', 'event-morning9').eq('ref_id', ev.id)
+            } else {
+              eventSent++
+              details.push(`morning9: ${ev.title}`)
+            }
           }
         }
       }
@@ -122,13 +126,18 @@ serve(async (req) => {
           .from('notification_dispatch_log')
           .insert({ kind: t.kind, ref_id: ev.id })
         if (!dupErr) {
-          await sendPushToMembers(admin, targets, {
+          const r = await sendPushToMembers(admin, targets, {
             title: `${ev.title} · ${dtLabel}`,
             body: `${t.label} · ${typeLabel}`,
             url: 'lab.html',
           })
-          eventSent++
-          details.push(`${t.kind}: ${ev.title}`)
+          if (r.sent === 0 && r.removed > 0) {
+            // 구독이 모두 만료된 경우 — 재등록 후 재시도할 수 있도록 로그 삭제
+            await admin.from('notification_dispatch_log').delete().eq('kind', t.kind).eq('ref_id', ev.id)
+          } else {
+            eventSent++
+            details.push(`${t.kind}: ${ev.title}`)
+          }
         }
       }
     }
@@ -156,12 +165,16 @@ serve(async (req) => {
         .from('notification_dispatch_log')
         .insert({ kind: 'goal-due', ref_id: goal.id })
       if (!dupErr) {
-        await sendPushToMembers(admin, [goal.member_id], {
+        const r = await sendPushToMembers(admin, [goal.member_id], {
           title: `연구 목표 마감 임박: ${goal.title}`,
           body: `마감일 ${deadline}`,
           url: 'member-dashboard.html',
         })
-        goalDue++
+        if (r.sent === 0 && r.removed > 0) {
+          await admin.from('notification_dispatch_log').delete().eq('kind', 'goal-due').eq('ref_id', goal.id)
+        } else {
+          goalDue++
+        }
       }
     }
 

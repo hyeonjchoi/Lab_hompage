@@ -42,7 +42,7 @@ const TIMING_DEFS = {
   morning9: { label: '당일 오전 9시', special: 'morning9' },
   min30:    { label: '30분 전',       low: 27,   high: 33 },
   min15:    { label: '15분 전',       low: 12,   high: 18 },
-  min5:     { label: '5분 전',        low: 5,    high: 11 },
+  min5:     { label: '5분 전',        low: 5,    high: 10 },
   atStart:  { label: '시작 시간',     low: 0,    high: 5 },
 };
 

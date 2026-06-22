@@ -902,7 +902,7 @@ a.nav-user-name:hover { color: var(--red); }
   width: 100%; padding: 10px 14px;
   border: 1px solid var(--line); border-radius: 6px;
   font-size: 0.95rem; font-family: inherit; color: var(--ink);
-  background: #fff;
+  background: #fff; min-width: 0; max-width: 100%;
 }
 .input-with-toggle { position: relative; }
 .input-with-toggle input { padding-right: 64px; }
