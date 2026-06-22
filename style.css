@@ -1710,6 +1710,7 @@ a.nav-user-name:hover { color: var(--red); }
 .lab-drawer input[type="time"] {
   -webkit-appearance: none; appearance: none;
   display: block; width: 100%; box-sizing: border-box;
+  padding: 10px 14px; line-height: 1.5; min-height: 44px;
 }
 .modal-list {
   display: grid; gap: 8px; margin-top: 18px;
