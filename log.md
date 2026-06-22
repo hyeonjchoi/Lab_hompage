@@ -32,8 +32,10 @@
 
 ### 4. 모바일 날짜·시간 입력 높이 조정 (`style.css`)
 
-- `-webkit-appearance: none` 적용 후 패딩이 초기화되어 다른 입력칸보다 세로가 짧아지는 문제 수정.
-- `.lab-drawer input[type="date"]`, `.lab-drawer input[type="time"]`에 `padding: 10px 14px; line-height: 1.5; min-height: 44px` 명시하여 다른 입력칸과 동일한 높이로 맞춤.
+- **증상**: `-webkit-appearance: none` 적용 후 다른 입력칸보다 세로가 짧게 렌더링.
+- **원인**: iOS Safari는 form 요소에 `min-height`를 무시하는 경우가 있음. `line-height`도 date/time 입력에는 적용되지 않을 수 있음.
+- **수정**: `min-height: 44px` → `height: 44px`으로 변경. 절대값 `height`로 명시하여 다른 입력칸과 동일한 높이 강제 적용. `padding: 10px 14px`도 함께 명시.
+- 확인 완료.
 
 ---
 
