@@ -1669,11 +1669,11 @@ a.nav-user-name:hover { color: var(--red); }
 }
 .lab-drawer {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 230;
-  width: min(460px, 100%); padding: 26px;
+  width: min(460px, 100vw); padding: 26px;
   background: #fff; border-left: 4px solid var(--navy);
   box-shadow: -18px 0 45px rgba(15, 23, 42, 0.16);
   transform: translateX(105%); transition: transform 0.2s ease;
-  overflow-y: auto;
+  overflow-x: hidden; overflow-y: auto;
 }
 .lab-drawer.open {
   transform: translateX(0);
@@ -1705,6 +1705,11 @@ a.nav-user-name:hover { color: var(--red); }
   border: 1px solid var(--line); border-left: 4px solid var(--red); border-radius: 0;
   background: var(--blue-soft); color: var(--navy);
   font-size: 0.9rem;
+}
+.lab-drawer input[type="date"],
+.lab-drawer input[type="time"] {
+  -webkit-appearance: none; appearance: none;
+  display: block; width: 100%; box-sizing: border-box;
 }
 .modal-list {
   display: grid; gap: 8px; margin-top: 18px;
