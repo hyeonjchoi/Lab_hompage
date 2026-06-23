@@ -7,6 +7,17 @@
 
 ## 2026-06-23 진행 요약
 
+### 4. Supabase 자동 pause 방지 — GitHub Actions 데일리 핑 추가
+
+- **배경**: Supabase 무료 플랜은 7일 비활성 시 프로젝트가 자동 pause됨.
+- **해결**: `.github/workflows/keep-supabase-alive.yml` 생성. GitHub Actions 스케줄러(`cron: '0 1 * * *'`)로 매일 01:00 UTC(10:00 KST)에 Supabase REST API(`/rest/v1/`)를 자동 호출해 활성 상태 유지.
+- GitHub Actions 탭에서 `workflow_dispatch`로 수동 실행도 가능.
+- GitHub에 push 완료 (`hyeonjchoi/Lab_hompage` main 브랜치).
+
+---
+
+## 2026-06-23 진행 요약
+
 ### 1. 알림 완전 미수신 핵심 버그 수정 (`supabase/functions/push-reminders/index.ts`)
 
 - **증상**: 알림이 타이밍과 무관하게 전혀 오지 않음.
@@ -32,6 +43,37 @@
 - "로컬 테스트 알림" 버튼 추가 — `CAPNotifications.sendTest()` 호출로 알림 파이프라인 즉시 검증.
 - "알림 재등록" 버튼을 `settings.enabled = true`일 때만 표시 → **항상 표시**로 변경 (알림 OFF 상태에서도 재등록 가능).
 - `supabase-client.js`에 `getMyPushSubscriptions(memberId)` 메서드 추가 — 진단 패널의 DB 구독 확인에 사용.
+
+### 4. 알림 중복 발송 + 타입 라벨 오류 수정 (`cap-notifications.js`, `sw.js`)
+
+- **증상**: '수업' 일정에 알림이 두 번 도착 — "지금 시작 · 수업"(서버 push), "시작 시간 · 일정"(클라이언트 scan).
+- **원인 ①(중복)**: PWA 열려있을 때 `scanAndNotify()`(클라이언트)가 서버 cron push와 동시에 실행 → 같은 이벤트에 2개 도착.
+- **원인 ②(타입 라벨)**: 클라이언트 typeLabel 매핑에 `class`→`'수업'`, `seminar`→`'세미나'` 누락 → 'class' 타입이 '일정'으로 출력.
+- **수정**:
+  - `scanAndNotify()` 시작 시 push 구독 존재 여부 확인, 구독 있으면 early return → 클라이언트 중복 차단. 구독 없는 환경에선 폴백으로 동작.
+  - `EVENT_TYPE_LABEL` 맵 추가 (`meeting: '미팅', conference: '학회/모임', class: '수업', seminar: '세미나'`) — 서버 `TYPE_LABEL`과 동일.
+  - `TIMING_DEFS`에 `bodyLabel` 필드 추가 — 설정 화면 표시용 label과 알림 본문 표시용 bodyLabel 분리 (예: atStart `bodyLabel: '지금 시작'`으로 서버와 일치).
+  - `sw.js` push 핸들러에 `tag` 추가 (title 기반 자동 생성) → 서버 push가 중복 스택되지 않도록 처리.
+
+### 5. 알림 타이밍 오차 수정 — cronNow 기반 계산 (`push-reminders/index.ts`)
+
+- **증상**: "5분 전" 알림 누락, 대신 "시작 시간" 알림이 이른 시간에 도착. (예: 11:57 이벤트 → 11:53에 atStart 발송, 5분 전 알림 미발송)
+- **원인**: Edge Function 실행 지연(수 초)으로 인해 경계값 이벤트가 잘못 분류됨. 크론 11:52:05 실행 시 `now` 기준 `minutesUntil = 4.97` → atStart [0,5) 오분류. min5 [5,10)에 포착되어야 하지만 경계 직전에 떨어짐.
+- **수정**: `const cronNow = new Date(Math.floor(now.getTime() / 300000) * 300000)` — 실행 시각을 직전 5분 정각으로 내림(floor). `minutesUntil`을 `cronNow` 기준으로 계산 → 크론 11:52:05, 이벤트 11:57 → cronNow=11:52:00 → `minutesUntil = 5.00` → min5 정상 분류.
+
+### 6. '5분 전' 알림 옵션 삭제 + 기본값 통일 (`cap-notifications.js`, `settings.html`, `push-reminders/index.ts`)
+
+- **이유**: min5 창 [5,10)이 atStart [0,5)와 인접해 편차가 크고 혼란 유발. 사용자 요청으로 제거.
+- **수정**:
+  - `push-reminders/index.ts` TIMING_WINDOWS에서 `event-min5` 항목 삭제.
+  - `cap-notifications.js` TIMING_DEFS에서 `min5` 항목 삭제.
+  - `getSettings()`에 마이그레이션 로직 추가 — localStorage에 `min5`가 남아 있으면 자동 제거, 결과가 빈 배열이면 기본값 복원.
+  - `settings.html` timingOptions에서 '5분 전' 체크박스 제거.
+- **잔여 타이밍 옵션**: `1일 전 / 당일 오전 9시 / 30분 전 / 15분 전 / 시작 시간`
+- **기본값 통일 확인**:
+  - 클라이언트: `timings: ['day1', 'atStart']` (`cap-notifications.js:78`)
+  - 서버: `const DEFAULT_TIMINGS = ['day1', 'atStart']` (`push-reminders/index.ts:24`)
+  - DB 행 없을 때 서버가 사용하는 기본값과 클라이언트 기본값 완전 일치.
 
 ---
 
