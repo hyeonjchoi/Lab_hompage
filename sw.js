@@ -33,10 +33,13 @@ self.addEventListener('install', event => {
 self.addEventListener('push', event => {
   let data = { title: 'KW CAP Lab', body: '새 알림이 있습니다.' };
   try { if (event.data) data = event.data.json(); } catch (e) { /* keep default */ }
+  const tag = data.tag || ('cap-push-' + (data.title || '').replace(/\s/g, '').slice(0, 24));
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: 'icons/icon-192.png',
+      tag: tag,
+      renotify: false,
       data: { url: data.url || 'lab.html' }
     })
   );

@@ -16,6 +16,9 @@ function urlBase64ToUint8Array(base64String) {
   return out;
 }
 
+// 이벤트 타입 → 알림 본문 레이블 (서버 push-reminders TYPE_LABEL과 동일하게 유지)
+const EVENT_TYPE_LABEL = { meeting: '미팅', conference: '학회/모임', class: '수업', seminar: '세미나' };
+
 // 각 타이밍 옵션의 설명과 알림 창 정의
 // KST 자연어 날짜·시간 (서버 formatKSTDatetime과 동일 로직)
 function formatKSTDatetime(dateStr, timeStr) {
@@ -37,13 +40,14 @@ function formatKSTDatetime(dateStr, timeStr) {
 }
 
 // 서버(push-reminders) 창과 일치: [low, high) 구간이 겹치지 않음.
+// label: 설정 화면 체크박스 표시용, bodyLabel: 알림 본문 표시용 (서버 label과 동일)
 const TIMING_DEFS = {
-  day1:     { label: '1일 전',       low: 1380, high: 1500 },
-  morning9: { label: '당일 오전 9시', special: 'morning9' },
-  min30:    { label: '30분 전',       low: 27,   high: 33 },
-  min15:    { label: '15분 전',       low: 12,   high: 18 },
-  min5:     { label: '5분 전',        low: 5,    high: 10 },
-  atStart:  { label: '시작 시간',     low: 0,    high: 5 },
+  day1:     { label: '1일 전',       bodyLabel: '내일 일정',    low: 1380, high: 1500 },
+  morning9: { label: '당일 오전 9시', bodyLabel: '오늘의 일정', special: 'morning9' },
+  min30:    { label: '30분 전',       bodyLabel: '30분 후 시작', low: 27,   high: 33 },
+  min15:    { label: '15분 전',       bodyLabel: '15분 후 시작', low: 12,   high: 18 },
+  min5:     { label: '5분 전',        bodyLabel: '5분 후 시작',  low: 5,    high: 10 },
+  atStart:  { label: '시작 시간',     bodyLabel: '지금 시작',    low: 0,    high: 5 },
 };
 
 const CAPNotifications = {
@@ -213,6 +217,13 @@ const CAPNotifications = {
   async scanAndNotify() {
     const settings = this.getSettings();
     if (!settings.enabled || !this.isSupported() || Notification.permission !== 'granted') return;
+    // 서버 push 구독이 등록되어 있으면 서버(push-reminders)가 알림을 처리하므로
+    // 클라이언트 중복 발송을 방지한다. 구독이 없을 때만 클라이언트가 폴백으로 동작.
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) return;
+    } catch (e) { /* 서비스 워커 미지원 환경 — 클라이언트 scan으로 폴백 */ }
     const due = this.buildReminderList({ dueOnly: true });
     const sent = this.getSent();
     for (const reminder of due) {
@@ -256,7 +267,7 @@ const CAPNotifications = {
       if (!eventAt) return;
 
       const minutesUntil = (eventAt - now) / 60000;
-      const typeLabel = eventType === 'meeting' ? '미팅' : eventType === 'conference' ? '학회/모임' : '일정';
+      const typeLabel = EVENT_TYPE_LABEL[eventType] || '일정';
       const dtLabel = formatKSTDatetime(event.date, event.startTime || '09:00');
 
       timings.forEach(timing => {
@@ -285,7 +296,7 @@ const CAPNotifications = {
               id: 'event_' + timing + '_' + event.id + '_' + event.date,
               kind: typeLabel,
               title: (event.title || '다가오는 일정') + ' · ' + dtLabel,
-              body: def.label + ' · ' + typeLabel,
+              body: (def.bodyLabel || def.label) + ' · ' + typeLabel,
               url: 'lab.html'
             });
           }

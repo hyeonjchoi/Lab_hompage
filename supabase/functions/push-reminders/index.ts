@@ -86,7 +86,12 @@ serve(async (req) => {
       const at = new Date(`${ev.event_date}T${timeStr}:00+09:00`)
       if (isNaN(at.getTime())) continue  // 파싱 실패 건너뜀
 
-      const minutesUntil = (at.getTime() - now.getTime()) / 60000
+      // 5분 크론의 실행 지연(수 초)으로 인한 창 경계 오분류 방지:
+      // 실제 실행 시각 대신 직전 5분 단위 정각 기준으로 minutesUntil을 계산한다.
+      // 예) 이벤트 11:57, 크론 11:52:05 → now 기준 4.97분 → atStart 오분류
+      //     cronNow(11:52:00) 기준 5.00분 → min5 정상 분류
+      const cronNow = new Date(Math.floor(now.getTime() / 300000) * 300000)
+      const minutesUntil = (at.getTime() - cronNow.getTime()) / 60000
       const allTargets: string[] = (ev.attendee_ids?.length) ? ev.attendee_ids : allMemberIds
       const eventType = ev.type || 'meeting'
       const typeLabel = TYPE_LABEL[eventType] || '일정'
