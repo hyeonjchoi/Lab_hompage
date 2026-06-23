@@ -244,6 +244,14 @@ const CAPData = {
     const { error } = await getSupabase().from('push_subscriptions').delete().eq('endpoint', endpoint);
     _throw(error);
   },
+  async getMyPushSubscriptions(memberId) {
+    const { data, error } = await getSupabase()
+      .from('push_subscriptions')
+      .select('id, endpoint, created_at')
+      .eq('member_id', memberId);
+    if (error) return [];
+    return data || [];
+  },
 
   // ── Notification Settings ─────────────────
   async upsertNotificationSettings(memberId, timings, types) {

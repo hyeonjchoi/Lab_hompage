@@ -241,7 +241,25 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 
 -- ══════════════════════════════════════════════
--- 16. 알림 발송 기록 (notification_dispatch_log)
+-- 16. 알림 수신 설정 (notification_settings)
+-- 구성원별 알림 타이밍·종류 선택. 행 없으면 서버 기본값(day1, atStart) 사용.
+-- ══════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS notification_settings (
+  member_id  UUID PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+  timings    JSONB NOT NULL DEFAULT '["day1","atStart"]'::jsonb,
+  types      JSONB NOT NULL DEFAULT '{"class":true,"meeting":true,"conference":true,"goal":true,"feedback":true}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE notification_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "notification_settings_select_own" ON notification_settings
+  FOR SELECT USING (member_id = current_member_id());
+CREATE POLICY "notification_settings_insert_own" ON notification_settings
+  FOR INSERT WITH CHECK (member_id = current_member_id());
+CREATE POLICY "notification_settings_update_own" ON notification_settings
+  FOR UPDATE USING (member_id = current_member_id());
+
+-- ══════════════════════════════════════════════
+-- 17. 알림 발송 기록 (notification_dispatch_log)
 -- 일정/목표 마감 같은 시간 기반 알림의 중복 발송을 막기 위한 기록
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS notification_dispatch_log (

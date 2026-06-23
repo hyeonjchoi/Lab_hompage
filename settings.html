@@ -188,12 +188,21 @@
             '</div>' +
           '</div>' +
 
-          (settings.enabled ?
-            '<div class="settings-sub-section">' +
-              '<button class="btn-sm" onclick="reregisterPush()" style="margin-top:4px">알림 재등록 (이 기기)</button>' +
-              '<p class="settings-hint" style="margin-top:6px">알림이 오지 않으면 이 버튼을 눌러 이 기기에 알림을 다시 등록하세요.</p>' +
-            '</div>'
-            : '') +
+          '<div class="settings-sub-section">' +
+            '<button class="btn-sm" onclick="reregisterPush()" style="margin-top:4px">알림 재등록 (이 기기)</button>' +
+            '<p class="settings-hint" style="margin-top:6px">알림이 오지 않으면 이 버튼을 눌러 이 기기에 알림을 다시 등록하세요.</p>' +
+          '</div>' +
+
+          '<div class="settings-sub-section">' +
+            '<h3 class="settings-subsec-title">알림 상태 진단</h3>' +
+            '<div id="notif-diag-panel" style="font-size:0.82rem;background:#f8f9fa;border:1px solid #e2e8f0;border-radius:6px;padding:12px;margin-top:8px">' +
+              '<p style="color:#64748b;margin:0">아래 버튼을 눌러 알림 파이프라인 상태를 확인하세요.</p>' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">' +
+              '<button class="btn-sm" id="diag-btn" onclick="diagnoseNotif()">진단 실행</button>' +
+              '<button class="btn-sm" onclick="sendTestNotif()">로컬 테스트 알림</button>' +
+            '</div>' +
+          '</div>' +
 
           (CAPNotifications.isSupported() ? '' :
             '<p class="settings-hint" style="color:var(--red);margin-top:8px">이 브라우저는 웹 푸시 알림을 지원하지 않습니다.</p>') +
@@ -291,6 +300,85 @@
         } catch (e) { /* 네트워크 오류 — localStorage 저장은 완료됨 */ }
       }
       showToast('알림 시간 설정이 저장되었습니다.');
+    }
+
+    async function diagnoseNotif() {
+      var btn = document.getElementById('diag-btn');
+      var panel = document.getElementById('notif-diag-panel');
+      if (!panel) return;
+      if (btn) { btn.disabled = true; btn.textContent = '진단 중...'; }
+
+      var rows = [];
+      function row(label, ok, msg) {
+        var color = ok ? '#16a34a' : '#dc2626';
+        var icon  = ok ? '✓' : '✗';
+        rows.push('<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:1px solid #e2e8f0">' +
+          '<span style="color:#374151">' + label + '</span>' +
+          '<span style="color:' + color + ';margin-left:8px;text-align:right;max-width:60%">' + icon + ' ' + msg + '</span>' +
+        '</div>');
+      }
+
+      // 1. 브라우저 지원
+      var supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+      row('브라우저 지원', supported, supported ? '지원됨' : '이 브라우저는 웹 푸시 미지원');
+
+      // 2. 알림 권한
+      var perm = 'Notification' in window ? Notification.permission : 'unsupported';
+      row('알림 권한', perm === 'granted',
+        perm === 'granted' ? '허용됨' : (perm === 'denied' ? '차단됨 (브라우저 설정에서 직접 허용)' : '아직 요청 안 함 → ON 토글을 누르세요'));
+
+      // 3. 알림 활성화 (localStorage)
+      var settings = CAPNotifications.getSettings();
+      row('알림 ON/OFF', settings.enabled, settings.enabled ? 'ON' : 'OFF (위 토글을 눌러 켜세요)');
+
+      // 4. 서비스 워커
+      var swOk = false;
+      try {
+        var swReg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise(function(_, reject) { setTimeout(function() { reject(new Error('timeout')); }, 4000); })
+        ]);
+        swOk = !!swReg;
+      } catch(e) {}
+      row('서비스 워커', swOk, swOk ? '활성' : '응답 없음 — 페이지 새로고침 후 재시도');
+
+      // 5. 브라우저 Push 구독
+      var browserSub = null;
+      try {
+        var reg = await navigator.serviceWorker.ready;
+        browserSub = await reg.pushManager.getSubscription();
+      } catch(e) {}
+      row('브라우저 Push 구독', !!browserSub, browserSub ? '등록됨 (…' + (browserSub.endpoint || '').slice(-20) + ')' : '없음 → 아래 재등록 버튼을 누르세요');
+
+      // 6. DB Push 구독
+      var dbCount = 0;
+      try {
+        var session = CAPAuth.getSession();
+        if (session) {
+          var subs = await CAPData.getMyPushSubscriptions(session.userId);
+          dbCount = subs.length;
+        }
+      } catch(e) {}
+      row('DB Push 구독', dbCount > 0,
+        dbCount > 0 ? 'DB에 ' + dbCount + '개 등록됨' : 'DB에 없음 → 재등록 버튼을 눌러주세요');
+
+      // 결과 표시
+      var allOk = rows.every(function(r) { return r.indexOf('color:#16a34a') !== -1; });
+      var summary = allOk
+        ? '<p style="color:#16a34a;font-weight:600;margin:0 0 8px">✓ 모든 항목 정상입니다.</p>'
+        : '<p style="color:#dc2626;font-weight:600;margin:0 0 8px">✗ 항목을 확인하여 빨간 항목을 해결하세요.</p>';
+      panel.innerHTML = summary + rows.join('');
+
+      if (btn) { btn.disabled = false; btn.textContent = '다시 진단'; }
+    }
+
+    async function sendTestNotif() {
+      try {
+        await CAPNotifications.sendTest();
+        showToast('테스트 알림을 전송했습니다. 잠시 후 알림이 뜨면 정상입니다.');
+      } catch(e) {
+        showToast('테스트 실패: ' + (e.message || e));
+      }
     }
 
     async function reregisterPush() {

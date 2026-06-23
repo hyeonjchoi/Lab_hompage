@@ -105,7 +105,8 @@ serve(async (req) => {
               body: `오늘의 일정 · ${typeLabel}`,
               url: 'lab.html',
             })
-            if (r.sent === 0 && r.removed > 0) {
+            if (r.sent === 0) {
+              // 아무것도 전송 안 됨(구독 없거나 모두 만료) — 재등록 후 재시도하도록 로그 삭제
               await admin.from('notification_dispatch_log').delete().eq('kind', 'event-morning9').eq('ref_id', ev.id)
             } else {
               eventSent++
@@ -131,8 +132,8 @@ serve(async (req) => {
             body: `${t.label} · ${typeLabel}`,
             url: 'lab.html',
           })
-          if (r.sent === 0 && r.removed > 0) {
-            // 구독이 모두 만료된 경우 — 재등록 후 재시도할 수 있도록 로그 삭제
+          if (r.sent === 0) {
+            // 아무것도 전송 안 됨(구독 없거나 모두 만료) — 재등록 후 재시도하도록 로그 삭제
             await admin.from('notification_dispatch_log').delete().eq('kind', t.kind).eq('ref_id', ev.id)
           } else {
             eventSent++
@@ -170,7 +171,8 @@ serve(async (req) => {
           body: `마감일 ${deadline}`,
           url: 'member-dashboard.html',
         })
-        if (r.sent === 0 && r.removed > 0) {
+        if (r.sent === 0) {
+          // 아무것도 전송 안 됨 — 재등록 후 재시도하도록 로그 삭제
           await admin.from('notification_dispatch_log').delete().eq('kind', 'goal-due').eq('ref_id', goal.id)
         } else {
           goalDue++
