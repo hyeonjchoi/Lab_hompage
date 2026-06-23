@@ -1,0 +1,37 @@
+name: Keep Supabase Alive
+
+# Supabase 무료 플랜은 7일 비활성 시 프로젝트가 자동 pause됨.
+# 매일 한 번 REST API를 호출해 활성 상태를 유지한다.
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 매일 01:00 UTC = 10:00 KST
+  workflow_dispatch:        # GitHub Actions 탭에서 수동 실행 가능
+
+jobs:
+  ping:
+    name: Ping Supabase REST API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: https://pfnqcwamznvaxgqahavi.supabase.co
+          # anon key는 supabase-client.js에 이미 공개되어 있어 여기에 직접 기재.
+          # 보안을 강화하려면 GitHub Repo → Settings → Secrets 에 SUPABASE_ANON_KEY를
+          # 추가하고 아래 값을 ${{ secrets.SUPABASE_ANON_KEY }} 로 교체하면 된다.
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmbnFjd2Ftem52YXhncWFoYXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NDc5OTEsImV4cCI6MjA5NzEyMzk5MX0.WzCEyb0WxI_X34d6XG7632Cy31J5_O5Yz58yRUUQygU
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          echo "HTTP status: ${HTTP_STATUS}"
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 400 ]; then
+            echo "Ping failed — Supabase may be paused or unreachable."
+            exit 1
+          fi
+
+          echo "Supabase is active."
