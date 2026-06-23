@@ -5,6 +5,36 @@
 
 ---
 
+## 2026-06-23 진행 요약
+
+### 1. 알림 완전 미수신 핵심 버그 수정 (`supabase/functions/push-reminders/index.ts`)
+
+- **증상**: 알림이 타이밍과 무관하게 전혀 오지 않음.
+- **원인**: 크론 실행 시 push_subscriptions에 구독이 없는 상태(등록 전 또는 만료 후 삭제된 상태)에서 알림 창에 진입하면 `sendPushToMembers()` 가 `{ sent: 0, removed: 0 }`을 반환. 기존 조건 `sent === 0 && removed > 0`은 이 케이스를 처리하지 못해 **아무것도 발송하지 않았는데도 `notification_dispatch_log`에 해당 이벤트가 "발송됨"으로 기록**됨. 이후 사용자가 구독을 등록해도 7일간 재시도 불가 → 실질적으로 알림이 영구 차단.
+- **수정**: 조건을 `sent === 0 && removed > 0` → `sent === 0`으로 단순화. 아무것도 전송되지 않은 경우(구독 없음 또는 만료 포함) 무조건 dispatch_log 항목 삭제 → 구독 등록 후 다음 크론 주기에 재시도 가능. morning9·TIMING_WINDOWS·goal-due 세 블록 모두 적용.
+- Edge Function 재배포 완료.
+
+### 2. `notification_settings` 테이블 생성 (`supabase-schema.sql`, Supabase DB)
+
+- **원인**: `supabase-schema.sql`에 `notification_settings` 테이블 정의가 누락되어 있었음. 실제 DB에도 존재하지 않아 `upsertNotificationSettings()` 호출 시 조용히 실패, 사용자 타이밍·종류 설정이 서버에 저장되지 않음.
+- **수정**: `notification_settings (member_id UUID PK, timings JSONB, types JSONB, updated_at TIMESTAMPTZ)` 테이블 정의를 schema에 추가. RLS 정책(SELECT/INSERT/UPDATE 본인만) 포함.
+- `npx supabase db query --linked` 로 운영 DB에 즉시 적용 완료.
+
+### 3. 알림 상태 진단 패널 추가 (`settings.html`, `supabase-client.js`)
+
+- `settings.html`에 "알림 상태 진단" 섹션 추가. "진단 실행" 버튼 클릭 시 6개 항목을 순차 검사하고 결과를 색상(녹색/빨간색)으로 표시:
+  1. 브라우저 웹 푸시 지원 여부
+  2. 알림 권한 상태 (granted / denied / default)
+  3. 알림 ON/OFF (localStorage settings.enabled)
+  4. 서비스 워커 활성 여부
+  5. 브라우저 Push 구독 등록 여부 (pushManager)
+  6. DB Push 구독 등록 여부 (push_subscriptions 테이블 조회)
+- "로컬 테스트 알림" 버튼 추가 — `CAPNotifications.sendTest()` 호출로 알림 파이프라인 즉시 검증.
+- "알림 재등록" 버튼을 `settings.enabled = true`일 때만 표시 → **항상 표시**로 변경 (알림 OFF 상태에서도 재등록 가능).
+- `supabase-client.js`에 `getMyPushSubscriptions(memberId)` 메서드 추가 — 진단 패널의 DB 구독 확인에 사용.
+
+---
+
 ## 2026-06-22 진행 요약
 
 ### 1. 알림 5분 전 타이밍 오류 수정 (`supabase/functions/push-reminders/index.ts`, `cap-notifications.js`)
