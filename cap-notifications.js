@@ -46,7 +46,6 @@ const TIMING_DEFS = {
   morning9: { label: '당일 오전 9시', bodyLabel: '오늘의 일정', special: 'morning9' },
   min30:    { label: '30분 전',       bodyLabel: '30분 후 시작', low: 27,   high: 33 },
   min15:    { label: '15분 전',       bodyLabel: '15분 후 시작', low: 12,   high: 18 },
-  min5:     { label: '5분 전',        bodyLabel: '5분 후 시작',  low: 5,    high: 10 },
   atStart:  { label: '시작 시간',     bodyLabel: '지금 시작',    low: 0,    high: 5 },
 };
 
@@ -61,6 +60,11 @@ const CAPNotifications = {
       saved = raw ? JSON.parse(raw) : {};
     } catch (err) {
       saved = {};
+    }
+    // min5 옵션 삭제 후 호환 처리 — 저장된 설정에 남아있어도 자동 제거
+    if (Array.isArray(saved.timings)) {
+      saved.timings = saved.timings.filter(t => t !== 'min5');
+      if (saved.timings.length === 0) saved.timings = ['day1', 'atStart'];
     }
     return {
       enabled: false,
