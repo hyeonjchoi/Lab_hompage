@@ -85,6 +85,14 @@
   - 서버: `const DEFAULT_TIMINGS = ['day1', 'atStart']` (`push-reminders/index.ts:24`)
   - DB 행 없을 때 서버가 사용하는 기본값과 클라이언트 기본값 완전 일치.
 
+### 7. 알림 설정 localStorage를 userId별로 분리 (`cap-notifications.js`)
+
+- **증상**: 같은 기기(Safari)에서 다른 구성원 계정으로 로그인해도 이전 사용자의 알림 시간 설정이 그대로 표시됨.
+- **원인**: `cap_notification_settings` / `cap_notification_sent` 키가 userId 구분 없이 공유되어, 기기 단위로 하나의 설정만 존재함.
+- **수정**: `_key(base)` 헬퍼 추가 — 세션이 있으면 `<base>_<userId>` 형태로 반환, 없으면 기본 키 사용. `getSettings()` / `saveSettings()` / `getSent()` / `saveSent()` 모두 `_key()` 경유하도록 변경.
+- **마이그레이션**: userId 키에 값이 없을 때 구 공유 키에서 자동으로 불러와 이어서 사용 — 기존 사용자 설정 유지.
+- **결과**: 같은 기기에서 계정마다 독립된 설정 보유. 처음 로그인한 구성원은 기본값('1일 전 + 시작 시간') 표시.
+
 ---
 
 ## 2026-06-22 진행 요약
