@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-06-24 진행 요약 (2차 — 관리자 패널 및 로그인 동기화)
+
+### 1. 모바일 관리자 패널 레이아웃 전면 개선 (`style.css`, `admin.html`)
+
+- **탭 버튼**: 기존 2열 그리드 → 한 줄 균등 분할로 변경. `flex: 1 1 0` + `min-width: 0`으로 5개 버튼이 화면 너비를 5등분. 스크롤 없이 고정 배치되어 터치 시 위치 이탈 없음. (`word-break: keep-all`, `min-height: 46px`, `align-items: center`)
+- **구성원 관리 테이블**: 카드뷰 해제 → `.member-table-wrap` 래퍼 + CSS 오버라이드로 기존 가로 스크롤 표 형태 복원. 6개 열(이름/학번/역할/그룹/수정일/작업)이 표로 유지됨.
+- **논문/발표 테이블**: 카드뷰 유지하되 행 간격 8px, 셀 패딩 4px로 압축하여 화면 내 정보 밀도 개선.
+
+### 2. 구성원 관리 학번 칸 표시 개선 (`admin.html`)
+
+- **placeholder 간소화**: 기존 `"학번 미지정 · 임시 비밀번호 CAP_이름"` → `"CAP_이름"` 만 표시. 빈 칸이면 학번 미지정임이 명확하므로 안내 문구 제거.
+- **동명 중복 구성원 임시비번 표시**: 동명 2번째 구성원의 임시비번은 `CAP_이름_2` 형태. 기존에는 placeholder로만 표시되어 잘렸으나, 이 경우에는 `studentValue`로 직접 표시되도록 변경 → 관리자가 텍스트로 확인 가능.
+- **CAP_ 값 저장 방지**: `updateStudentId()` 에 `CAP_` 시작 값 입력 시 경고 후 차단. 실수로 임시비번을 학번으로 저장하는 오동작 방지.
+
+### 3. 그룹 변경 시 역할(role) 자동 동기화 (`admin.html`)
+
+- `updateGroup()` 함수에 `GROUP_ROLE_MAP` 추가: `integrated → phd`, `master → master`, `ra → ra`, `alumni → alumni` 등 그룹 변경 시 역할 자동 반영.
+- admin 역할 보유자는 그룹 변경의 영향을 받지 않고 `toggleRole()`로만 변경 가능.
+
+### 4. 개인 설정에서 학번 변경 → 로그인 즉시 동기화 수정 (`settings.html`, `create-member/index.ts`)
+
+- **문제**: `settings.html`의 `updateStudentIdAndPassword()`가 클라이언트 SDK `auth.updateUser()`로 이메일 변경을 시도하는데, Supabase는 이메일 변경 시 확인 메일이 필요해 `@kwcaplab.internal` 도메인에서는 즉시 반영되지 않음. 결과적으로 학번 변경 후 로그인 불가 상태 발생 가능.
+- **수정**: Edge Function `sync-login` 액션에 **본인 계정 업데이트 허용** 조건 추가 (`member.auth_user_id === user.id`). `settings.html`에서 `syncMemberLogin()` (Edge Function 경유)으로 교체하여, service role key로 이메일 즉시 확정 + Auth 계정 갱신 보장.
+- **3-3 확인**: 동명 구성원이라도 정식 학번 입력 시 학번 기반 이메일로 생성되어 충돌 없이 정상 처리됨 (코드 변경 불필요).
+
+### 5. 동일 이름 재추가 시 '이미 등록된 이메일' 오류 수정 (`create-member/index.ts`)
+
+- **원인**: 구성원 삭제 후 재추가 시 Auth 계정이 고아 상태로 남아있으면, DB에는 없어도 Auth에는 `TBD_이름` 이메일이 존재. `nextTemporaryLoginId()`는 DB만 조회해 같은 ID를 반환하고, Auth 생성 시 충돌 발생.
+- **수정**: `createUser()` 호출 전 Auth 사용자 목록을 조회해 동일 이메일 계정이 있으면 새로 생성하지 않고 재사용(비밀번호·메타데이터 갱신)하도록 변경.
+
+---
+
 ## 2026-06-24 진행 요약
 
 ### Keep Supabase Alive workflow 401 오류 수정
