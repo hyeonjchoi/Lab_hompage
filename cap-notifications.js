@@ -53,8 +53,17 @@ const CAPNotifications = {
   SETTINGS_KEY: 'cap_notification_settings',
   SENT_KEY: 'cap_notification_sent',
 
+  // userId별로 키 분리 — 같은 기기에서 계정마다 독립된 설정 유지
+  _key(base) {
+    const session = window.CAPAuth && CAPAuth.getSession ? CAPAuth.getSession() : null;
+    return session ? (base + '_' + session.userId) : base;
+  },
+
   getSettings() {
-    const raw = localStorage.getItem(this.SETTINGS_KEY);
+    const key = this._key(this.SETTINGS_KEY);
+    // userId 키에 없으면 공유 키에서 마이그레이션
+    const raw = localStorage.getItem(key) ||
+      (key !== this.SETTINGS_KEY ? localStorage.getItem(this.SETTINGS_KEY) : null);
     let saved = {};
     try {
       saved = raw ? JSON.parse(raw) : {};
@@ -91,11 +100,11 @@ const CAPNotifications = {
   },
 
   saveSettings(settings) {
-    localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(settings));
+    localStorage.setItem(this._key(this.SETTINGS_KEY), JSON.stringify(settings));
   },
 
   getSent() {
-    const raw = localStorage.getItem(this.SENT_KEY);
+    const raw = localStorage.getItem(this._key(this.SENT_KEY));
     try {
       return raw ? JSON.parse(raw) : {};
     } catch (err) {
@@ -104,7 +113,7 @@ const CAPNotifications = {
   },
 
   saveSent(sent) {
-    localStorage.setItem(this.SENT_KEY, JSON.stringify(sent));
+    localStorage.setItem(this._key(this.SENT_KEY), JSON.stringify(sent));
   },
 
   isSupported() {
