@@ -202,15 +202,34 @@ serve(async (req) => {
     const interest = group === 'alumni' ? (affiliation ?? '') : ''
 
     // 3) Auth 유저 생성 (학번이 없으면 ID는 TBD_이름, 임시 비밀번호는 CAP_이름)
+    //    동일 이메일의 고아 Auth 계정이 있으면 재사용(업데이트)하고 새로 만들지 않음
     let auth_user_id: string | null = null
-    const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
-      email: loginEmail(loginId),
-      password: loginPassword(loginId, name),
-      email_confirm: true,
-      user_metadata: { name },
-    })
-    if (authErr) return json({ error: `계정 생성 실패: ${authErr.message}` }, 400)
-    auth_user_id = authUser.user.id
+    const targetEmail = loginEmail(loginId)
+    const targetPassword = loginPassword(loginId, name)
+
+    const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    const existingAuthUser = listed?.users.find(
+      (u) => u.email?.toLowerCase() === targetEmail.toLowerCase()
+    )
+
+    if (existingAuthUser) {
+      // 고아 Auth 계정 재사용: 비밀번호·메타데이터만 갱신
+      await admin.auth.admin.updateUserById(existingAuthUser.id, {
+        password: targetPassword,
+        email_confirm: true,
+        user_metadata: { name },
+      })
+      auth_user_id = existingAuthUser.id
+    } else {
+      const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
+        email: targetEmail,
+        password: targetPassword,
+        email_confirm: true,
+        user_metadata: { name },
+      })
+      if (authErr) return json({ error: `계정 생성 실패: ${authErr.message}` }, 400)
+      auth_user_id = authUser.user.id
+    }
 
     // 4) members 테이블 삽입
     const row: Record<string, unknown> = {
