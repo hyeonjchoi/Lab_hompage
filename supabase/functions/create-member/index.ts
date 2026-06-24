@@ -43,7 +43,25 @@ function loginEmail(studentId: string): string {
 }
 
 function loginPassword(loginId: string, name: string): string {
-  return loginId.startsWith('TBD_') ? `CAP_${name}` : loginId
+  const base = `TBD_${name}`
+  if (!loginId.startsWith(base)) return loginId
+  return `CAP_${name}${loginId.slice(base.length)}`
+}
+
+async function nextTemporaryLoginId(admin: ReturnType<typeof createClient>, name: string): Promise<string> {
+  const base = `TBD_${name}`
+  const { data, error } = await admin
+    .from('members')
+    .select('student_id')
+    .like('student_id', `${base}%`)
+  if (error) throw error
+
+  const used = new Set((data || []).map((row) => row.student_id))
+  if (!used.has(base)) return base
+
+  let suffix = 2
+  while (used.has(`${base}_${suffix}`)) suffix += 1
+  return `${base}_${suffix}`
 }
 
 serve(async (req) => {
@@ -164,7 +182,7 @@ serve(async (req) => {
     }
 
     if (!name) return json({ error: '이름은 필수입니다' }, 400)
-    const loginId = studentId || `TBD_${name}`
+    const loginId = studentId || await nextTemporaryLoginId(admin, name)
 
     const role = group === 'professor'
       ? (caller.role)        // professor도 admin 유지

@@ -288,13 +288,20 @@
       alumni: '졸업생'
     };
 
+    function getTempPasswordLabel(member) {
+      var sid = member.student_id || '';
+      var base = 'TBD_' + member.name;
+      var suffix = sid.indexOf(base) === 0 ? sid.slice(base.length) : '';
+      return 'CAP_' + member.name + suffix;
+    }
+
     async function renderMemberTable() {
       var members = await CAPData.getMembers();
       var tbody = document.getElementById('member-tbody');
       tbody.innerHTML = members.map(function (m) {
         var isTempLogin = (m.student_id || '').indexOf('TBD_') === 0;
         var studentValue = isTempLogin ? '' : (m.student_id || '');
-        var studentPlaceholder = isTempLogin ? '학번 미지정 · 임시 비밀번호 CAP_' + m.name : '학번 입력';
+        var studentPlaceholder = isTempLogin ? '학번 미지정 · 임시 비밀번호 ' + getTempPasswordLabel(m) : '학번 입력';
         return '<tr>' +
           '<td><strong>' + escHtml(m.name) + '</strong></td>' +
           '<td><input style="border:1px solid var(--line);border-radius:4px;padding:3px 7px;font-size:0.84rem;width:120px" ' +
