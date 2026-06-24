@@ -108,6 +108,9 @@
     var addingArticle = false;
     var addingPres = false;
     var addingAward = false;
+    var editingArticleId = null;
+    var editingPresId = null;
+    var editingAwardId = null;
 
     function getPublicationYear(item) {
       return item && item.year ? String(item.year).trim() : '연도 미정';
@@ -184,14 +187,33 @@
 
       list.innerHTML = articles.length ? groupByPublicationYear(articles).map(function (group) {
         return renderPublicationGroup(group.year, group.items.map(function (a) {
-          var deleteBtn = isAdmin
-            ? '<button class="btn-sm danger" onclick="deleteArticle(\'' + escHtml(a.id) + '\')" style="margin-top:10px">삭제</button>'
+          if (isLoggedIn && a.id === editingArticleId) {
+            return '<div class="pub-entry inline-form" style="background:var(--bg-alt,#f5f7fa);padding:16px;border-radius:6px">' +
+              '<h4 style="margin:0 0 12px">논문 수정</h4>' +
+              '<div class="form-row">' +
+                '<div class="form-group"><label>제목</label><input id="ea-title" value="' + escHtml(a.title || '') + '"></div>' +
+                '<div class="form-group"><label>저자</label><input id="ea-authors" value="' + escHtml(a.authors || '') + '"></div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group"><label>저널</label><input id="ea-journal" value="' + escHtml(a.journal || '') + '"></div>' +
+                '<div class="form-group"><label>연도</label><input id="ea-year" value="' + escHtml(a.year || '') + '"></div>' +
+              '</div>' +
+              '<div class="form-group"><label>DOI / URL</label><input id="ea-doi" value="' + escHtml(a.doi || '') + '"></div>' +
+              '<button class="save-btn" onclick="saveEditArticleInline(\'' + escHtml(a.id) + '\')">저장</button>' +
+              '<button class="btn-sm" style="margin-left:8px" onclick="cancelEditArticleInline()">취소</button>' +
+              '</div>';
+          }
+          var adminBtns = isLoggedIn
+            ? '<div style="margin-top:10px">' +
+                '<button class="btn-sm" onclick="startEditArticle(\'' + escHtml(a.id) + '\')" style="margin-right:6px">수정</button>' +
+                (isAdmin ? '<button class="btn-sm danger" onclick="deleteArticle(\'' + escHtml(a.id) + '\')">삭제</button>' : '') +
+              '</div>'
             : '';
           return renderPublicationEntry({
             title: a.title,
             meta: [a.authors, a.journal].filter(Boolean).join(' · '),
             link: a.doi,
-            action: deleteBtn
+            action: adminBtns
           });
         }));
       }).join('') : '<li class="publication-year-group empty"><div class="pub-year">-</div><div class="pub-year-items"><div class="pub-entry"><b style="color:var(--muted)">논문 데이터를 추가해주세요.</b></div></div></li>';
@@ -229,13 +251,36 @@
 
       list.innerHTML = preses.length ? groupByPublicationYear(preses).map(function (group) {
         return renderPublicationGroup(group.year, group.items.map(function (p) {
-          var deleteBtn = isAdmin
-            ? '<button class="btn-sm danger" onclick="deletePres(\'' + escHtml(p.id) + '\')" style="margin-top:10px">삭제</button>'
+          if (isLoggedIn && p.id === editingPresId) {
+            return '<div class="pub-entry inline-form" style="background:var(--bg-alt,#f5f7fa);padding:16px;border-radius:6px">' +
+              '<h4 style="margin:0 0 12px">학술발표 수정</h4>' +
+              '<div class="form-row">' +
+                '<div class="form-group"><label>발표 제목</label><input id="ep-title" value="' + escHtml(p.title || '') + '"></div>' +
+                '<div class="form-group"><label>발표자</label><input id="ep-presenter" value="' + escHtml(p.presenter || '') + '"></div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group"><label>학회명</label><input id="ep-venue" value="' + escHtml(p.venue || '') + '"></div>' +
+                '<div class="form-group"><label>연도</label><input id="ep-year" value="' + escHtml(p.year || '') + '"></div>' +
+              '</div>' +
+              '<div class="form-group"><label>발표 형식</label>' +
+                '<select id="ep-type">' +
+                  '<option' + (p.pres_type === '구두 발표' ? ' selected' : '') + '>구두 발표</option>' +
+                  '<option' + (p.pres_type === '포스터 발표' ? ' selected' : '') + '>포스터 발표</option>' +
+                '</select></div>' +
+              '<button class="save-btn" onclick="saveEditPresInline(\'' + escHtml(p.id) + '\')">저장</button>' +
+              '<button class="btn-sm" style="margin-left:8px" onclick="cancelEditPresInline()">취소</button>' +
+              '</div>';
+          }
+          var adminBtns = isLoggedIn
+            ? '<div style="margin-top:10px">' +
+                '<button class="btn-sm" onclick="startEditPres(\'' + escHtml(p.id) + '\')" style="margin-right:6px">수정</button>' +
+                (isAdmin ? '<button class="btn-sm danger" onclick="deletePres(\'' + escHtml(p.id) + '\')">삭제</button>' : '') +
+              '</div>'
             : '';
           return renderPublicationEntry({
             title: p.title,
             meta: [p.presenter, p.venue, p.pres_type].filter(Boolean).join(' · '),
-            action: deleteBtn
+            action: adminBtns
           });
         }));
       }).join('') : '<li class="publication-year-group empty"><div class="pub-year">-</div><div class="pub-year-items"><div class="pub-entry"><b style="color:var(--muted)">학술발표 데이터를 추가해주세요.</b></div></div></li>';
@@ -271,14 +316,33 @@
 
       list.innerHTML = awards.length ? groupByPublicationYear(awards).map(function (group) {
         return renderPublicationGroup(group.year, group.items.map(function (a) {
-          var deleteBtn = isAdmin
-            ? '<button class="btn-sm danger" onclick="deleteAward(\'' + escHtml(a.id) + '\')" style="margin-top:10px">삭제</button>'
+          if (isLoggedIn && a.id === editingAwardId) {
+            return '<div class="pub-entry inline-form" style="background:var(--bg-alt,#f5f7fa);padding:16px;border-radius:6px">' +
+              '<h4 style="margin:0 0 12px">수상내역 수정</h4>' +
+              '<div class="form-row">' +
+                '<div class="form-group"><label>수상명</label><input id="ew-title" value="' + escHtml(a.title || '') + '"></div>' +
+                '<div class="form-group"><label>수상자</label><input id="ew-recipient" value="' + escHtml(a.recipient || '') + '"></div>' +
+              '</div>' +
+              '<div class="form-row">' +
+                '<div class="form-group"><label>수여 기관</label><input id="ew-venue" value="' + escHtml(a.venue || '') + '"></div>' +
+                '<div class="form-group"><label>연도</label><input id="ew-year" value="' + escHtml(a.year || '') + '"></div>' +
+              '</div>' +
+              '<div class="form-group"><label>설명</label><input id="ew-desc" value="' + escHtml(a.description || '') + '"></div>' +
+              '<button class="save-btn" onclick="saveEditAwardInline(\'' + escHtml(a.id) + '\')">저장</button>' +
+              '<button class="btn-sm" style="margin-left:8px" onclick="cancelEditAwardInline()">취소</button>' +
+              '</div>';
+          }
+          var adminBtns = isLoggedIn
+            ? '<div style="margin-top:10px">' +
+                '<button class="btn-sm" onclick="startEditAward(\'' + escHtml(a.id) + '\')" style="margin-right:6px">수정</button>' +
+                (isAdmin ? '<button class="btn-sm danger" onclick="deleteAward(\'' + escHtml(a.id) + '\')">삭제</button>' : '') +
+              '</div>'
             : '';
           return renderPublicationEntry({
             title: a.title,
             meta: [a.recipient, a.venue].filter(Boolean).join(' · '),
             desc: a.description,
-            action: deleteBtn
+            action: adminBtns
           });
         }));
       }).join('') : '<li class="publication-year-group empty"><div class="pub-year">-</div><div class="pub-year-items"><div class="pub-entry"><b style="color:var(--muted)">수상내역 데이터를 추가해주세요.</b></div></div></li>';
@@ -310,6 +374,33 @@
       showToast('논문이 추가되었습니다.');
       renderArticles();
     }
+    function startEditArticle(id) {
+      editingArticleId = id;
+      editingPresId = null;
+      editingAwardId = null;
+      renderArticles();
+    }
+    async function saveEditArticleInline(id) {
+      var title = document.getElementById('ea-title').value.trim();
+      if (!title) { alert('제목을 입력해주세요.'); return; }
+      try {
+        await CAPData.updateArticle(id, {
+          title: title,
+          authors: document.getElementById('ea-authors').value.trim(),
+          journal: document.getElementById('ea-journal').value.trim(),
+          year: document.getElementById('ea-year').value.trim(),
+          doi: document.getElementById('ea-doi').value.trim()
+        });
+        showToast('논문이 수정되었습니다.');
+        editingArticleId = null;
+        await renderArticles();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    function cancelEditArticleInline() {
+      editingArticleId = null;
+      renderArticles();
+    }
+
     async function deleteArticle(id) {
       if (!confirm('이 논문을 삭제하시겠습니까?')) return;
       await CAPData.removeArticle(id);
@@ -329,6 +420,33 @@
       showToast('학술발표가 추가되었습니다.');
       renderPresentations();
     }
+    function startEditPres(id) {
+      editingPresId = id;
+      editingArticleId = null;
+      editingAwardId = null;
+      renderPresentations();
+    }
+    async function saveEditPresInline(id) {
+      var title = document.getElementById('ep-title').value.trim();
+      if (!title) { alert('제목을 입력해주세요.'); return; }
+      try {
+        await CAPData.updatePresentation(id, {
+          title: title,
+          presenter: document.getElementById('ep-presenter').value.trim(),
+          venue: document.getElementById('ep-venue').value.trim(),
+          year: document.getElementById('ep-year').value.trim(),
+          pres_type: document.getElementById('ep-type').value
+        });
+        showToast('학술발표가 수정되었습니다.');
+        editingPresId = null;
+        await renderPresentations();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    function cancelEditPresInline() {
+      editingPresId = null;
+      renderPresentations();
+    }
+
     async function deletePres(id) {
       if (!confirm('이 발표를 삭제하시겠습니까?')) return;
       await CAPData.removePresentation(id);
@@ -348,6 +466,33 @@
       showToast('수상내역이 추가되었습니다.');
       renderAwards();
     }
+    function startEditAward(id) {
+      editingAwardId = id;
+      editingArticleId = null;
+      editingPresId = null;
+      renderAwards();
+    }
+    async function saveEditAwardInline(id) {
+      var title = document.getElementById('ew-title').value.trim();
+      if (!title) { alert('수상명을 입력해주세요.'); return; }
+      try {
+        await CAPData.updateAward(id, {
+          title: title,
+          recipient: document.getElementById('ew-recipient').value.trim(),
+          venue: document.getElementById('ew-venue').value.trim(),
+          year: document.getElementById('ew-year').value.trim(),
+          description: document.getElementById('ew-desc').value.trim()
+        });
+        showToast('수상내역이 수정되었습니다.');
+        editingAwardId = null;
+        await renderAwards();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    function cancelEditAwardInline() {
+      editingAwardId = null;
+      renderAwards();
+    }
+
     async function deleteAward(id) {
       if (!confirm('이 수상내역을 삭제하시겠습니까?')) return;
       await CAPData.removeAward(id);

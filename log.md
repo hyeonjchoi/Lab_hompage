@@ -1,5 +1,45 @@
 # KW CAP Lab 홈페이지 제작 로그
 
+---
+
+## 2026-06-24 진행 요약 (3차 — 논문/발표 수정 기능 및 순서 관리)
+
+### 1. 논문·발표·수상내역 수정(Edit) 기능 추가
+
+- **`supabase-client.js`**: `updateArticle(id, updates)`, `updatePresentation(id, updates)`, `updateAward(id, updates)` 함수 추가. Supabase `publications` 테이블 UPDATE.
+- **`admin.html` (관리자 패널 > 논문/발표 관리 탭)**:
+  - 각 섹션(논문·학술발표·수상내역) 상단에 **수정 패널** (`article-edit-panel`, `pres-edit-panel`, `award-edit-panel`) 추가. 수정 버튼 클릭 시 기존 값이 채워진 인라인 폼 표시.
+  - 테이블 마지막 열 `삭제` → `순서` + `작업(수정·삭제)` 2열로 분리.
+- **`publications.html` (연구 성과 페이지)**:
+  - 관리자(`isAdmin`) 로그인 시 각 항목에 **수정** 버튼 추가 (삭제 버튼 옆).
+  - 수정 클릭 시 해당 항목 위치에 인라인 편집 폼이 렌더링됨 (`editingArticleId` 등 상태 변수로 제어).
+  - 저장/취소 로직으로 원래 표시 복원.
+
+### 2. 연도별 자동 분류 및 연도 내 순서 직접 조정
+
+- **`supabase-client.js`**:
+  - `getArticles/getPresentations/getAwards` 쿼리에 `.order('sort_order', { ascending: true }).order('created_at', { ascending: false })` 추가. 신규 등록 항목(`sort_order: 0`)은 같은 연도 내 최상단 우선, 등록 최신 순으로 표시.
+  - `_movePubItem(type, id, direction)`: 같은 연도 그룹 내에서 sort_order를 정규화(0,1,2…)한 뒤 swap. Supabase에 해당 연도 항목들의 sort_order 일괄 업데이트.
+  - `moveArticleUp/Down`, `movePresUp/Down`, `moveAwardUp/Down` 래퍼 함수 추가.
+- **`admin.html`**:
+  - 논문·발표·수상내역 테이블이 **연도별로 그룹화**된 행으로 렌더링됨. 연도 헤더 행 삽입.
+  - 각 항목에 **▲ / ▼ 버튼** 추가. 연도 그룹 내 첫 번째 항목의 ▲, 마지막 항목의 ▼는 비활성화(disabled).
+  - `moveAdminArticle/moveAdminPres/moveAdminAward(id, dir)` 함수로 연결.
+
+### 3. Supabase 정책 추가 (✅ 적용 완료)
+
+- **`supabase-schema.sql`** 에 UPDATE 정책 추가. Supabase 대시보드에서 직접 실행 완료:
+  ```sql
+  DROP POLICY IF EXISTS "publications_update" ON publications;
+  CREATE POLICY "publications_update" ON publications FOR UPDATE
+    USING (current_member_id() IS NOT NULL)
+    WITH CHECK (current_member_id() IS NOT NULL);
+  ```
+- 수정 권한을 관리자 전용에서 **로그인한 구성원 전체**로 확대 (삭제는 관리자 유지).
+- `publications.html` 수정 버튼 표시 조건: `isAdmin` → `isLoggedIn`, 삭제 버튼은 `isAdmin` 유지.
+
+---
+
 > 이 파일은 프로젝트 진행 상황과 결정사항을 이어받기 위한 작업 로그입니다.  
 > 다음 업데이트나 구현 작업을 시작할 때는 먼저 이 파일을 검토한 뒤 진행합니다.
 

@@ -385,46 +385,102 @@ const CAPData = {
   // ── Publications ──────────────────────────
   async getArticles() {
     const { data, error } = await getSupabase()
-      .from('publications').select('*').eq('type', 'article').order('year', { ascending: false });
+      .from('publications').select('*').eq('type', 'article')
+      .order('year', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
     _throw(error); return data;
   },
   async getPresentations() {
     const { data, error } = await getSupabase()
-      .from('publications').select('*').eq('type', 'presentation').order('year', { ascending: false });
+      .from('publications').select('*').eq('type', 'presentation')
+      .order('year', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
     _throw(error); return data;
   },
   async getAwards() {
     const { data, error } = await getSupabase()
-      .from('publications').select('*').eq('type', 'award').order('year', { ascending: false });
+      .from('publications').select('*').eq('type', 'award')
+      .order('year', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
     _throw(error); return data;
   },
   async addArticle(item) {
     const { data, error } = await getSupabase()
-      .from('publications').insert({ type: 'article', ...item }).select().single();
+      .from('publications').insert({ type: 'article', sort_order: 0, ...item }).select().single();
     _throw(error); return data;
   },
   async removeArticle(id) {
     const { error } = await getSupabase().from('publications').delete().eq('id', id);
     _throw(error);
   },
+  async updateArticle(id, updates) {
+    const { error } = await getSupabase()
+      .from('publications').update(updates).eq('id', id).eq('type', 'article');
+    _throw(error);
+  },
   async addPresentation(item) {
     const { data, error } = await getSupabase()
-      .from('publications').insert({ type: 'presentation', ...item }).select().single();
+      .from('publications').insert({ type: 'presentation', sort_order: 0, ...item }).select().single();
     _throw(error); return data;
   },
   async removePresentation(id) {
     const { error } = await getSupabase().from('publications').delete().eq('id', id);
     _throw(error);
   },
+  async updatePresentation(id, updates) {
+    const { error } = await getSupabase()
+      .from('publications').update(updates).eq('id', id).eq('type', 'presentation');
+    _throw(error);
+  },
   async addAward(item) {
     const { data, error } = await getSupabase()
-      .from('publications').insert({ type: 'award', ...item }).select().single();
+      .from('publications').insert({ type: 'award', sort_order: 0, ...item }).select().single();
     _throw(error); return data;
   },
   async removeAward(id) {
     const { error } = await getSupabase().from('publications').delete().eq('id', id);
     _throw(error);
   },
+  async updateAward(id, updates) {
+    const { error } = await getSupabase()
+      .from('publications').update(updates).eq('id', id).eq('type', 'award');
+    _throw(error);
+  },
+  async _movePubItem(type, id, direction) {
+    const { data: items, error } = await getSupabase()
+      .from('publications')
+      .select('id, year, sort_order, created_at')
+      .eq('type', type)
+      .order('year', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+    _throw(error);
+    const item = items.find(x => x.id === id);
+    if (!item) return;
+    const year = item.year ? String(item.year).trim() : '';
+    const sameYear = items.filter(x => (x.year ? String(x.year).trim() : '') === year);
+    const pos = sameYear.findIndex(x => x.id === id);
+    if (direction === 'up' && pos === 0) return;
+    if (direction === 'down' && pos === sameYear.length - 1) return;
+    const swapPos = direction === 'up' ? pos - 1 : pos + 1;
+    // 해당 연도 그룹 내 순서 정규화 후 swap
+    const ordered = sameYear.map((x, i) => ({ id: x.id, sort_order: i }));
+    const tmp = ordered[pos].sort_order;
+    ordered[pos].sort_order = ordered[swapPos].sort_order;
+    ordered[swapPos].sort_order = tmp;
+    await Promise.all(ordered.map(u =>
+      getSupabase().from('publications').update({ sort_order: u.sort_order }).eq('id', u.id)
+    ));
+  },
+  async moveArticleUp(id) { await this._movePubItem('article', id, 'up'); },
+  async moveArticleDown(id) { await this._movePubItem('article', id, 'down'); },
+  async movePresUp(id) { await this._movePubItem('presentation', id, 'up'); },
+  async movePresDown(id) { await this._movePubItem('presentation', id, 'down'); },
+  async moveAwardUp(id) { await this._movePubItem('award', id, 'up'); },
+  async moveAwardDown(id) { await this._movePubItem('award', id, 'down'); },
 
   // ── Lab Events ────────────────────────────
   async getLabEvents(fromDate, toDate) {

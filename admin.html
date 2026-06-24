@@ -181,8 +181,24 @@
       <div id="tab-publications" class="tab-panel">
         <div class="panel-section">
           <h3>논문 목록</h3>
+          <!-- 논문 수정 패널 -->
+          <div id="article-edit-panel" style="display:none;margin-bottom:16px;" class="inline-form">
+            <h4>논문 수정</h4>
+            <input type="hidden" id="ae-id">
+            <div class="form-row">
+              <div class="form-group"><label>제목</label><input id="ae-title"></div>
+              <div class="form-group"><label>저자</label><input id="ae-authors"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>저널</label><input id="ae-journal"></div>
+              <div class="form-group"><label>연도</label><input id="ae-year"></div>
+            </div>
+            <div class="form-group"><label>DOI / URL</label><input id="ae-doi"></div>
+            <button class="save-btn" onclick="saveEditAdminArticle()">저장</button>
+            <button class="btn-sm" style="margin-left:8px" onclick="cancelEditAdminArticle()">취소</button>
+          </div>
           <table class="data-table" id="articles-table">
-            <thead><tr><th>제목</th><th>저자</th><th>저널 · 연도</th><th>DOI</th><th>삭제</th></tr></thead>
+            <thead><tr><th>제목</th><th>저자</th><th>저널 · 연도</th><th>DOI</th><th style="text-align:center">순서</th><th>작업</th></tr></thead>
             <tbody id="articles-tbody"></tbody>
           </table>
           <div class="inline-form" style="margin-top:16px;">
@@ -202,8 +218,26 @@
 
         <div class="panel-section">
           <h3>학술발표 목록</h3>
+          <!-- 학술발표 수정 패널 -->
+          <div id="pres-edit-panel" style="display:none;margin-bottom:16px;" class="inline-form">
+            <h4>학술발표 수정</h4>
+            <input type="hidden" id="pe-id">
+            <div class="form-row">
+              <div class="form-group"><label>제목</label><input id="pe-title"></div>
+              <div class="form-group"><label>발표자</label><input id="pe-presenter"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>학회명</label><input id="pe-venue"></div>
+              <div class="form-group"><label>연도</label><input id="pe-year"></div>
+            </div>
+            <div class="form-group"><label>형식</label>
+              <select id="pe-type"><option>구두 발표</option><option>포스터 발표</option></select>
+            </div>
+            <button class="save-btn" onclick="saveEditAdminPres()">저장</button>
+            <button class="btn-sm" style="margin-left:8px" onclick="cancelEditAdminPres()">취소</button>
+          </div>
           <table class="data-table" id="pres-table">
-            <thead><tr><th>제목</th><th>발표자</th><th>학회 · 연도</th><th>형식</th><th>삭제</th></tr></thead>
+            <thead><tr><th>제목</th><th>발표자</th><th>학회 · 연도</th><th>형식</th><th style="text-align:center">순서</th><th>작업</th></tr></thead>
             <tbody id="pres-tbody"></tbody>
           </table>
           <div class="inline-form" style="margin-top:16px;">
@@ -225,8 +259,24 @@
 
         <div class="panel-section">
           <h3>수상내역 목록</h3>
+          <!-- 수상내역 수정 패널 -->
+          <div id="award-edit-panel" style="display:none;margin-bottom:16px;" class="inline-form">
+            <h4>수상내역 수정</h4>
+            <input type="hidden" id="awe-id">
+            <div class="form-row">
+              <div class="form-group"><label>수상명</label><input id="awe-title"></div>
+              <div class="form-group"><label>수상자</label><input id="awe-recipient"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>수여 기관</label><input id="awe-venue"></div>
+              <div class="form-group"><label>연도</label><input id="awe-year"></div>
+            </div>
+            <div class="form-group"><label>설명</label><input id="awe-desc"></div>
+            <button class="save-btn" onclick="saveEditAdminAward()">저장</button>
+            <button class="btn-sm" style="margin-left:8px" onclick="cancelEditAdminAward()">취소</button>
+          </div>
           <table class="data-table" id="awards-table">
-            <thead><tr><th>수상명</th><th>수상자</th><th>기관 · 연도</th><th>설명</th><th>삭제</th></tr></thead>
+            <thead><tr><th>수상명</th><th>수상자</th><th>기관 · 연도</th><th>설명</th><th style="text-align:center">순서</th><th>작업</th></tr></thead>
             <tbody id="awards-tbody"></tbody>
           </table>
           <div class="inline-form" style="margin-top:16px;">
@@ -699,49 +749,250 @@
     }
 
     /* ---- Tab 4: Publications ---- */
+    function groupConsecutiveByYear(items) {
+      var groups = [];
+      (items || []).forEach(function (item) {
+        var year = item.year ? String(item.year).trim() : '연도 미정';
+        var last = groups[groups.length - 1];
+        if (last && last.year === year) {
+          last.items.push(item);
+        } else {
+          groups.push({ year: year, items: [item] });
+        }
+      });
+      return groups;
+    }
+
+    function makeMoveBtn(label, id, dir, fnName, disabled) {
+      return '<button class="btn-sm" style="padding:2px 7px;' + (disabled ? 'opacity:0.25;' : '') + '"' +
+        (disabled ? ' disabled' : ' onclick="' + fnName + '(\'' + escHtml(id) + '\',\'' + dir + '\')"') + '>' + label + '</button>';
+    }
+
     async function renderArticlesTable() {
       var articles = await CAPData.getArticles();
       var tbody = document.getElementById('articles-tbody');
-      tbody.innerHTML = articles.map(function (a) {
-        return '<tr>' +
-          '<td>' + escHtml(a.title) + '</td>' +
-          '<td>' + escHtml(a.authors) + '</td>' +
-          '<td>' + escHtml(a.journal) + ' · ' + escHtml(a.year) + '</td>' +
-          '<td>' + (a.doi ? '<a href="' + escHtml(a.doi) + '" target="_blank" style="color:var(--navy)">링크</a>' : '-') + '</td>' +
-          '<td><button class="btn-sm danger" onclick="removeAdminArticle(\'' + escHtml(a.id) + '\')">삭제</button></td>' +
-          '</tr>';
-      }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">논문 없음</td></tr>';
+      var groups = groupConsecutiveByYear(articles);
+      if (!groups.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">논문 없음</td></tr>';
+        return;
+      }
+      tbody.innerHTML = groups.map(function (group) {
+        var yearRow = '<tr style="background:var(--bg-alt,#f0f4f8);">' +
+          '<td colspan="6" style="font-weight:700;padding:5px 10px;font-size:0.85rem;color:var(--navy)">' + escHtml(group.year) + '</td></tr>';
+        var rows = group.items.map(function (a, idx) {
+          var first = idx === 0, last = idx === group.items.length - 1;
+          return '<tr>' +
+            '<td style="max-width:220px;word-break:break-all">' + escHtml(a.title) + '</td>' +
+            '<td>' + escHtml(a.authors || '') + '</td>' +
+            '<td>' + escHtml(a.journal || '') + (a.year ? ' · ' + escHtml(a.year) : '') + '</td>' +
+            '<td>' + (a.doi ? '<a href="' + escHtml(a.doi) + '" target="_blank" style="color:var(--navy)">링크</a>' : '-') + '</td>' +
+            '<td style="text-align:center;white-space:nowrap">' +
+              makeMoveBtn('▲', a.id, 'up', 'moveAdminArticle', first) + ' ' +
+              makeMoveBtn('▼', a.id, 'down', 'moveAdminArticle', last) +
+            '</td>' +
+            '<td class="action-row">' +
+              '<button class="btn-sm primary" onclick="editAdminArticle(\'' + escHtml(a.id) + '\')">수정</button>' +
+              '<button class="btn-sm danger" onclick="removeAdminArticle(\'' + escHtml(a.id) + '\')">삭제</button>' +
+            '</td></tr>';
+        }).join('');
+        return yearRow + rows;
+      }).join('');
     }
 
     async function renderPresTable() {
       var preses = await CAPData.getPresentations();
       var tbody = document.getElementById('pres-tbody');
-      tbody.innerHTML = preses.map(function (p) {
-        return '<tr>' +
-          '<td>' + escHtml(p.title) + '</td>' +
-          '<td>' + escHtml(p.presenter) + '</td>' +
-          '<td>' + escHtml(p.venue) + ' · ' + escHtml(p.year) + '</td>' +
-          '<td>' + escHtml(p.pres_type || '') + '</td>' +
-          '<td><button class="btn-sm danger" onclick="removeAdminPres(\'' + escHtml(p.id) + '\')">삭제</button></td>' +
-          '</tr>';
-      }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">학술발표 없음</td></tr>';
+      var groups = groupConsecutiveByYear(preses);
+      if (!groups.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">학술발표 없음</td></tr>';
+        return;
+      }
+      tbody.innerHTML = groups.map(function (group) {
+        var yearRow = '<tr style="background:var(--bg-alt,#f0f4f8);">' +
+          '<td colspan="6" style="font-weight:700;padding:5px 10px;font-size:0.85rem;color:var(--navy)">' + escHtml(group.year) + '</td></tr>';
+        var rows = group.items.map(function (p, idx) {
+          var first = idx === 0, last = idx === group.items.length - 1;
+          return '<tr>' +
+            '<td style="max-width:220px;word-break:break-all">' + escHtml(p.title) + '</td>' +
+            '<td>' + escHtml(p.presenter || '') + '</td>' +
+            '<td>' + escHtml(p.venue || '') + (p.year ? ' · ' + escHtml(p.year) : '') + '</td>' +
+            '<td>' + escHtml(p.pres_type || '') + '</td>' +
+            '<td style="text-align:center;white-space:nowrap">' +
+              makeMoveBtn('▲', p.id, 'up', 'moveAdminPres', first) + ' ' +
+              makeMoveBtn('▼', p.id, 'down', 'moveAdminPres', last) +
+            '</td>' +
+            '<td class="action-row">' +
+              '<button class="btn-sm primary" onclick="editAdminPres(\'' + escHtml(p.id) + '\')">수정</button>' +
+              '<button class="btn-sm danger" onclick="removeAdminPres(\'' + escHtml(p.id) + '\')">삭제</button>' +
+            '</td></tr>';
+        }).join('');
+        return yearRow + rows;
+      }).join('');
     }
 
     async function renderAwardsTable() {
       var awards = await CAPData.getAwards();
       var tbody = document.getElementById('awards-tbody');
-      tbody.innerHTML = awards.map(function (a) {
-        return '<tr>' +
-          '<td>' + escHtml(a.title) + '</td>' +
-          '<td>' + escHtml(a.recipient) + '</td>' +
-          '<td>' + escHtml(a.venue) + ' · ' + escHtml(a.year) + '</td>' +
-          '<td>' + escHtml(a.description || '-') + '</td>' +
-          '<td><button class="btn-sm danger" onclick="removeAdminAward(\'' + escHtml(a.id) + '\')">삭제</button></td>' +
-          '</tr>';
-      }).join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;">수상내역 없음</td></tr>';
+      var groups = groupConsecutiveByYear(awards);
+      if (!groups.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;">수상내역 없음</td></tr>';
+        return;
+      }
+      tbody.innerHTML = groups.map(function (group) {
+        var yearRow = '<tr style="background:var(--bg-alt,#f0f4f8);">' +
+          '<td colspan="6" style="font-weight:700;padding:5px 10px;font-size:0.85rem;color:var(--navy)">' + escHtml(group.year) + '</td></tr>';
+        var rows = group.items.map(function (a, idx) {
+          var first = idx === 0, last = idx === group.items.length - 1;
+          return '<tr>' +
+            '<td style="max-width:200px;word-break:break-all">' + escHtml(a.title) + '</td>' +
+            '<td>' + escHtml(a.recipient || '') + '</td>' +
+            '<td>' + escHtml(a.venue || '') + (a.year ? ' · ' + escHtml(a.year) : '') + '</td>' +
+            '<td>' + escHtml(a.description || '-') + '</td>' +
+            '<td style="text-align:center;white-space:nowrap">' +
+              makeMoveBtn('▲', a.id, 'up', 'moveAdminAward', first) + ' ' +
+              makeMoveBtn('▼', a.id, 'down', 'moveAdminAward', last) +
+            '</td>' +
+            '<td class="action-row">' +
+              '<button class="btn-sm primary" onclick="editAdminAward(\'' + escHtml(a.id) + '\')">수정</button>' +
+              '<button class="btn-sm danger" onclick="removeAdminAward(\'' + escHtml(a.id) + '\')">삭제</button>' +
+            '</td></tr>';
+        }).join('');
+        return yearRow + rows;
+      }).join('');
     }
 
+    /* ---- 순서 이동 ---- */
+    async function moveAdminArticle(id, dir) {
+      try {
+        dir === 'up' ? await CAPData.moveArticleUp(id) : await CAPData.moveArticleDown(id);
+        await renderArticlesTable();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    async function moveAdminPres(id, dir) {
+      try {
+        dir === 'up' ? await CAPData.movePresUp(id) : await CAPData.movePresDown(id);
+        await renderPresTable();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    async function moveAdminAward(id, dir) {
+      try {
+        dir === 'up' ? await CAPData.moveAwardUp(id) : await CAPData.moveAwardDown(id);
+        await renderAwardsTable();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+
+    /* ---- 수정 ---- */
+    async function editAdminArticle(id) {
+      var articles = await CAPData.getArticles();
+      var a = articles.find(function (x) { return x.id === id; });
+      if (!a) return;
+      document.getElementById('ae-id').value = id;
+      document.getElementById('ae-title').value = a.title || '';
+      document.getElementById('ae-authors').value = a.authors || '';
+      document.getElementById('ae-journal').value = a.journal || '';
+      document.getElementById('ae-year').value = a.year || '';
+      document.getElementById('ae-doi').value = a.doi || '';
+      var panel = document.getElementById('article-edit-panel');
+      panel.style.display = 'block';
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    async function saveEditAdminArticle() {
+      var id = document.getElementById('ae-id').value;
+      var title = document.getElementById('ae-title').value.trim();
+      if (!title) { alert('제목을 입력해주세요.'); return; }
+      try {
+        await CAPData.updateArticle(id, {
+          title: title,
+          authors: document.getElementById('ae-authors').value.trim(),
+          journal: document.getElementById('ae-journal').value.trim(),
+          year: document.getElementById('ae-year').value.trim(),
+          doi: document.getElementById('ae-doi').value.trim()
+        });
+        showToast('논문이 수정되었습니다.');
+        document.getElementById('article-edit-panel').style.display = 'none';
+        await renderArticlesTable();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    function cancelEditAdminArticle() {
+      document.getElementById('article-edit-panel').style.display = 'none';
+    }
+
+    async function editAdminPres(id) {
+      var preses = await CAPData.getPresentations();
+      var p = preses.find(function (x) { return x.id === id; });
+      if (!p) return;
+      document.getElementById('pe-id').value = id;
+      document.getElementById('pe-title').value = p.title || '';
+      document.getElementById('pe-presenter').value = p.presenter || '';
+      document.getElementById('pe-venue').value = p.venue || '';
+      document.getElementById('pe-year').value = p.year || '';
+      var sel = document.getElementById('pe-type');
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === p.pres_type) { sel.selectedIndex = i; break; }
+      }
+      var panel = document.getElementById('pres-edit-panel');
+      panel.style.display = 'block';
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    async function saveEditAdminPres() {
+      var id = document.getElementById('pe-id').value;
+      var title = document.getElementById('pe-title').value.trim();
+      if (!title) { alert('제목을 입력해주세요.'); return; }
+      try {
+        await CAPData.updatePresentation(id, {
+          title: title,
+          presenter: document.getElementById('pe-presenter').value.trim(),
+          venue: document.getElementById('pe-venue').value.trim(),
+          year: document.getElementById('pe-year').value.trim(),
+          pres_type: document.getElementById('pe-type').value
+        });
+        showToast('학술발표가 수정되었습니다.');
+        document.getElementById('pres-edit-panel').style.display = 'none';
+        await renderPresTable();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    function cancelEditAdminPres() {
+      document.getElementById('pres-edit-panel').style.display = 'none';
+    }
+
+    async function editAdminAward(id) {
+      var awards = await CAPData.getAwards();
+      var a = awards.find(function (x) { return x.id === id; });
+      if (!a) return;
+      document.getElementById('awe-id').value = id;
+      document.getElementById('awe-title').value = a.title || '';
+      document.getElementById('awe-recipient').value = a.recipient || '';
+      document.getElementById('awe-venue').value = a.venue || '';
+      document.getElementById('awe-year').value = a.year || '';
+      document.getElementById('awe-desc').value = a.description || '';
+      var panel = document.getElementById('award-edit-panel');
+      panel.style.display = 'block';
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    async function saveEditAdminAward() {
+      var id = document.getElementById('awe-id').value;
+      var title = document.getElementById('awe-title').value.trim();
+      if (!title) { alert('수상명을 입력해주세요.'); return; }
+      try {
+        await CAPData.updateAward(id, {
+          title: title,
+          recipient: document.getElementById('awe-recipient').value.trim(),
+          venue: document.getElementById('awe-venue').value.trim(),
+          year: document.getElementById('awe-year').value.trim(),
+          description: document.getElementById('awe-desc').value.trim()
+        });
+        showToast('수상내역이 수정되었습니다.');
+        document.getElementById('award-edit-panel').style.display = 'none';
+        await renderAwardsTable();
+      } catch (e) { alert('오류: ' + e.message); }
+    }
+    function cancelEditAdminAward() {
+      document.getElementById('award-edit-panel').style.display = 'none';
+    }
+
+    /* ---- 삭제 ---- */
     async function removeAdminArticle(id) {
+      if (!confirm('이 논문을 삭제하시겠습니까?')) return;
       try {
         await CAPData.removeArticle(id);
         await renderArticlesTable();
@@ -752,6 +1003,7 @@
     }
 
     async function removeAdminPres(id) {
+      if (!confirm('이 발표를 삭제하시겠습니까?')) return;
       try {
         await CAPData.removePresentation(id);
         await renderPresTable();
@@ -762,6 +1014,7 @@
     }
 
     async function removeAdminAward(id) {
+      if (!confirm('이 수상내역을 삭제하시겠습니까?')) return;
       try {
         await CAPData.removeAward(id);
         await renderAwardsTable();

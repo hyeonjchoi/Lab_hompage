@@ -517,6 +517,9 @@ CREATE POLICY "publications_insert" ON publications FOR INSERT
   WITH CHECK (current_member_role() IN ('professor', 'admin'));
 CREATE POLICY "publications_delete" ON publications FOR DELETE
   USING (current_member_role() IN ('professor', 'admin'));
+CREATE POLICY "publications_update" ON publications FOR UPDATE
+  USING (current_member_id() IS NOT NULL)
+  WITH CHECK (current_member_id() IS NOT NULL);
 
 -- ──────────────────────────────────────────────
 -- site_content: 누구나 조회, professor/admin만 수정
