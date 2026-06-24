@@ -97,7 +97,7 @@
           <h3>새 구성원 추가</h3>
           <div class="form-row">
             <div class="form-group"><label>이름 (한국어)</label><input id="nm-name" placeholder="홍길동"></div>
-            <div class="form-group"><label>학번</label><input id="nm-sid" placeholder="2024XXXXX"></div>
+            <div class="form-group"><label>학번</label><input id="nm-sid" placeholder="비우면 ID TBD_이름 / 비번 CAP_이름"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>역할</label>
@@ -247,7 +247,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js?v=supabase-v1"></script>
+  <script src="supabase-client.js?v=supabase-v4"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
     /* ---- 초기화 ---- */
@@ -316,8 +316,9 @@
 
     async function updateStudentId(id, val) {
       try {
-        await CAPData.updateMember(id, { student_id: val.trim() });
-        showToast('학번이 업데이트되었습니다.');
+        await CAPData.syncMemberLogin(id, val.trim());
+        showToast('학번과 로그인 계정이 업데이트되었습니다.');
+        await renderMemberTable();
       } catch (e) {
         alert('오류: ' + e.message);
       }
@@ -364,7 +365,7 @@
       var group = document.getElementById('nm-group').value;
       var degree = document.getElementById('nm-degree').value.trim();
       var affiliation = document.getElementById('nm-affiliation').value.trim();
-      if (!name || (!sid && group !== 'alumni')) { alert('이름과 학번은 필수입니다. 졸업생은 학번 없이 추가할 수 있습니다.'); return; }
+      if (!name) { alert('이름은 필수입니다. 학번을 비우면 ID는 TBD_이름, 임시 비밀번호는 CAP_이름으로 생성됩니다.'); return; }
       if (group === 'alumni' && (!degree || !affiliation)) { alert('졸업생은 이름, 학위, 현 소속을 입력해야 합니다.'); return; }
       var avatarChar = document.getElementById('nm-avatar').value.trim() || name.charAt(0);
 
@@ -405,7 +406,7 @@
     function updateAlumniFields() {
       var isAlumni = document.getElementById('nm-group').value === 'alumni';
       document.getElementById('alumni-fields').style.display = isAlumni ? 'block' : 'none';
-      document.getElementById('nm-sid').placeholder = isAlumni ? '졸업생은 생략 가능' : '2024XXXXX';
+      document.getElementById('nm-sid').placeholder = '비우면 ID TBD_이름 / 비번 CAP_이름';
       document.getElementById('nm-enName').disabled = isAlumni;
       document.getElementById('nm-avatar').disabled = isAlumni;
     }

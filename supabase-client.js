@@ -33,6 +33,22 @@ function getSupabase() {
 // ──────────────────────────────────────────────
 function _throw(error) { if (error) throw error; }
 
+function _loginEmail(loginId) {
+  const id = String(loginId || '').trim();
+  if (/^[A-Za-z0-9._%+-]+$/.test(id)) {
+    return id.toLowerCase() + '@kwcaplab.internal';
+  }
+  const bytes = new TextEncoder().encode(id);
+  let binary = '';
+  bytes.forEach(function (byte) { binary += String.fromCharCode(byte); });
+  const encoded = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  return 'login-' + encoded + '@kwcaplab.internal';
+}
+
+function _isTemporaryLoginId(loginId) {
+  return String(loginId || '').trim().indexOf('TBD_') === 0;
+}
+
 // localStorage 기반 세션 호환 레이어 (Supabase 세션을 sessionStorage에도 미러)
 function _mirrorSession(session) {
   if (!session) {
@@ -55,18 +71,43 @@ const CAPAuth = {
   /**
    * 로그인: 이름 + 학번으로 검증
    * Supabase Auth 이메일: {studentId}@kwcaplab.internal
+   * 한글 임시 ID(TBD_이름)는 내부적으로 안전한 이메일로 변환
+   * 학번 미등록 구성원은 이름 + CAP_이름 임시 비밀번호로 로그인
    */
   async login(name, studentId) {
     if (!name || !studentId) {
       return { success: false, error: '이름과 학번을 모두 입력해주세요.' };
     }
     try {
-      const email = `${studentId.trim()}@kwcaplab.internal`;
-      const { data, error } = await getSupabase().auth.signInWithPassword({
-        email,
-        password: studentId.trim()  // 초기 비밀번호 = 학번 (관리자가 변경 가능)
+      const credential = studentId.trim();
+      let data = null;
+
+      const directLogin = await getSupabase().auth.signInWithPassword({
+        email: _loginEmail(credential),
+        password: credential
       });
-      if (error) return { success: false, error: '이름 또는 학번이 일치하지 않습니다.' };
+      if (!directLogin.error) {
+        data = directLogin.data;
+      } else {
+        const { data: candidates } = await getSupabase()
+          .from('members')
+          .select('*')
+          .eq('name', name.trim());
+
+        for (const candidate of candidates || []) {
+          if (!_isTemporaryLoginId(candidate.student_id)) continue;
+          const fallbackLogin = await getSupabase().auth.signInWithPassword({
+            email: _loginEmail(candidate.student_id),
+            password: credential
+          });
+          if (!fallbackLogin.error) {
+            data = fallbackLogin.data;
+            break;
+          }
+        }
+      }
+
+      if (!data) return { success: false, error: '이름 또는 학번이 일치하지 않습니다.' };
 
       // members 테이블에서 이름 일치 확인
       const { data: member, error: mErr } = await getSupabase()
@@ -209,7 +250,7 @@ const CAPData = {
 
     // Supabase Auth 이메일 업데이트 (로그인 email = {학번}@kwcaplab.internal)
     const { error: emailErr } = await getSupabase().auth.updateUser({
-      email: newStudentId.trim() + '@kwcaplab.internal'
+      email: _loginEmail(newStudentId)
     });
     // 이메일 변경은 확인 메일 없는 환경에서만 즉시 반영됨 — 실패해도 진행
     void emailErr;
@@ -218,6 +259,23 @@ const CAPData = {
     const { error } = await getSupabase()
       .from('members').update({ student_id: newStudentId.trim(), updated_at: new Date().toISOString() }).eq('id', id);
     _throw(error); return true;
+  },
+  async syncMemberLogin(id, newStudentId) {
+    const sid = String(newStudentId || '').trim();
+    if (!sid) throw new Error('학번은 필수입니다.');
+
+    const { data: sessionData } = await getSupabase().auth.getSession();
+    const token = sessionData.session && sessionData.session.access_token;
+    if (!token) throw new Error('관리자 로그인이 필요합니다.');
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/create-member', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'sync-login', memberId: id, studentId: sid })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || '로그인 계정 동기화에 실패했습니다.');
+    return result.member;
   },
   async addMember(member) {
     const { data, error } = await getSupabase().from('members').insert(member).select().single();

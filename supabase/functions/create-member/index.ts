@@ -24,6 +24,28 @@ const GROUP_POSITION: Record<string, string> = {
   alumni:     '',
 }
 
+function cleanStudentId(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function base64UrlFromString(value: string): string {
+  const bytes = new TextEncoder().encode(value)
+  let binary = ''
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte) })
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+}
+
+function loginEmail(studentId: string): string {
+  if (/^[A-Za-z0-9._%+-]+$/.test(studentId)) {
+    return `${studentId.toLowerCase()}@kwcaplab.internal`
+  }
+  return `login-${base64UrlFromString(studentId)}@kwcaplab.internal`
+}
+
+function loginPassword(loginId: string, name: string): string {
+  return loginId.startsWith('TBD_') ? `CAP_${name}` : loginId
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
@@ -52,8 +74,72 @@ serve(async (req) => {
       return json({ error: '관리자 권한이 필요합니다' }, 403)
 
     // 2) 요청 파싱
-    const { name, studentId, group, enName, avatarChar, degree, affiliation } = await req.json()
+    const body = await req.json()
+    const { name, group, enName, avatarChar, degree, affiliation } = body
+    const studentId = cleanStudentId(body.studentId)
+
+    if (body.action === 'sync-login') {
+      const memberId = body.memberId
+      if (!memberId) return json({ error: '구성원 ID가 필요합니다' }, 400)
+      if (!studentId) return json({ error: '학번은 필수입니다' }, 400)
+
+      const { data: member, error: memberErr } = await admin
+        .from('members')
+        .select('id, name, auth_user_id')
+        .eq('id', memberId)
+        .single()
+      if (memberErr || !member) return json({ error: '구성원을 찾을 수 없습니다' }, 404)
+
+      const email = loginEmail(studentId)
+      const password = loginPassword(studentId, member.name as string)
+      let authUserId = member.auth_user_id as string | null
+
+      if (authUserId) {
+        const { error: updateAuthErr } = await admin.auth.admin.updateUserById(authUserId, {
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { name: member.name },
+        })
+        if (updateAuthErr) return json({ error: `계정 갱신 실패: ${updateAuthErr.message}` }, 400)
+      } else {
+        const { data: listed, error: listErr } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+        if (listErr) return json({ error: `계정 조회 실패: ${listErr.message}` }, 400)
+        const existing = listed.users.find((user) => user.email?.toLowerCase() === email)
+
+        if (existing) {
+          authUserId = existing.id
+          const { error: updateAuthErr } = await admin.auth.admin.updateUserById(authUserId, {
+            password,
+            email_confirm: true,
+            user_metadata: { name: member.name },
+          })
+          if (updateAuthErr) return json({ error: `계정 갱신 실패: ${updateAuthErr.message}` }, 400)
+        } else {
+          const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { name: member.name },
+          })
+          if (authErr) return json({ error: `계정 생성 실패: ${authErr.message}` }, 400)
+          authUserId = authUser.user.id
+        }
+      }
+
+      const { data: updated, error: dbErr } = await admin
+        .from('members')
+        .update({ student_id: studentId, auth_user_id: authUserId, updated_at: new Date().toISOString() })
+        .eq('id', memberId)
+        .select()
+        .single()
+      if (dbErr) return json({ error: `DB 저장 실패: ${dbErr.message}` }, 400)
+
+      return json({ success: true, member: updated })
+    }
+
     if (!name) return json({ error: '이름은 필수입니다' }, 400)
+    const loginId = studentId || `TBD_${name}`
 
     const role = group === 'professor'
       ? (caller.role)        // professor도 admin 유지
@@ -65,29 +151,27 @@ serve(async (req) => {
 
     const interest = group === 'alumni' ? (affiliation ?? '') : ''
 
-    // 3) Auth 유저 생성 (학번 있을 때만)
+    // 3) Auth 유저 생성 (학번이 없으면 ID는 TBD_이름, 임시 비밀번호는 CAP_이름)
     let auth_user_id: string | null = null
-    if (studentId) {
-      const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
-        email: `${studentId}@kwcaplab.internal`,
-        password: studentId,
-        email_confirm: true,
-        user_metadata: { name },
-      })
-      if (authErr) return json({ error: `계정 생성 실패: ${authErr.message}` }, 400)
-      auth_user_id = authUser.user.id
-    }
+    const { data: authUser, error: authErr } = await admin.auth.admin.createUser({
+      email: loginEmail(loginId),
+      password: loginPassword(loginId, name),
+      email_confirm: true,
+      user_metadata: { name },
+    })
+    if (authErr) return json({ error: `계정 생성 실패: ${authErr.message}` }, 400)
+    auth_user_id = authUser.user.id
 
     // 4) members 테이블 삽입
     const row: Record<string, unknown> = {
-      student_id:  studentId || `TBD_${name}`,
+      student_id:  loginId,
       name,
       role,
       lab_group:   group,
       avatar_char: avatarChar || name.charAt(0),
       profile: { enName: enName ?? '', position, interest, email: '', showEmail: false },
+      auth_user_id,
     }
-    if (auth_user_id) row.auth_user_id = auth_user_id
 
     const { data: member, error: dbErr } = await admin
       .from('members').insert(row).select().single()
