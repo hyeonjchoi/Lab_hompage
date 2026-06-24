@@ -78,6 +78,31 @@ serve(async (req) => {
     const { name, group, enName, avatarChar, degree, affiliation } = body
     const studentId = cleanStudentId(body.studentId)
 
+    if (body.action === 'delete-member') {
+      const memberId = body.memberId
+      if (!memberId) return json({ error: '구성원 ID가 필요합니다' }, 400)
+
+      const { data: member, error: memberErr } = await admin
+        .from('members')
+        .select('id, auth_user_id')
+        .eq('id', memberId)
+        .single()
+      if (memberErr || !member) return json({ error: '구성원을 찾을 수 없습니다' }, 404)
+
+      const { error: dbErr } = await admin
+        .from('members')
+        .delete()
+        .eq('id', memberId)
+      if (dbErr) return json({ error: `DB 삭제 실패: ${dbErr.message}` }, 400)
+
+      if (member.auth_user_id) {
+        const { error: authErr } = await admin.auth.admin.deleteUser(member.auth_user_id as string)
+        if (authErr) return json({ error: `로그인 계정 삭제 실패: ${authErr.message}` }, 400)
+      }
+
+      return json({ success: true })
+    }
+
     if (body.action === 'sync-login') {
       const memberId = body.memberId
       if (!memberId) return json({ error: '구성원 ID가 필요합니다' }, 400)

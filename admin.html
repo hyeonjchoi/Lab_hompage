@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CAP Lab">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=mobile-overflow-v1">
   <style>
     .admin-header {
       background: var(--navy); color: #fff;
@@ -97,7 +97,7 @@
           <h3>새 구성원 추가</h3>
           <div class="form-row">
             <div class="form-group"><label>이름 (한국어)</label><input id="nm-name" placeholder="홍길동"></div>
-            <div class="form-group"><label>학번</label><input id="nm-sid" placeholder="비우면 ID TBD_이름 / 비번 CAP_이름"></div>
+            <div class="form-group"><label>학번</label><input id="nm-sid" placeholder="비우면 임시 비밀번호 CAP_이름 생성"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>역할</label>
@@ -247,7 +247,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js?v=supabase-v4"></script>
+  <script src="supabase-client.js?v=supabase-v5"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
     /* ---- 초기화 ---- */
@@ -292,10 +292,14 @@
       var members = await CAPData.getMembers();
       var tbody = document.getElementById('member-tbody');
       tbody.innerHTML = members.map(function (m) {
+        var isTempLogin = (m.student_id || '').indexOf('TBD_') === 0;
+        var studentValue = isTempLogin ? '' : (m.student_id || '');
+        var studentPlaceholder = isTempLogin ? '학번 미지정 · 임시 비밀번호 CAP_' + m.name : '학번 입력';
         return '<tr>' +
           '<td><strong>' + escHtml(m.name) + '</strong></td>' +
           '<td><input style="border:1px solid var(--line);border-radius:4px;padding:3px 7px;font-size:0.84rem;width:120px" ' +
-               'value="' + escHtml(m.student_id || '') + '" ' +
+               'value="' + escHtml(studentValue) + '" ' +
+               'placeholder="' + escHtml(studentPlaceholder) + '" ' +
                'onchange="updateStudentId(\'' + escHtml(m.id) + '\',this.value)"></td>' +
           '<td><span class="role-badge ' + (m.role === 'admin' ? 'role-admin' : 'role-member') + '">' + escHtml(m.role) + '</span>' +
                '<button class="btn-sm" style="margin-left:6px" onclick="toggleRole(\'' + escHtml(m.id) + '\')">변경</button></td>' +
@@ -351,8 +355,8 @@
     async function deleteMember(id, name) {
       if (!confirm(name + ' 님을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
       try {
-        await CAPData.removeMember(id);
-        showToast('구성원이 삭제되었습니다.');
+        await CAPData.deleteMemberWithLogin(id);
+        showToast('구성원과 로그인 계정이 삭제되었습니다.');
         await renderMemberTable();
       } catch (e) {
         alert('오류: ' + e.message);
@@ -365,7 +369,7 @@
       var group = document.getElementById('nm-group').value;
       var degree = document.getElementById('nm-degree').value.trim();
       var affiliation = document.getElementById('nm-affiliation').value.trim();
-      if (!name) { alert('이름은 필수입니다. 학번을 비우면 ID는 TBD_이름, 임시 비밀번호는 CAP_이름으로 생성됩니다.'); return; }
+      if (!name) { alert('이름은 필수입니다. 학번을 비우면 임시 비밀번호는 CAP_이름으로 생성됩니다.'); return; }
       if (group === 'alumni' && (!degree || !affiliation)) { alert('졸업생은 이름, 학위, 현 소속을 입력해야 합니다.'); return; }
       var avatarChar = document.getElementById('nm-avatar').value.trim() || name.charAt(0);
 
@@ -406,7 +410,7 @@
     function updateAlumniFields() {
       var isAlumni = document.getElementById('nm-group').value === 'alumni';
       document.getElementById('alumni-fields').style.display = isAlumni ? 'block' : 'none';
-      document.getElementById('nm-sid').placeholder = '비우면 ID TBD_이름 / 비번 CAP_이름';
+      document.getElementById('nm-sid').placeholder = '비우면 임시 비밀번호 CAP_이름 생성';
       document.getElementById('nm-enName').disabled = isAlumni;
       document.getElementById('nm-avatar').disabled = isAlumni;
     }

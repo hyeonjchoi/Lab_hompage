@@ -277,6 +277,20 @@ const CAPData = {
     if (!res.ok) throw new Error(result.error || '로그인 계정 동기화에 실패했습니다.');
     return result.member;
   },
+  async deleteMemberWithLogin(id) {
+    const { data: sessionData } = await getSupabase().auth.getSession();
+    const token = sessionData.session && sessionData.session.access_token;
+    if (!token) throw new Error('관리자 로그인이 필요합니다.');
+
+    const res = await fetch(SUPABASE_URL + '/functions/v1/create-member', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'delete-member', memberId: id })
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || '구성원 삭제에 실패했습니다.');
+    return true;
+  },
   async addMember(member) {
     const { data, error } = await getSupabase().from('members').insert(member).select().single();
     _throw(error); return data;
