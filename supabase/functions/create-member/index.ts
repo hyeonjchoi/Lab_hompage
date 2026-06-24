@@ -88,15 +88,16 @@ serve(async (req) => {
 
     const { data: caller } = await admin
       .from('members').select('role').eq('auth_user_id', user.id).single()
-    if (!caller || (caller.role !== 'admin' && caller.role !== 'professor'))
-      return json({ error: '관리자 권한이 필요합니다' }, 403)
 
     // 2) 요청 파싱
     const body = await req.json()
     const { name, group, enName, avatarChar, degree, affiliation } = body
     const studentId = cleanStudentId(body.studentId)
 
+    const isAdmin = caller && (caller.role === 'admin' || caller.role === 'professor')
+
     if (body.action === 'delete-member') {
+      if (!isAdmin) return json({ error: '관리자 권한이 필요합니다' }, 403)
       const memberId = body.memberId
       if (!memberId) return json({ error: '구성원 ID가 필요합니다' }, 400)
 
@@ -132,6 +133,11 @@ serve(async (req) => {
         .eq('id', memberId)
         .single()
       if (memberErr || !member) return json({ error: '구성원을 찾을 수 없습니다' }, 404)
+
+      // 관리자이거나 본인 계정 수정인 경우만 허용
+      const isSelf = member.auth_user_id === user.id
+      if (!isAdmin && !isSelf)
+        return json({ error: '권한이 없습니다' }, 403)
 
       const email = loginEmail(studentId)
       const password = loginPassword(studentId, member.name as string)
@@ -181,6 +187,7 @@ serve(async (req) => {
       return json({ success: true, member: updated })
     }
 
+    if (!isAdmin) return json({ error: '관리자 권한이 필요합니다' }, 403)
     if (!name) return json({ error: '이름은 필수입니다' }, 400)
     const loginId = studentId || await nextTemporaryLoginId(admin, name)
 

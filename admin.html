@@ -83,14 +83,16 @@
       <div id="tab-members" class="tab-panel active">
         <div class="panel-section">
           <h3>구성원 목록</h3>
-          <table class="data-table" id="member-table">
-            <thead>
-              <tr>
-                <th>이름</th><th>학번</th><th>역할</th><th>그룹</th><th>마지막 수정</th><th>작업</th>
-              </tr>
-            </thead>
-            <tbody id="member-tbody"></tbody>
-          </table>
+          <div class="member-table-wrap">
+            <table class="data-table" id="member-table">
+              <thead>
+                <tr>
+                  <th>이름</th><th>학번</th><th>역할</th><th>그룹</th><th>마지막 수정</th><th>작업</th>
+                </tr>
+              </thead>
+              <tbody id="member-tbody"></tbody>
+            </table>
+          </div>
         </div>
 
         <div class="panel-section">
@@ -300,8 +302,11 @@
       var tbody = document.getElementById('member-tbody');
       tbody.innerHTML = members.map(function (m) {
         var isTempLogin = (m.student_id || '').indexOf('TBD_') === 0;
-        var studentValue = isTempLogin ? '' : (m.student_id || '');
-        var studentPlaceholder = isTempLogin ? '학번 미지정 · 임시 비밀번호 ' + getTempPasswordLabel(m) : '학번 입력';
+        var tempLabel = isTempLogin ? getTempPasswordLabel(m) : '';
+        var isVariantTemp = isTempLogin && (m.student_id || '') !== ('TBD_' + m.name);
+        // 동명 중복 구성원은 임시비번(CAP_이름_2)을 값으로 표시; 일반 임시는 placeholder로만 표시
+        var studentValue = isVariantTemp ? tempLabel : (isTempLogin ? '' : (m.student_id || ''));
+        var studentPlaceholder = isTempLogin && !isVariantTemp ? tempLabel : '학번 입력';
         return '<tr>' +
           '<td><strong>' + escHtml(m.name) + '</strong></td>' +
           '<td><input style="border:1px solid var(--line);border-radius:4px;padding:3px 7px;font-size:0.84rem;width:120px" ' +
@@ -326,8 +331,15 @@
     }
 
     async function updateStudentId(id, val) {
+      var trimmed = val.trim();
+      if (!trimmed) return; // 빈 값은 무시
+      if (trimmed.startsWith('CAP_')) {
+        alert('임시 비밀번호 형식의 값입니다. 실제 학번을 입력해주세요.');
+        await renderMemberTable();
+        return;
+      }
       try {
-        await CAPData.syncMemberLogin(id, val.trim());
+        await CAPData.syncMemberLogin(id, trimmed);
         showToast('학번과 로그인 계정이 업데이트되었습니다.');
         await renderMemberTable();
       } catch (e) {
@@ -335,9 +347,20 @@
       }
     }
 
+    var GROUP_ROLE_MAP = {
+      professor: 'admin', phd: 'phd', integrated: 'phd',
+      master: 'master', ra: 'ra', alumni: 'alumni'
+    };
+
     async function updateGroup(id, val) {
       try {
-        await CAPData.updateMember(id, { lab_group: val });
+        var m = await CAPData.getMember(id);
+        var updates = { lab_group: val };
+        // 관리자(admin) 권한은 toggleRole로만 변경 가능하므로 admin이 아닌 경우에만 role 동기화
+        if (m && m.role !== 'admin') {
+          updates.role = GROUP_ROLE_MAP[val] || 'member';
+        }
+        await CAPData.updateMember(id, updates);
         showToast('그룹이 변경되었습니다.');
         await renderMemberTable();
       } catch (e) {

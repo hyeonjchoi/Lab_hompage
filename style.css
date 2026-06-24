@@ -2127,24 +2127,66 @@ a.nav-user-name:hover { color: var(--red); }
   .join-action { padding: 16px 24px; }
   .form-row { grid-template-columns: 1fr; }
   .page-wrap { padding: 36px 0 52px; }
+  /* ── 탭 버튼: 한 줄 가로 스크롤 ── */
   .tabs {
-    gap: 6px;
-    border-bottom: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0;
+    scrollbar-width: none;
   }
+  .tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
-    flex: 1 1 calc(50% - 6px);
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-width: 90px;
     min-height: 38px;
-    margin-bottom: 0;
-    padding: 8px 10px;
-    border: 1px solid var(--line);
-    background: #fff;
-    font-size: 0.78rem;
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    font-size: 0.8rem;
   }
   .tab-btn.active {
-    color: #fff;
-    background: var(--navy);
-    border-color: var(--navy);
+    color: var(--navy);
+    border-bottom: 2px solid var(--navy);
+    margin-bottom: -1px;
   }
+
+  /* ── 구성원 관리 테이블: 가로 스크롤 표 형태 유지 ── */
+  .member-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #member-table {
+    display: table;
+    min-width: 560px;
+    table-layout: auto;
+  }
+  #member-table thead { display: table-header-group; }
+  #member-table tbody { display: table-row-group; }
+  #member-table tr {
+    display: table-row;
+    margin-bottom: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+  #member-table tr:hover td { background: var(--bg); }
+  #member-table td {
+    display: table-cell;
+    width: auto;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    grid-template-columns: unset;
+  }
+  #member-table td::before { content: none !important; }
+  #member-table td > * { grid-column: unset; min-width: 0; }
+  #member-table thead th { display: table-cell; }
+
+  /* ── 논문/발표/수상 테이블: 카드뷰 (간격 압축) ── */
   .data-table {
     display: block;
     min-width: 0;
@@ -2159,8 +2201,8 @@ a.nav-user-name:hover { color: var(--red); }
     width: 100%;
   }
   .data-table tr {
-    margin-bottom: 12px;
-    padding: 12px;
+    margin-bottom: 8px;
+    padding: 8px 10px;
     border: 1px solid var(--line);
     background: #fff;
   }
@@ -2169,17 +2211,17 @@ a.nav-user-name:hover { color: var(--red); }
   }
   .data-table td {
     display: grid;
-    grid-template-columns: minmax(76px, 28%) minmax(0, 1fr);
+    grid-template-columns: minmax(60px, 22%) minmax(0, 1fr);
     align-items: start;
-    gap: 10px;
-    padding: 7px 0;
+    gap: 6px;
+    padding: 4px 0;
     border-bottom: 0;
   }
   .data-table td::before {
     grid-column: 1;
     grid-row: 1 / span 8;
     color: var(--muted);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 800;
     line-height: 1.4;
   }
@@ -2199,35 +2241,33 @@ a.nav-user-name:hover { color: var(--red); }
     width: 100% !important;
     max-width: 100%;
     min-width: 0;
+    font-size: 0.82rem;
+    padding: 4px 8px;
   }
   .data-table .action-row {
     align-items: stretch;
     flex-wrap: wrap;
+    gap: 4px;
   }
   .data-table .action-row .btn-sm,
   .data-table td > .btn-sm {
     flex: 1 1 auto;
-    min-width: 72px;
+    min-width: 60px;
+    font-size: 0.72rem;
   }
-  #member-table td:nth-of-type(1)::before { content: "이름"; }
-  #member-table td:nth-of-type(2)::before { content: "학번"; }
-  #member-table td:nth-of-type(3)::before { content: "역할"; }
-  #member-table td:nth-of-type(4)::before { content: "그룹"; }
-  #member-table td:nth-of-type(5)::before { content: "수정일"; }
-  #member-table td:nth-of-type(6)::before { content: "작업"; }
   #articles-table td:nth-of-type(1)::before { content: "제목"; }
   #articles-table td:nth-of-type(2)::before { content: "저자"; }
-  #articles-table td:nth-of-type(3)::before { content: "저널 · 연도"; }
+  #articles-table td:nth-of-type(3)::before { content: "저널·연도"; }
   #articles-table td:nth-of-type(4)::before { content: "DOI"; }
   #articles-table td:nth-of-type(5)::before { content: "삭제"; }
   #pres-table td:nth-of-type(1)::before { content: "제목"; }
   #pres-table td:nth-of-type(2)::before { content: "발표자"; }
-  #pres-table td:nth-of-type(3)::before { content: "학회 · 연도"; }
+  #pres-table td:nth-of-type(3)::before { content: "학회·연도"; }
   #pres-table td:nth-of-type(4)::before { content: "형식"; }
   #pres-table td:nth-of-type(5)::before { content: "삭제"; }
   #awards-table td:nth-of-type(1)::before { content: "수상명"; }
   #awards-table td:nth-of-type(2)::before { content: "수상자"; }
-  #awards-table td:nth-of-type(3)::before { content: "기관 · 연도"; }
+  #awards-table td:nth-of-type(3)::before { content: "기관·연도"; }
   #awards-table td:nth-of-type(4)::before { content: "설명"; }
   #awards-table td:nth-of-type(5)::before { content: "삭제"; }
   .dashboard-preview, .dashboard-form { padding: 22px; }

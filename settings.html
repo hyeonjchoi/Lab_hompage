@@ -243,7 +243,7 @@
       saveBtn.textContent = '저장 중...';
 
       try {
-        await CAPData.updateStudentIdAndPassword(currentMember.id, newSid);
+        await CAPData.syncMemberLogin(currentMember.id, newSid);
         currentMember.student_id = newSid;
         document.getElementById('sid-display').textContent = newSid;
         cancelPwEdit();
