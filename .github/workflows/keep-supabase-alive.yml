@@ -1,7 +1,7 @@
 name: Keep Supabase Alive
 
 # Supabase 무료 플랜은 7일 비활성 시 프로젝트가 자동 pause됨.
-# 매일 한 번 REST API를 호출해 활성 상태를 유지한다.
+# 매일 한 번 공개 조회 가능한 REST 리소스를 호출해 활성 상태를 유지한다.
 
 on:
   schedule:
@@ -23,7 +23,7 @@ jobs:
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmbnFjd2Ftem52YXhncWFoYXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NDc5OTEsImV4cCI6MjA5NzEyMzk5MX0.WzCEyb0WxI_X34d6XG7632Cy31J5_O5Yz58yRUUQygU
         run: |
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/" \
+            "${SUPABASE_URL}/rest/v1/members?select=id&limit=1" \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
 

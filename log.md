@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-06-24 진행 요약
+
+### Keep Supabase Alive workflow 401 오류 수정
+
+- **증상**: GitHub Actions `Keep Supabase Alive` 실행 시 `HTTP status: 401`, `Ping failed — Supabase may be paused or unreachable.` 메시지와 함께 실패.
+- **원인**: 워크플로우가 `${SUPABASE_URL}/rest/v1/` 루트 엔드포인트를 호출하고 있었는데, 해당 엔드포인트는 anon key가 아닌 `service_role` key만 허용해 `UNAUTHORIZED_INVALID_API_KEY_TYPE` 401을 반환함.
+- **수정**: ping 대상을 공개 조회 가능한 실제 REST 리소스인 `/rest/v1/members?select=id&limit=1`로 변경. anon key로 라이브 호출 시 `HTTP 200` 확인 완료.
+
+---
+
 ## 2026-06-23 진행 요약
 
 ### 4. Supabase 자동 pause 방지 — GitHub Actions 데일리 핑 추가
