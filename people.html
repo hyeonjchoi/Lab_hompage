@@ -116,11 +116,10 @@
             ? '<span class="interest"><a href="mailto:' + escHtml(m.profile.email) + '" style="color:var(--navy)">' + escHtml(m.profile.email) + '</a></span>'
             : '';
           var avatarChar = m.profile.avatarEmoji || m.avatar_char;
+          var avatarBgVal = m.profile.avatarBg && /^#[0-9A-Fa-f]{3,6}$/.test(m.profile.avatarBg) ? m.profile.avatarBg : '';
           var avatarHtml = m.profile.photo
             ? '<img class="avatar avatar-photo" src="' + escHtml(m.profile.photo) + '" alt="' + escHtml(m.name) + ' 프로필 사진">'
-            : (grp !== 'alumni' && m.profile.characterAvatar && m.profile.characterAvatar.enabled
-              ? CAPAvatar.render(m.profile.characterAvatar, m.name + ' 캐릭터 아바타')
-              : '<div class="avatar" aria-hidden="true">' + escHtml(avatarChar) + '</div>');
+            : '<div class="avatar" aria-hidden="true"' + (avatarBgVal ? ' style="background:' + avatarBgVal + '"' : '') + '>' + escHtml(avatarChar) + '</div>';
 
           html += '<article class="' + pClass + '">';
           html += avatarHtml;

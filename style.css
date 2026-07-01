@@ -545,25 +545,36 @@ main { background: var(--bg); }
   border-top: 3px solid var(--navy);
 }
 .avatar {
-  display: grid; width: 76px; height: 76px;
+  display: grid; width: 100px; height: 100px;
   margin: 0 auto 14px; place-items: center;
   border: 1px solid var(--line); border-radius: 0;
+  overflow: hidden;
   background: var(--blue-soft); color: var(--navy);
-  font-size: 1.55rem; font-weight: 900;
+  font-size: 1.8rem; font-weight: 900;
 }
 .avatar-photo {
-  display: block; object-fit: cover;
+  display: block; width: 100px; height: 100px;
+  object-fit: cover; object-position: center;
   background: #fff;
 }
 .avatar-character {
   display: block; overflow: hidden;
 }
 .person.professor .avatar {
-  width: 88px; height: 88px;
-  background: var(--navy); color: #fff; font-size: 1.5rem;
+  width: 124px; height: 124px;
+  background: var(--navy); color: #fff; font-size: 1.8rem;
+}
+.person.professor .avatar-photo {
+  width: 124px; height: 124px;
 }
 .person.alumni {
   background: linear-gradient(180deg, #fff 0%, #F7FAFC 100%);
+}
+.person.alumni .avatar {
+  width: 88px; height: 88px; font-size: 1.6rem;
+}
+.person.alumni .avatar-photo {
+  width: 88px; height: 88px;
 }
 .person.placeholder {
   border-style: dashed;
@@ -1071,7 +1082,10 @@ a.nav-user-name:hover { color: var(--red); }
   border-top: 3px solid var(--navy);
 }
 .profile-preview-card .avatar {
-  width: 86px; height: 86px;
+  width: 100px; height: 100px;
+}
+.profile-preview-card .avatar-photo {
+  width: 100px; height: 100px;
 }
 .profile-preview-card.professor .avatar {
   background: var(--navy); color: #fff;
@@ -1128,6 +1142,16 @@ a.nav-user-name:hover { color: var(--red); }
 .emoji-presets button:hover {
   border-color: var(--navy); background: var(--blue-soft);
 }
+.avatar-bg-swatches {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;
+}
+.avatar-bg-swatch {
+  width: 32px; height: 32px; border-radius: 0;
+  border: 2px solid var(--line); cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.avatar-bg-swatch:hover { border-color: var(--navy); transform: scale(1.1); }
+.avatar-bg-swatch.selected { border-color: var(--navy); box-shadow: 0 0 0 2px var(--navy); }
 .character-builder {
   margin-top: 14px; padding: 16px; border: 1px solid var(--line); border-left: 4px solid var(--navy);
   border-radius: 0;
@@ -1777,9 +1801,10 @@ a.nav-user-name:hover { color: var(--red); }
   min-height: 280px;
 }
 .member-profile-avatar {
-  display: grid; place-items: center; width: 74px; height: 74px; margin: 16px 0;
+  display: grid; place-items: center; width: 100px; height: 100px; margin: 16px 0;
   border-radius: 0; background: var(--blue-soft); color: var(--navy);
-  border: 1px solid var(--line); font-size: 1.4rem; font-weight: 900;
+  border: 1px solid var(--line); font-size: 1.8rem; font-weight: 900;
+  overflow: hidden;
 }
 .member-profile-summary strong {
   display: block; color: var(--navy); font-size: 1.18rem;

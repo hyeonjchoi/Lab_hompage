@@ -100,11 +100,25 @@
       var previewClass = 'profile-preview-card' + (m.lab_group === 'professor' ? ' professor' : '');
       var isAlumni = m.lab_group === 'alumni';
       var positionLabel = isAlumni ? '학위' : '직위 / 과정';
-      var interestLabel = isAlumni ? '현재 소속' : '연구 관심사';
+      var interestLabel = isAlumni ? '현재 소속' : '연구 관심사 및 자기소개';
       var positionPlaceholder = isAlumni ? '예: 석사 졸업 · M.A.' : '예: 석사과정 · M.A. Student';
       var interestPlaceholder = isAlumni ? '예: 브랜드 전략팀 · ABC Company' : '연구 관심사를 입력하세요. 줄바꿈 가능.';
       var avatarEmoji = p.avatarEmoji || m.avatar_char || m.name.charAt(0);
-      var character = CAPAvatar.normalize(p.characterAvatar);
+      var avatarBg = p.avatarBg || '#EAF2F8';
+      var bgColors = [
+        { value: '#EAF2F8', label: '하늘색' },
+        { value: '#EAF7EF', label: '민트' },
+        { value: '#FEF3C7', label: '연노랑' },
+        { value: '#FCE8EA', label: '연분홍' },
+        { value: '#EDE9FE', label: '라벤더' },
+        { value: '#F3F4F6', label: '그레이' }
+      ];
+      var bgSwatchHtml = bgColors.map(function (c) {
+        var sel = c.value === avatarBg ? ' aria-pressed="true"' : ' aria-pressed="false"';
+        return '<button type="button" class="avatar-bg-swatch' + (c.value === avatarBg ? ' selected' : '') + '"' +
+          ' data-bg="' + c.value + '" style="background:' + c.value + '" title="' + c.label + '"' +
+          ' aria-label="' + c.label + '"' + sel + ' onclick="setAvatarBg(\'' + c.value + '\')"></button>';
+      }).join('');
       var avatarToolsHtml = isAlumni ? '' :
             '<div class="emoji-builder">' +
               '<div class="form-group"><label for="f-avatarEmoji">이모지 아바타</label>' +
@@ -119,50 +133,10 @@
                 '<button type="button" onclick="setAvatarEmoji(\'🔬\')" aria-label="현미경">🔬</button>' +
                 '<button type="button" onclick="setAvatarEmoji(\'✨\')" aria-label="반짝임">✨</button>' +
               '</div>' +
-            '</div>' +
-            '<div class="character-builder">' +
-              '<div class="form-check">' +
-                '<input type="checkbox" id="f-useCharacter"' + (character.enabled ? ' checked' : '') + '>' +
-                '<label for="f-useCharacter">조합형 캐릭터 아바타를 사용합니다.</label>' +
+              '<div class="form-group" style="margin-top:12px"><label>이모지 배경색</label>' +
+                '<div class="avatar-bg-swatches">' + bgSwatchHtml + '</div>' +
+                '<input type="hidden" id="f-avatarBg" value="' + escHtml(avatarBg) + '">' +
               '</div>' +
-              '<div class="character-controls">' +
-                '<div class="form-group"><label for="f-charGender">성별</label>' +
-                  '<select id="f-charGender">' +
-                    optionHtml('female', '여성', character.gender) +
-                    optionHtml('male', '남성', character.gender) +
-                  '</select></div>' +
-                '<div class="form-group"><label for="f-charFace">얼굴형</label>' +
-                  '<select id="f-charFace">' +
-                    optionHtml('round', '둥근형', character.face) +
-                    optionHtml('soft', '부드러운형', character.face) +
-                    optionHtml('long', '긴 얼굴형', character.face) +
-                  '</select></div>' +
-                '<div class="form-group"><label for="f-charExpression">표정</label>' +
-                  '<select id="f-charExpression">' +
-                    optionHtml('smile', '웃음', character.expression) +
-                    optionHtml('calm', '차분', character.expression) +
-                    optionHtml('focus', '집중', character.expression) +
-                    optionHtml('confident', '자신감', character.expression) +
-                  '</select></div>' +
-                '<div class="form-group"><label for="f-charBackground">배경색</label>' +
-                  '<select id="f-charBackground">' +
-                    optionHtml('blue', '하늘색', character.background) +
-                    optionHtml('red', '레드', character.background) +
-                    optionHtml('green', '그린', character.background) +
-                    optionHtml('gray', '그레이', character.background) +
-                    optionHtml('navy', '네이비', character.background) +
-                    optionHtml('lavender', '라벤더', character.background) +
-                  '</select></div>' +
-                '<div class="form-group"><label for="f-charAccessory">소품</label>' +
-                  '<select id="f-charAccessory">' +
-                    optionHtml('none', '없음', character.accessory) +
-                    optionHtml('glasses', '안경', character.accessory) +
-                    optionHtml('book', '책', character.accessory) +
-                    optionHtml('microscope', '현미경', character.accessory) +
-                    optionHtml('laptop', '노트북', character.accessory) +
-                  '</select></div>' +
-              '</div>' +
-              '<p class="form-hint">프로필 사진이 없고 이 옵션을 켰을 때 구성원 카드에 표시됩니다.</p>' +
             '</div>';
 
       wrap.innerHTML =
@@ -191,7 +165,7 @@
             '<div class="form-group"><label for="f-photo">프로필 사진</label>' +
               '<input id="f-photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif">' +
               '<input id="f-photoData" type="hidden" value="' + escHtml(p.photo || '') + '">' +
-              '<p class="form-hint">PNG, JPG, WebP, GIF 파일을 사용할 수 있습니다. 1MB 이하 이미지를 권장합니다.</p>' +
+              '<p class="form-hint">PNG, JPG, WebP, GIF 파일을 사용할 수 있습니다. 5MB 이하 이미지를 권장합니다.</p>' +
               '<button type="button" class="btn-sm" onclick="removeProfilePhoto()">사진 제거</button>' +
             '</div>' +
             avatarToolsHtml +
@@ -229,10 +203,6 @@
       if (document.getElementById('f-avatarEmoji')) {
         document.getElementById('f-avatarEmoji').addEventListener('input', updateProfilePreview);
       }
-      ['f-useCharacter', 'f-charGender', 'f-charFace', 'f-charExpression', 'f-charBackground', 'f-charAccessory'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener('change', updateProfilePreview);
-      });
       document.getElementById('f-showEmail').addEventListener('change', updateProfilePreview);
       document.getElementById('f-photo').addEventListener('change', handleProfilePhoto);
     }
@@ -246,11 +216,12 @@
       var photo = document.getElementById('f-photoData').value;
       var emojiEl = document.getElementById('f-avatarEmoji');
       var avatarEmoji = emojiEl ? emojiEl.value.trim() : '';
-      var character = getCharacterAvatar();
+      var bgEl = document.getElementById('f-avatarBg');
+      var avatarBg = bgEl ? bgEl.value : '#EAF2F8';
       var positionFallback = document.querySelector('label[for="f-position"]').textContent + ' 추가 예정';
       var interestFallback = document.querySelector('label[for="f-interest"]').textContent + ' 추가 예정';
 
-      updateAvatarPreview(photo, avatarEmoji, character);
+      updateAvatarPreview(photo, avatarEmoji, avatarBg);
       setPreviewText('preview-enName', enName, '영문 이름 추가 예정');
       setPreviewText('preview-position', position, positionFallback);
       setPreviewText('preview-interest', interest, interestFallback);
@@ -273,21 +244,32 @@
       el.classList.toggle('is-empty', !value);
     }
 
-    function updateAvatarPreview(photo, avatarEmoji, character) {
+    function updateAvatarPreview(photo, avatarEmoji, avatarBg) {
       var avatar = document.getElementById('preview-avatar');
       var fallback = document.querySelector('.profile-preview-card strong').textContent.charAt(0);
       if (photo) {
         avatar.innerHTML = '<img class="avatar avatar-photo" src="' + escHtml(photo) + '" alt="프로필 사진 미리보기">';
-      } else if (character.enabled) {
-        avatar.innerHTML = CAPAvatar.render(character, '캐릭터 아바타 미리보기');
       } else {
-        avatar.innerHTML = '<div class="avatar" aria-hidden="true">' + escHtml(avatarEmoji || fallback) + '</div>';
+        var bgStyle = /^#[0-9A-Fa-f]{3,6}$/.test(avatarBg) ? 'background:' + avatarBg + ';' : '';
+        avatar.innerHTML = '<div class="avatar" aria-hidden="true" style="' + bgStyle + '">' + escHtml(avatarEmoji || fallback) + '</div>';
       }
     }
 
     function setAvatarEmoji(value) {
       if (!document.getElementById('f-avatarEmoji')) return;
       document.getElementById('f-avatarEmoji').value = value;
+      updateProfilePreview();
+    }
+
+    function setAvatarBg(value) {
+      var bgEl = document.getElementById('f-avatarBg');
+      if (!bgEl) return;
+      bgEl.value = value;
+      document.querySelectorAll('.avatar-bg-swatch').forEach(function (btn) {
+        var isSelected = btn.dataset.bg === value;
+        btn.classList.toggle('selected', isSelected);
+        btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      });
       updateProfilePreview();
     }
 
@@ -300,8 +282,8 @@
         e.target.value = '';
         return;
       }
-      if (file.size > 1024 * 1024) {
-        alert('프로필 사진은 1MB 이하 파일을 사용해 주세요.');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('프로필 사진은 5MB 이하 파일을 사용해 주세요.');
         e.target.value = '';
         return;
       }
@@ -319,21 +301,7 @@
       updateProfilePreview();
     }
 
-    function getCharacterAvatar() {
-      if (!document.getElementById('f-useCharacter')) {
-        return CAPAvatar.normalize({ enabled: false });
-      }
-      return CAPAvatar.normalize({
-        enabled: document.getElementById('f-useCharacter').checked,
-        gender: document.getElementById('f-charGender').value,
-        face: document.getElementById('f-charFace').value,
-        expression: document.getElementById('f-charExpression').value,
-        background: document.getElementById('f-charBackground').value,
-        accessory: document.getElementById('f-charAccessory').value
-      });
-    }
-
-    function optionHtml(value, label, current) {
+function optionHtml(value, label, current) {
       return '<option value="' + value + '"' + (value === current ? ' selected' : '') + '>' + label + '</option>';
     }
 
@@ -346,7 +314,7 @@
         showEmail: document.getElementById('f-showEmail').checked,
         photo:     document.getElementById('f-photoData').value,
         avatarEmoji: document.getElementById('f-avatarEmoji') ? document.getElementById('f-avatarEmoji').value.trim() : '',
-        characterAvatar: getCharacterAvatar()
+        avatarBg:    document.getElementById('f-avatarBg') ? document.getElementById('f-avatarBg').value : '#EAF2F8'
       };
       try {
         await CAPData.updateMemberProfile(id, updates);
