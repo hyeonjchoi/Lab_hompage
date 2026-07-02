@@ -601,6 +601,31 @@ const CAPData = {
     _throw(error);
   },
 
+  // ── Member Progress (개인 연구 진행상황) ──
+  async getMemberProgress(memberId) {
+    const { data, error } = await getSupabase()
+      .from('member_progress').select('*').eq('member_id', memberId).maybeSingle();
+    _throw(error); return data;
+  },
+  async getAllMemberProgress() {
+    const { data, error } = await getSupabase()
+      .from('member_progress').select('*');
+    _throw(error); return data;
+  },
+  async updateMemberProgress(memberId, status, memo) {
+    const { error } = await getSupabase()
+      .from('member_progress')
+      .upsert(
+        { member_id: memberId, status, memo, updated_at: new Date().toISOString() },
+        { onConflict: 'member_id' }
+      );
+    _throw(error); return true;
+  },
+  async removeMemberProgress(memberId) {
+    const { error } = await getSupabase().from('member_progress').delete().eq('member_id', memberId);
+    _throw(error);
+  },
+
   // ── Team Projects ─────────────────────────
   async getTeamProjects() {
     const { data, error } = await getSupabase()
@@ -710,6 +735,11 @@ const CAPData = {
         { onConflict: 'project_id,member_id' }
       );
     _throw(error); return true;
+  },
+  async removeProjectProgress(projectId, memberId) {
+    const { error } = await getSupabase()
+      .from('team_project_progress').delete().eq('project_id', projectId).eq('member_id', memberId);
+    _throw(error);
   }
 };
 

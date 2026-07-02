@@ -54,6 +54,24 @@
       <article class="lab-board member-profile-summary">
         <span class="lab-kicker">Profile</span>
         <div id="member-profile-card"></div>
+        <div id="profile-progress-panel" hidden style="border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-top:14px">
+          <p style="font-weight:700;margin:0 0 12px">개인 연구 진행상황 업데이트</p>
+          <form onsubmit="saveProfileProgress(event)">
+            <div class="form-group">
+              <label for="profile-progress-status">진행 상태</label>
+              <input id="profile-progress-status" placeholder="예: 논문 초안 작성 중">
+            </div>
+            <div class="form-group">
+              <label for="profile-progress-memo">공유 메모</label>
+              <textarea id="profile-progress-memo" placeholder="현재 진행 사항과 다음 액션을 적어주세요."></textarea>
+            </div>
+            <div class="drawer-actions" style="margin-top:12px">
+              <button type="button" class="btn-sm" onclick="closeProfileProgressPanel()">취소</button>
+              <button type="button" class="btn-sm danger" onclick="resetProfileProgress()">초기화</button>
+              <button type="submit" class="save-btn">업데이트 저장</button>
+            </div>
+          </form>
+        </div>
         <div id="goal-notes-panel" hidden class="goal-notes-panel" style="margin-top:14px">
           <div class="goal-notes-panel-head">
             <span id="goal-notes-panel-title">목표 관련 메모</span>
@@ -235,7 +253,8 @@
         CAPData.getProjectsForMember(memberId),
         CAPData.getLabEvents(),
         CAPData.getMeetingMinutes(),
-        CAPData.getMembers()
+        CAPData.getMembers(),
+        CAPData.getMemberProgress(memberId).catch(function () { return null; })
       ]);
       var goals = results[0];
       var notes = results[1];
@@ -243,6 +262,7 @@
       var events = results[3];
       var minutes = results[4];
       var members = results[5];
+      var progressRow = results[6];
       labData.memberGoals = (goals || []).map(function(g) {
         return {
           id: g.id, memberId: g.member_id, title: g.title, status: g.status,
@@ -273,7 +293,7 @@
           title: m.title, summary: m.summary || '', createdAt: m.created_at };
       });
       labData.members = members || [];
-      labData.progress = [];
+      labData.progress = progressRow ? [{ memberId: progressRow.member_id, status: progressRow.status, memo: progressRow.memo, updatedAt: progressRow.updated_at }] : [];
     }
 
     function renderMemberPage() {
@@ -287,17 +307,67 @@
         ? '<img src="' + escHtml(_photo) + '" alt="' + escHtml(currentMember.name) + ' 프로필 사진">'
         : escHtml(currentMember.profile.avatarEmoji || currentMember.avatar_char || currentMember.name.charAt(0));
       document.getElementById('member-profile-card').innerHTML =
+        (!isAdminView ? '<button type="button" class="btn-sm profile-progress-btn" onclick="openProfileProgressPanel()">진행상황 업데이트</button>' : '') +
         '<div class="member-profile-avatar">' + _avatarInner + '</div>' +
         '<strong>' + escHtml(currentMember.name) + '</strong>' +
         '<span>' + escHtml(currentMember.profile.position || '직위 추가 예정') + '</span>' +
         '<p>' + escHtml(progress ? progress.status : '진행상황 추가 예정') + '</p>' +
-        '<p>' + escHtml(progress ? progress.memo : 'LAB 페이지에서 진행상황을 업데이트할 수 있습니다.') + '</p>';
+        '<p>' + escHtml(progress ? progress.memo : (isAdminView ? '아직 등록된 진행상황이 없습니다.' : '우측 상단 버튼으로 진행상황을 업데이트할 수 있습니다.')) + '</p>';
       renderGoalPermissions();
       renderNoteForm();
       renderGoals();
       renderMeetings();
       renderNotes();
       renderMemberProjects();
+    }
+
+    function openProfileProgressPanel() {
+      if (isAdminView || !currentSession) return;
+      var panel = document.getElementById('profile-progress-panel');
+      if (!panel) return;
+      var progress = labData.progress.find(function (item) { return item.memberId === currentMember.id; });
+      var statusInput = document.getElementById('profile-progress-status');
+      var memoInput = document.getElementById('profile-progress-memo');
+      if (statusInput) statusInput.value = progress ? progress.status : '';
+      if (memoInput) memoInput.value = progress ? progress.memo : '';
+      panel.hidden = false;
+      if (statusInput) statusInput.focus();
+    }
+
+    function closeProfileProgressPanel() {
+      var panel = document.getElementById('profile-progress-panel');
+      if (panel) panel.hidden = true;
+    }
+
+    async function saveProfileProgress(e) {
+      e.preventDefault();
+      if (isAdminView || !currentSession) return;
+      var status = document.getElementById('profile-progress-status').value.trim();
+      if (!status) { showToast('진행 상태를 입력해 주세요.'); return; }
+      var memo = document.getElementById('profile-progress-memo').value.trim();
+      try {
+        await CAPData.updateMemberProgress(currentSession.userId, status, memo);
+        await loadMemberData(currentMember.id);
+        renderMemberPage();
+        closeProfileProgressPanel();
+        showToast('진행상황을 업데이트했습니다.');
+      } catch (err) {
+        showToast('저장 실패: ' + (err && err.message ? err.message.slice(0, 80) : '오류가 발생했습니다.'));
+      }
+    }
+
+    async function resetProfileProgress() {
+      if (isAdminView || !currentSession) return;
+      if (!confirm('개인 연구 진행상황을 삭제하고 초기화할까요?')) return;
+      try {
+        await CAPData.removeMemberProgress(currentSession.userId);
+        await loadMemberData(currentMember.id);
+        renderMemberPage();
+        closeProfileProgressPanel();
+        showToast('진행상황을 초기화했습니다.');
+      } catch (err) {
+        showToast('초기화 실패: ' + (err && err.message ? err.message.slice(0, 80) : '오류가 발생했습니다.'));
+      }
     }
 
     function renderNoteForm() {

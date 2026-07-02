@@ -117,7 +117,20 @@ CREATE TABLE IF NOT EXISTS member_notes (
 );
 
 -- ══════════════════════════════════════════════
--- 8. 팀 프로젝트 (team_projects)
+-- 8. 구성원 개인 연구 진행상황 (member_progress)
+--    team_project_progress와 별개로, 팀 프로젝트 소속 여부와 무관하게
+--    구성원 본인이 자유롭게 갱신하는 개인 연구 현황 한 줄
+-- ══════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS member_progress (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id   UUID NOT NULL UNIQUE REFERENCES members(id) ON DELETE CASCADE,
+  status      TEXT,
+  memo        TEXT,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ══════════════════════════════════════════════
+-- 9. 팀 프로젝트 (team_projects)
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS team_projects (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -135,7 +148,7 @@ CREATE TABLE IF NOT EXISTS team_projects (
 );
 
 -- ══════════════════════════════════════════════
--- 9. 팀 프로젝트 목표 (team_project_goals)
+-- 10. 팀 프로젝트 목표 (team_project_goals)
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS team_project_goals (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -153,7 +166,7 @@ CREATE TABLE IF NOT EXISTS team_project_goals (
 );
 
 -- ══════════════════════════════════════════════
--- 10. 팀 프로젝트 메모/노트 (team_project_notes)
+-- 11. 팀 프로젝트 메모/노트 (team_project_notes)
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS team_project_notes (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -169,7 +182,7 @@ CREATE TABLE IF NOT EXISTS team_project_notes (
 );
 
 -- ══════════════════════════════════════════════
--- 11. 팀 프로젝트 노트 댓글 (team_project_note_replies)
+-- 12. 팀 프로젝트 노트 댓글 (team_project_note_replies)
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS team_project_note_replies (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -181,7 +194,7 @@ CREATE TABLE IF NOT EXISTS team_project_note_replies (
 );
 
 -- ══════════════════════════════════════════════
--- 12. 팀 프로젝트 내 개인 진행상황 (team_project_progress)
+-- 13. 팀 프로젝트 내 개인 진행상황 (team_project_progress)
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS team_project_progress (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -194,7 +207,7 @@ CREATE TABLE IF NOT EXISTS team_project_progress (
 );
 
 -- ══════════════════════════════════════════════
--- 13. 논문 및 학술 성과 (publications)
+-- 14. 논문 및 학술 성과 (publications)
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS publications (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -218,7 +231,7 @@ CREATE TABLE IF NOT EXISTS publications (
 );
 
 -- ══════════════════════════════════════════════
--- 14. 사이트 콘텐츠 (site_content)
+-- 15. 사이트 콘텐츠 (site_content)
 -- 관리자가 편집하는 홈/페이지 텍스트, 연구 축 데이터 등
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS site_content (
@@ -228,7 +241,7 @@ CREATE TABLE IF NOT EXISTS site_content (
 );
 
 -- ══════════════════════════════════════════════
--- 15. 푸시 구독 정보 (push_subscriptions)
+-- 16. 푸시 구독 정보 (push_subscriptions)
 -- 구성원이 "알림 허용"을 누르면 기기별로 한 행씩 저장됨
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -241,7 +254,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 
 -- ══════════════════════════════════════════════
--- 16. 알림 수신 설정 (notification_settings)
+-- 17. 알림 수신 설정 (notification_settings)
 -- 구성원별 알림 타이밍·종류 선택. 행 없으면 서버 기본값(day1, atStart) 사용.
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS notification_settings (
@@ -259,7 +272,7 @@ CREATE POLICY "notification_settings_update_own" ON notification_settings
   FOR UPDATE USING (member_id = current_member_id());
 
 -- ══════════════════════════════════════════════
--- 17. 알림 발송 기록 (notification_dispatch_log)
+-- 18. 알림 발송 기록 (notification_dispatch_log)
 -- 일정/목표 마감 같은 시간 기반 알림의 중복 발송을 막기 위한 기록
 -- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS notification_dispatch_log (
@@ -279,6 +292,7 @@ ALTER TABLE notices                   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resources                 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE member_goals              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE member_notes              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE member_progress           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_projects             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_goals        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_notes        ENABLE ROW LEVEL SECURITY;
@@ -385,6 +399,18 @@ CREATE POLICY "notes_insert" ON member_notes FOR INSERT
   WITH CHECK (current_member_role() IN ('professor', 'admin') OR author_id = current_member_id());
 CREATE POLICY "notes_delete" ON member_notes FOR DELETE
   USING (author_id = current_member_id() OR current_member_role() IN ('professor', 'admin'));
+
+-- ──────────────────────────────────────────────
+-- member_progress: 로그인한 구성원 누구나 조회(랩 현황판), 본인만 작성/수정
+-- ──────────────────────────────────────────────
+CREATE POLICY "member_progress_select" ON member_progress FOR SELECT
+  USING (auth.role() = 'authenticated');
+CREATE POLICY "member_progress_upsert" ON member_progress FOR INSERT
+  WITH CHECK (member_id = current_member_id());
+CREATE POLICY "member_progress_update" ON member_progress FOR UPDATE
+  USING (member_id = current_member_id());
+CREATE POLICY "member_progress_delete" ON member_progress FOR DELETE
+  USING (member_id = current_member_id());
 
 -- ──────────────────────────────────────────────
 -- team_projects: 참여자 또는 professor/admin 조회/수정
@@ -506,6 +532,8 @@ CREATE POLICY "tp_progress_select" ON team_project_progress FOR SELECT
 CREATE POLICY "tp_progress_upsert" ON team_project_progress FOR INSERT
   WITH CHECK (member_id = current_member_id());
 CREATE POLICY "tp_progress_update" ON team_project_progress FOR UPDATE
+  USING (member_id = current_member_id());
+CREATE POLICY "tp_progress_delete" ON team_project_progress FOR DELETE
   USING (member_id = current_member_id());
 
 -- ──────────────────────────────────────────────
