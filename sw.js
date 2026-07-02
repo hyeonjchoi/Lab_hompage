@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kw-cap-lab-v18';
+const CACHE_NAME = 'kw-cap-lab-v19';
 const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 
 const PRECACHE_ASSETS = [
@@ -75,6 +75,11 @@ self.addEventListener('activate', event => {
 // Fetch: network-first for API/Supabase, cache-first for static assets
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+
+  // http(s) 이외 스킴(chrome-extension: 등)은 Cache API가 지원하지 않으므로 가로채지 않는다.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
 
   // Supabase API 요청: 항상 네트워크 우선 (캐시 안 함)
   if (url.hostname.includes('supabase.co')) {
