@@ -110,6 +110,7 @@
             <div>
               <span class="lab-kicker">Notice</span>
               <h2>공지사항</h2>
+              <p class="lab-panel-sub" id="notice-count-sub"></p>
             </div>
             <div class="lab-panel-actions">
               <button type="button" class="btn-sm" onclick="openLabDrawer('notice')">추가</button>
@@ -124,6 +125,7 @@
             <div>
               <span class="lab-kicker">Scrap</span>
               <h2>공유 소스</h2>
+              <p class="lab-panel-sub" id="resource-count-sub"></p>
             </div>
             <div class="lab-panel-actions">
               <button type="button" class="btn-sm" onclick="openLabDrawer('resource')">추가</button>
@@ -296,6 +298,10 @@
     var MINUTES_PAGE_SIZE = 5;
     var teamProjectPage = 1;
     var TEAM_PROJECT_PAGE_SIZE = 4;
+    var noticePage = 1;
+    var NOTICE_PAGE_SIZE = 2;
+    var resourcePage = 1;
+    var RESOURCE_PAGE_SIZE = 2;
     var MINUTES_RETENTION_DAYS = 60;
 
     var EVENT_TYPES = {
@@ -505,27 +511,73 @@
 
     function renderNotices() {
       var list = document.getElementById('notice-list');
-      var notices = labData.notices.slice().sort(function (a, b) {
-        return sortPinnedThenDate(a, b);
-      }).slice(0, 2);
-      list.innerHTML = notices.length ? notices.map(function (notice) {
+      var allNotices = labData.notices.slice().sort(sortPinnedThenDate);
+      var totalPages = Math.max(1, Math.ceil(allNotices.length / NOTICE_PAGE_SIZE));
+      if (noticePage > totalPages) noticePage = totalPages;
+      if (noticePage < 1) noticePage = 1;
+      var start = (noticePage - 1) * NOTICE_PAGE_SIZE;
+      var notices = allNotices.slice(start, start + NOTICE_PAGE_SIZE);
+
+      document.getElementById('notice-count-sub').textContent = allNotices.length
+        ? '전체 ' + allNotices.length + '건 중 ' + (start + 1) + '-' + (start + notices.length) + '번째 표시'
+        : '등록된 공지사항이 없습니다.';
+
+      list.innerHTML = (notices.length ? notices.map(function (notice) {
         return '<button type="button" class="lab-list-card notice-card clickable" onclick="openDetailModal(\'notice\',\'' + escHtml(notice.id) + '\')">' +
           '<span>' + (notice.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.date)) + '</span>' +
           '<strong>' + escHtml(notice.title) + '</strong>' +
           '<p>' + escHtml(notice.summary) + '</p>' +
         '</button>';
-      }).join('') : '<p class="lab-empty">공지사항이 없습니다.</p>';
+      }).join('') : '<p class="lab-empty">공지사항이 없습니다.</p>') + renderNoticePagination(totalPages, allNotices.length);
+    }
+
+    function renderNoticePagination(totalPages, totalCount) {
+      if (totalPages <= 1) return '';
+      return '<div class="minutes-pagination" aria-label="공지사항 페이지 이동">' +
+        '<button type="button" class="btn-sm" onclick="changeNoticePage(-1)"' + (noticePage === 1 ? ' disabled' : '') + '>이전</button>' +
+        '<span>' + noticePage + ' / ' + totalPages + ' · 총 ' + totalCount + '개</span>' +
+        '<button type="button" class="btn-sm" onclick="changeNoticePage(1)"' + (noticePage === totalPages ? ' disabled' : '') + '>다음</button>' +
+      '</div>';
+    }
+
+    function changeNoticePage(delta) {
+      noticePage += delta;
+      renderNotices();
     }
 
     function renderResources() {
       var list = document.getElementById('resource-list');
-      var resources = labData.resources.slice().sort(sortPinnedThenDate).slice(0, 2);
-      list.innerHTML = resources.length ? resources.map(function (resource) {
+      var allResources = labData.resources.slice().sort(sortPinnedThenDate);
+      var totalPages = Math.max(1, Math.ceil(allResources.length / RESOURCE_PAGE_SIZE));
+      if (resourcePage > totalPages) resourcePage = totalPages;
+      if (resourcePage < 1) resourcePage = 1;
+      var start = (resourcePage - 1) * RESOURCE_PAGE_SIZE;
+      var resources = allResources.slice(start, start + RESOURCE_PAGE_SIZE);
+
+      document.getElementById('resource-count-sub').textContent = allResources.length
+        ? '전체 ' + allResources.length + '건 중 ' + (start + 1) + '-' + (start + resources.length) + '번째 표시'
+        : '등록된 공유 자료가 없습니다.';
+
+      list.innerHTML = (resources.length ? resources.map(function (resource) {
         return '<button type="button" class="lab-list-card resource-card clickable resource-compact" onclick="openDetailModal(\'resource\',\'' + escHtml(resource.id) + '\')">' +
           '<span>' + (resource.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
           '<strong>' + escHtml(resource.title) + '</strong>' +
         '</button>';
-      }).join('') : '<p class="lab-empty">공유 자료가 없습니다.</p>';
+      }).join('') : '<p class="lab-empty">공유 자료가 없습니다.</p>') + renderResourcePagination(totalPages, allResources.length);
+    }
+
+    function renderResourcePagination(totalPages, totalCount) {
+      if (totalPages <= 1) return '';
+      return '<div class="minutes-pagination" aria-label="공유 소스 페이지 이동">' +
+        '<button type="button" class="btn-sm" onclick="changeResourcePage(-1)"' + (resourcePage === 1 ? ' disabled' : '') + '>이전</button>' +
+        '<span>' + resourcePage + ' / ' + totalPages + ' · 총 ' + totalCount + '개</span>' +
+        '<button type="button" class="btn-sm" onclick="changeResourcePage(1)"' + (resourcePage === totalPages ? ' disabled' : '') + '>다음</button>' +
+      '</div>';
+    }
+
+    function changeResourcePage(delta) {
+      resourcePage += delta;
+      renderResources();
     }
 
     function renderMinutes() {
@@ -1030,6 +1082,7 @@
           await CAPData.updateNotice(editingContentId, noticePayload);
         } else {
           await CAPData.addNotice(noticePayload);
+          noticePage = 1;
         }
       } else if (activeDrawerType === 'resource') {
         var resourcePayload = {
@@ -1041,6 +1094,7 @@
           await CAPData.updateResource(editingContentId, resourcePayload);
         } else {
           await CAPData.addResource(resourcePayload);
+          resourcePage = 1;
         }
       } else if (activeDrawerType === 'progress') {
         if (!session) return;
