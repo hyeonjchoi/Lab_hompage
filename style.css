@@ -1799,6 +1799,8 @@ a.nav-user-name:hover { color: var(--red); }
 }
 .member-profile-summary {
   min-height: 280px;
+}
+.lab-page .member-profile-summary {
   position: relative;
 }
 .profile-progress-btn {
