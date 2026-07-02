@@ -2,6 +2,65 @@
 
 ---
 
+## 2026-07-02 진행 요약 — 개인 연구 진행상황 기능 추가 및 배포 버그 수정
+
+### 1. 개인 연구 진행상황(`member_progress`) 기능 추가
+
+- 기존 `team_project_progress`는 팀 프로젝트 소속 구성원만 갱신 가능했던 한계를 해소하기 위해, 팀 프로젝트 소속 여부와 무관하게 구성원 개인이 진행상황을 기록할 수 있는 신규 테이블 `member_progress` 추가 (member_id 유니크, status/memo/updated_at).
+- RLS: 로그인한 구성원 전체 조회 가능, 본인 행만 insert/update/delete 가능.
+- **`supabase-client.js`**: `getMemberProgress`, `getAllMemberProgress`, `updateMemberProgress`, `removeMemberProgress`, `removeProjectProgress` 추가.
+- **`lab.html`**: 진행상황 드로어에 "개인 연구" / "팀 프로젝트" 라디오 토글 추가 — 팀 프로젝트 미소속이어도 개인 진행상황 업데이트 가능. 연구자별 진행상황 카드에 출처 배지("개인 연구" 또는 프로젝트명) 표시, 구성원별로 더 최근에 갱신된 항목을 우선 노출.
+
+### 2. 진행상황 업데이트 UI를 `lab-member.html`(내 연구페이지)로 이동
+
+- `lab.html` "연구자별 진행 상황" 패널의 "업데이트" 버튼 제거 (페이지 상단 "진행상황 업데이트" 버튼은 팀 프로젝트용으로 유지).
+- `lab-member.html` 프로필 카드 우측 상단에 "진행상황 업데이트" 버튼 신설 (본인 페이지에서만 노출). 클릭 시 카드 하단에 인라인 편집 패널이 열리며 상태/메모 저장.
+- **초기화 버튼** 추가 — 저장된 진행상황을 삭제해 "진행상황 추가 예정" 초기 상태로 되돌릴 수 있음 (`lab.html` 드로어 개인/팀 양쪽, `lab-member.html` 패널 모두 적용).
+
+### 3. 팀 프로젝트 생성 버그 수정 (`lab.html`)
+
+- `saveProjectCreate()`가 실제 스키마에 없는 컬럼(`created_by`, 중첩 `profile` 객체)으로 insert를 시도해 항상 조용히 실패하던 문제 수정 → `creator_id`, `photo`, `avatar_emoji` 평평한 컬럼으로 교체.
+- try/catch + 실패 토스트 추가.
+
+### 4. 진행상황 토글 좌측 정렬 수정 (`lab.html`)
+
+- 라디오 버튼(`.form-check`)을 `.form-group`으로 감싸는 바람에 `.form-group input { width:100% }` 규칙에 걸려 우측으로 쏠려 보이던 문제 수정 — 이 코드베이스의 기존 관례대로 `.form-check`를 `.form-group` 밖에 독립적으로 배치.
+
+### 5. 배포 후 버튼 미표시 이슈 해결 — 캐시 2건 + CSS 명시도 버그 1건
+
+- `style.css` / `supabase-client.js`를 불러오는 `?v=` 캐시 버스팅 쿼리 문자열을 변경 없이 재배포해 브라우저가 예전 자산을 계속 서빙하던 문제 → 버전 문자열 갱신 (`magazine-v1-6-progress`, `supabase-v6`, `mobile-overflow-v2`).
+- 서비스워커(`sw.js`)의 `CACHE_NAME`을 변경하지 않아 새 서비스워커가 설치되지 않고 예전 캐시가 계속 서빙되던 문제 → `kw-cap-lab-v17` → `v20`으로 순차 상향. 겸사겸사 `chrome-extension:` 등 비-http(s) 요청을 fetch 핸들러가 가로채 `Cache.put()` 에러를 내던 부수적 버그도 함께 수정.
+- **실제 근본 원인은 CSS 명시도(specificity) 충돌**이었음: `.lab-page .lab-board`(명시도 0-2-0, `position: static`)가 `.member-profile-summary`(명시도 0-1-0, `position: relative`)보다 소스 순서와 무관하게 항상 우선 적용되어, 프로필 카드가 포지셔닝 컨텍스트가 되지 못하고 절대 위치 버튼이 카드 우측 상단이 아닌 엉뚱한 조상 기준 위치에 렌더링되고 있었음. 선택자를 `.lab-page .member-profile-summary`로 맞춰 명시도를 동일하게 하고 소스 순서로 우선권을 확보해 해결.
+
+### 6. Supabase 정책 추가 (✅ 적용 완료 — Management API로 프로덕션에 직접 실행)
+
+```sql
+CREATE TABLE IF NOT EXISTS member_progress (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id   UUID NOT NULL UNIQUE REFERENCES members(id) ON DELETE CASCADE,
+  status      TEXT,
+  memo        TEXT,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE member_progress ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "member_progress_select" ON member_progress FOR SELECT
+  USING (auth.role() = 'authenticated');
+CREATE POLICY "member_progress_upsert" ON member_progress FOR INSERT
+  WITH CHECK (member_id = current_member_id());
+CREATE POLICY "member_progress_update" ON member_progress FOR UPDATE
+  USING (member_id = current_member_id());
+CREATE POLICY "member_progress_delete" ON member_progress FOR DELETE
+  USING (member_id = current_member_id());
+
+CREATE POLICY "tp_progress_delete" ON team_project_progress FOR DELETE
+  USING (member_id = current_member_id());
+```
+
+- `member_progress` 테이블/정책은 신규 생성, `tp_progress_delete`는 기존 `team_project_progress`에 누락돼 있던 DELETE 정책 보강 (초기화 버튼 동작을 위해 필요).
+
+---
+
 ## 2026-07-01 진행 요약 — 프로필 사진 업로드 개선 및 아바타 UI 정리
 
 ### 1. 프로필 사진 업로드 용량 상향 (`member-dashboard.html`)
