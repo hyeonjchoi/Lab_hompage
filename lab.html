@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CAP Lab">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=mobile-overflow-v2">
+  <link rel="stylesheet" href="style.css?v=notice-clamp-v1">
 </head>
 <body>
   <a class="skip-link" href="#main">본문으로 이동</a>
@@ -325,9 +325,10 @@
     }
     function normalizeNotice(row) {
       var createdAt = row.created_at || '';
+      var createdDate = createdAt ? new Date(createdAt) : null;
       return {
         id: row.id, title: row.title,
-        date: createdAt.split('T')[0],
+        date: (createdDate && !isNaN(createdDate.getTime())) ? formatDateKey(createdDate) : createdAt.split('T')[0],
         createdAt: createdAt,
         important: !!row.is_important,
         summary: row.body || ''
@@ -736,7 +737,7 @@
       document.getElementById('content-modal-type').textContent = (item.important ? '중요 · ' : '') + (isNotice ? '공지사항' : '공유 소스');
       document.getElementById('content-modal-title').textContent = item.title;
       var detailHtml = isNotice
-        ? '<dl class="event-detail-list"><div><dt>작성일</dt><dd>' + escHtml(formatKoreanDate(item.createdAt || item.date)) + '</dd></div><div><dt>내용</dt><dd>' + escHtml(item.summary || '내용이 없습니다.') + '</dd></div></dl>'
+        ? '<dl class="event-detail-list"><div><dt>작성일</dt><dd>' + escHtml(formatKoreanDate(item.date)) + '</dd></div><div><dt>내용</dt><dd>' + escHtml(item.summary || '내용이 없습니다.') + '</dd></div></dl>'
         : '<dl class="event-detail-list"><div><dt>태그</dt><dd>' + escHtml(item.tags || '참고 자료') + '</dd></div><div><dt>URL</dt><dd>' + (item.url ? '<a href="' + escHtml(item.url) + '" target="_blank" rel="noopener">' + escHtml(item.url) + '</a>' : 'URL이 없습니다.') + '</dd></div><div><dt>설명</dt><dd>' + escHtml(item.desc || '설명이 없습니다.') + '</dd></div></dl>';
       document.getElementById('content-modal-body').innerHTML = detailHtml +
         '<div class="event-modal-actions">' +

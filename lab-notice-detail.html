@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="KW CAP Lab 공지사항 전체보기">
+  <meta name="description" content="KW CAP Lab 공지사항 상세보기">
   <title>공지사항 | KW CAP Lab</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#183A5A">
@@ -41,17 +41,18 @@
   <main id="main" class="lab-page">
     <section class="lab-hero">
       <div>
-        <span class="tagline">Notice</span>
-        <h1>공지사항 전체보기</h1>
-        <p>랩 운영과 관련된 공지사항을 최신순으로 확인합니다.</p>
+        <span class="tagline" id="notice-detail-badge">Notice</span>
+        <h1 id="notice-detail-title">불러오는 중...</h1>
+        <p id="notice-detail-date"></p>
       </div>
       <div class="lab-quick-actions">
+        <a class="btn-sm" href="lab-notices.html">목록으로</a>
         <a class="btn-sm" href="lab.html">LAB으로 돌아가기</a>
       </div>
     </section>
 
     <section class="lab-board">
-      <div class="lab-page-list" id="notice-page-list"></div>
+      <div class="notice-detail-body" id="notice-detail-body"></div>
     </section>
   </main>
 
@@ -71,24 +72,27 @@
   <script>
     document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
-      await renderNoticePage();
+      await renderNoticeDetailPage();
     });
 
-    async function renderNoticePage() {
+    async function renderNoticeDetailPage() {
+      var id = new URLSearchParams(window.location.search).get('id');
       var notices = await CAPData.getNotices();
-      notices = notices.slice().sort(sortPinnedThenDate);
-      document.getElementById('notice-page-list').innerHTML = notices.length ? notices.map(function (notice) {
-        return '<a class="lab-page-list-card" href="lab-notice-detail.html?id=' + encodeURIComponent(notice.id) + '">' +
-          '<span>' + (notice.is_important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.created_at)) + '</span>' +
-          '<strong>' + escHtml(notice.title) + '</strong>' +
-          '<p>' + escHtml(notice.body || '내용이 없습니다.') + '</p>' +
-        '</a>';
-      }).join('') : '<p class="lab-empty">등록된 공지사항이 없습니다.</p>';
-    }
+      var notice = (notices || []).find(function (item) { return item.id === id; });
 
-    function sortPinnedThenDate(a, b) {
-      if (!!a.is_important !== !!b.is_important) return a.is_important ? -1 : 1;
-      return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+      if (!notice) {
+        document.getElementById('notice-detail-badge').textContent = 'Notice';
+        document.getElementById('notice-detail-title').textContent = '공지사항을 찾을 수 없습니다.';
+        document.getElementById('notice-detail-date').textContent = '';
+        document.getElementById('notice-detail-body').textContent = '삭제되었거나 존재하지 않는 공지입니다.';
+        return;
+      }
+
+      document.title = notice.title + ' | KW CAP Lab';
+      document.getElementById('notice-detail-badge').textContent = notice.is_important ? '중요 공지' : 'Notice';
+      document.getElementById('notice-detail-title').textContent = notice.title;
+      document.getElementById('notice-detail-date').textContent = '작성일 ' + formatKoreanDate(notice.created_at);
+      document.getElementById('notice-detail-body').textContent = notice.body || '내용이 없습니다.';
     }
 
     function formatKoreanDate(value) {
