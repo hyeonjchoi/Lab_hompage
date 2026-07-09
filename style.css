@@ -909,7 +909,7 @@ a.nav-user-name:hover { color: var(--red); }
   display: block; font-size: 0.84rem; font-weight: 700;
   color: var(--ink); margin-bottom: 6px;
 }
-.form-group input, .form-group select, .form-group textarea {
+.form-group input:not([type="checkbox"]):not([type="radio"]), .form-group select, .form-group textarea {
   width: 100%; padding: 10px 14px;
   border: 1px solid var(--line); border-radius: 6px;
   font-size: 0.95rem; font-family: inherit; color: var(--ink);
@@ -1707,7 +1707,7 @@ a.nav-user-name:hover { color: var(--red); }
   word-break: break-word;
 }
 .event-modal-actions {
-  display: flex; justify-content: flex-end;
+  display: flex; justify-content: flex-end; gap: 8px;
   margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line);
 }
 .lab-drawer {
@@ -1739,9 +1739,9 @@ a.nav-user-name:hover { color: var(--red); }
 .member-check-actions label {
   margin-bottom: 0;
 }
-.member-check {
+.form-group .member-check {
   display: flex; align-items: center; gap: 7px; color: var(--ink);
-  font-size: 0.85rem; font-weight: 700;
+  font-size: 0.85rem; font-weight: 700; margin-bottom: 0;
 }
 .lab-self-note {
   margin-bottom: 16px; padding: 12px 14px;

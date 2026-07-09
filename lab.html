@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CAP Lab">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=notice-clamp-v1">
+  <link rel="stylesheet" href="style.css?v=member-check-align-v1">
 </head>
 <body>
   <a class="skip-link" href="#main">본문으로 이동</a>
@@ -242,6 +242,7 @@
       </dl>
       <div class="event-modal-actions">
         <button type="button" class="btn-sm primary" onclick="editEventFromModal()">수정</button>
+        <button type="button" class="btn-sm" id="modal-add-minutes-btn" onclick="addMinutesFromModal()" hidden>회의록 추가</button>
         <button type="button" class="btn-sm danger" onclick="deleteEventFromModal()">삭제</button>
       </div>
     </article>
@@ -292,6 +293,7 @@
     var editingEventId = null;
     var editingContentId = null;
     var editingMinutesId = null;
+    var pendingMinutesEventId = null;
     var draggingEventId = null;
     var adminProgressMode = false;
     var minutesPage = 1;
@@ -735,7 +737,15 @@
       document.getElementById('modal-zoom').innerHTML = event.zoom
         ? '<a href="' + escHtml(event.zoom) + '" target="_blank" rel="noopener">' + escHtml(event.zoom) + '</a>'
         : (event.type === 'conference' ? '참고 링크가 없습니다.' : 'Zoom 링크가 없습니다.');
+      document.getElementById('modal-add-minutes-btn').hidden = event.type !== 'meeting';
       document.getElementById('event-modal').hidden = false;
+    }
+
+    function addMinutesFromModal() {
+      if (!activeEventId) return;
+      pendingMinutesEventId = activeEventId;
+      closeEventModal();
+      openLabDrawer('minutes');
     }
 
     function closeEventModal() {
@@ -833,7 +843,17 @@
       activeDrawerType = type;
       editingEventId = type === 'event' ? (editId || null) : null;
       editingContentId = (type === 'notice' || type === 'resource') ? (editId || null) : null;
-      editingMinutesId = type === 'minutes' ? (editId || null) : null;
+      if (type === 'minutes') {
+        var resolvedMinutesId = editId || null;
+        if (!resolvedMinutesId) {
+          var targetEventId = pendingMinutesEventId || (labData.events.find(function (e) { return e.type === 'meeting' && e.date === selectedCalendarDate; }) || {}).id;
+          var existingMinute = targetEventId ? labData.minutes.find(function (m) { return m.eventId === targetEventId; }) : null;
+          if (existingMinute) resolvedMinutesId = existingMinute.id;
+        }
+        editingMinutesId = resolvedMinutesId;
+      } else {
+        editingMinutesId = null;
+      }
       var titleMap = {
         event: editingEventId ? '일정 수정' : '일정 추가',
         minutes: editingMinutesId ? '회의록 수정' : '회의록 추가',
@@ -1016,7 +1036,7 @@
     function populateMeetingSelectIfOpen() {
       var select = document.getElementById('lab-minutes-event');
       if (!select) return;
-      var meetings = labData.events.filter(function (event) { return event.type === 'meeting'; }).sort(sortByDateTime);
+      var meetings = labData.events.filter(function (event) { return event.type === 'meeting'; }).sort(function (a, b) { return sortByDateTime(b, a); });
       var editMinute = editingMinutesId ? labData.minutes.find(function (m) { return m.id === editingMinutesId; }) : null;
       if (editMinute) {
         var linkedMeeting = labData.events.find(function (e) { return e.id === editMinute.eventId; });
@@ -1027,7 +1047,12 @@
         select.innerHTML = meetings.length ? meetings.map(function (meeting) {
           return '<option value="' + escHtml(meeting.id) + '">' + escHtml(formatKoreanDate(meeting.date) + ' · ' + meeting.title) + '</option>';
         }).join('') : '<option value="">연결할 랩미팅 일정이 없습니다.</option>';
+        var autoMeetingId = pendingMinutesEventId && meetings.some(function (m) { return m.id === pendingMinutesEventId; })
+          ? pendingMinutesEventId
+          : (meetings.find(function (m) { return m.date === selectedCalendarDate; }) || {}).id;
+        if (autoMeetingId) select.value = autoMeetingId;
       }
+      pendingMinutesEventId = null;
     }
 
     async function saveLabForm(e) {
@@ -1063,14 +1088,22 @@
             showToast('연결할 랩미팅 일정을 먼저 추가해 주세요.');
             return;
           }
-          await CAPData.addMeetingMinute({
-            event_id: eventId,
-            meeting_date: meeting.date,
-            title: document.getElementById('lab-minutes-title').value.trim(),
-            summary: document.getElementById('lab-minutes-summary').value.trim(),
-            author_id: session ? session.userId : null,
-            attendee_ids: meeting.attendees || []
-          });
+          var duplicateMinute = labData.minutes.find(function (m) { return m.eventId === eventId; });
+          if (duplicateMinute) {
+            await CAPData.updateMeetingMinute(duplicateMinute.id, {
+              title: document.getElementById('lab-minutes-title').value.trim(),
+              summary: document.getElementById('lab-minutes-summary').value.trim()
+            });
+          } else {
+            await CAPData.addMeetingMinute({
+              event_id: eventId,
+              meeting_date: meeting.date,
+              title: document.getElementById('lab-minutes-title').value.trim(),
+              summary: document.getElementById('lab-minutes-summary').value.trim(),
+              author_id: session ? session.userId : null,
+              attendee_ids: meeting.attendees || []
+            });
+          }
         }
       } else if (activeDrawerType === 'notice') {
         var noticePayload = {
