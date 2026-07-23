@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS resources (
   title        TEXT NOT NULL,
   url          TEXT,
   description  TEXT,
+  is_important BOOLEAN NOT NULL DEFAULT FALSE,
   created_by   UUID REFERENCES members(id),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -113,6 +114,7 @@ CREATE TABLE IF NOT EXISTS member_notes (
   linked_goal_id  UUID REFERENCES member_goals(id) ON DELETE SET NULL,
   author_id       UUID REFERENCES members(id),
   author_name     TEXT,
+  done            BOOLEAN NOT NULL DEFAULT FALSE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

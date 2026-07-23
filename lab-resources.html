@@ -79,7 +79,7 @@
       resources = resources.slice().sort(sortPinnedThenDate);
       document.getElementById('resource-page-list').innerHTML = resources.length ? resources.map(function (resource) {
         return '<article class="lab-page-list-card">' +
-          '<span>' + (resource.important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
+          '<span>' + (resource.is_important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
           '<strong>' + escHtml(resource.title) + '</strong>' +
           '<p>' + escHtml(resource.description || resource.desc || '설명이 없습니다.') + '</p>' +
           (resource.url ? '<a class="pub-link" href="' + escHtml(resource.url) + '" target="_blank" rel="noopener">자료 열기</a>' : '') +
@@ -88,7 +88,7 @@
     }
 
     function sortPinnedThenDate(a, b) {
-      if (!!a.important !== !!b.important) return a.important ? -1 : 1;
+      if (!!a.is_important !== !!b.is_important) return a.is_important ? -1 : 1;
       return String(b.created_at || b.title || '').localeCompare(String(a.created_at || a.title || ''));
     }
   </script>

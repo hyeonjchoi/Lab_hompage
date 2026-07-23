@@ -277,7 +277,7 @@
           id: n.id, memberId: n.member_id, type: n.type || 'memo',
           text: n.content || '', linkedGoalId: n.linked_goal_id || '',
           authorId: n.author_id || '', authorName: n.author_name || '',
-          done: false,
+          done: !!n.done,
           createdAt: n.created_at, updatedAt: n.created_at,
           replies: []
         };
@@ -1137,15 +1137,10 @@
       var linkedGoalId = goalSel ? goalSel.value || null : null;
       try {
         if (existing) {
-          // No updateMemberNote in CAPData: delete then re-insert preserving author
-          await CAPData.removeMemberNote(existing.id);
-          await CAPData.addMemberNote({
-            member_id: currentMember.id,
+          await CAPData.updateMemberNote(existing.id, {
             type: noteType,
             content: noteContent,
-            linked_goal_id: linkedGoalId,
-            author_id: existing.authorId || (currentSession ? currentSession.userId : null),
-            author_name: existing.authorName || (currentSession ? currentSession.name : null)
+            linked_goal_id: linkedGoalId
           });
           showToast('기록을 수정했습니다.');
         } else {
@@ -1203,12 +1198,21 @@
       }
     }
 
-    function toggleNoteDone(noteId) {
-      // member_notes 테이블에 done 컬럼이 없으므로 로컬 상태만 토글합니다.
+    async function toggleNoteDone(noteId) {
       var note = labData.memberNotes.find(function (item) { return item.id === noteId; });
       if (!note) return;
-      note.done = !note.done;
+      var nextDone = !note.done;
+      note.done = nextDone;
       renderNotes();
+      if (selectedNoteId === noteId) renderMemberNoteDetail(note);
+      try {
+        await CAPData.updateMemberNote(noteId, { done: nextDone });
+      } catch (err) {
+        note.done = !nextDone;
+        renderNotes();
+        if (selectedNoteId === noteId) renderMemberNoteDetail(note);
+        showToast('상태 저장 실패: ' + (err && err.message ? err.message.slice(0, 80) : '오류가 발생했습니다.'));
+      }
     }
 
     function cancelNoteEdit() {

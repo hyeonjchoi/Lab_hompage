@@ -596,6 +596,10 @@ const CAPData = {
     const { data, error } = await getSupabase().from('member_notes').insert(note).select().single();
     _throw(error); return data;
   },
+  async updateMemberNote(id, updates) {
+    const { error } = await getSupabase().from('member_notes').update(updates).eq('id', id);
+    _throw(error);
+  },
   async removeMemberNote(id) {
     const { error } = await getSupabase().from('member_notes').delete().eq('id', id);
     _throw(error);

@@ -903,6 +903,7 @@ a.nav-user-name:hover { color: var(--red); }
 .auth-logo strong { display: block; color: var(--navy); font-size: 1.1rem; }
 .auth-logo span { color: var(--muted); font-size: 0.82rem; }
 .auth-card h2 { font-size: 1.3rem; margin-bottom: 24px; text-align: center; }
+.auth-card .form-hint { text-align: center; color: #9AA5B1; }
 
 .form-group { margin-bottom: 18px; }
 .form-group label {

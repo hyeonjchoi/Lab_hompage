@@ -347,7 +347,7 @@
         id: row.id, title: row.title,
         url: row.url || '',
         tags: '참고 자료',
-        important: false,
+        important: !!row.is_important,
         desc: row.description || ''
       };
     }
@@ -1121,6 +1121,7 @@
         var resourcePayload = {
           title: document.getElementById('lab-resource-title').value.trim(),
           url: document.getElementById('lab-resource-url').value.trim(),
+          is_important: document.getElementById('lab-resource-important').checked,
           description: document.getElementById('lab-resource-desc').value.trim() || null
         };
         if (editingContentId) {
