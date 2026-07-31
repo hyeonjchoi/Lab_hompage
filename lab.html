@@ -346,7 +346,7 @@
       return {
         id: row.id, title: row.title,
         url: row.url || '',
-        tags: '참고 자료',
+        tags: row.tags || '참고 자료',
         important: !!row.is_important,
         desc: row.description || ''
       };
