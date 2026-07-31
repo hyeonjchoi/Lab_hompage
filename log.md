@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-07-31 — 알림 창 축소, 메모 done 버그 재수정, 공유소스 태그 저장, 전체보기 검색/페이지네이션, 줄바꿈 반영, 목표 정렬/캘린더 월 이동
+
+### 1. day1 알림 타이밍 창 1시간으로 축소 (`cap-notifications.js`, `push-reminders/index.ts`)
+- 기존 `low:1380, high:1500`(2시간 창, 23~25h) → `low:1410, high:1470`(1시간 창, 23.5~24.5h)
+- 24시간 정각을 중심으로 ±30분으로 좁혀 예상보다 일찍 알림이 오는 빈도 감소.
+
+### 2. 개인 연구페이지 메모 '확인 완료' 체크 저장 안 됨 버그 재수정 (`supabase-schema.sql`, Supabase 대시보드)
+- 원인: `member_notes` 테이블에 UPDATE RLS 정책이 없어 `updateMemberNote()` 호출이 조용히 무시됨.
+- `notes_update` 정책 추가 (schema + 대시보드에서 SQL 직접 실행 완료).
+  ```sql
+  CREATE POLICY "notes_update" ON member_notes FOR UPDATE
+    USING (member_id = current_member_id() OR current_member_role() IN ('professor', 'admin'));
+  ```
+
+### 3. 공유소스 태그 저장 누락 버그 수정 (`lab.html`)
+- `saveLabForm`의 `resourcePayload`에 `tags` 필드가 빠져 있어 항상 '참고 자료'로만 보이던 문제.
+- `tags: document.getElementById('lab-resource-tags').value.trim() || '참고 자료'` 추가.
+
+### 4. 공지사항/공유소스 전체보기 검색 + 페이지네이션 (`lab-notices.html`, `lab-resources.html`)
+- 검색창 추가 (제목/내용 실시간 필터; 공유소스는 태그까지 포함).
+- 10개씩 페이지 분할, 이전/번호/다음 버튼, 현재 위치 표시.
+
+### 5. 개인 연구 진행상황 memo 줄바꿈 반영 (`lab-member.html`)
+- `<p style="white-space:pre-wrap">` 적용 → 입력 시 줄바꿈이 그대로 표시.
+
+### 6. 연구 목표 리스트 정렬 기능 추가 (`lab-member.html`, `style.css`)
+- 정렬 버튼 3종 추가: **시작날짜순** / **마감날짜순** / **상태별**
+- 상태별 그룹 순서: 진행 중 → 예정 → 보류 → 완료 (그룹 내 시작날짜순 2차 정렬).
+- 상태별 선택 시 페이지네이션 없이 전체 나열(그룹 헤더 포함).
+
+### 7. 연구 목표 일정보기 달 이동 기능 추가 (`lab-member.html`, `style.css`)
+- `calendarYear`, `calendarMonth` 상태 변수 도입; 기본값은 오늘 날짜의 연월.
+- 캘린더 상단에 ‹ / › 버튼 추가 → 이전 달·다음 달 자유롭게 이동 가능.
+- 해당 달에 목표가 없어도 빈 달력 대신 안내 메시지 표시.
+
+---
+
 ## 2026-07-23 — 로그인 안내 문구 복원, 공유소스/메모 체크 상태 저장 버그 수정
 
 ### 1. 로그인 페이지 임시 비밀번호 안내 문구 복원 (`login.html`, `style.css`)

@@ -399,6 +399,8 @@ CREATE POLICY "notes_select" ON member_notes FOR SELECT
   USING (member_id = current_member_id() OR current_member_role() IN ('professor', 'admin'));
 CREATE POLICY "notes_insert" ON member_notes FOR INSERT
   WITH CHECK (current_member_role() IN ('professor', 'admin') OR author_id = current_member_id());
+CREATE POLICY "notes_update" ON member_notes FOR UPDATE
+  USING (member_id = current_member_id() OR current_member_role() IN ('professor', 'admin'));
 CREATE POLICY "notes_delete" ON member_notes FOR DELETE
   USING (author_id = current_member_id() OR current_member_role() IN ('professor', 'admin'));
 

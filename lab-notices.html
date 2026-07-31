@@ -11,7 +11,18 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CAP Lab">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=notice-clamp-v1">
+  <link rel="stylesheet" href="style.css?v=notice-search-page-v1">
+  <style>
+    .list-search-bar { display:flex; gap:8px; margin-bottom:16px; }
+    .list-search-bar input { flex:1; padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.92rem; background:var(--card); color:var(--ink); }
+    .list-search-bar input:focus { outline:2px solid var(--navy); outline-offset:2px; }
+    .list-pagination { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:20px; flex-wrap:wrap; }
+    .list-pagination button { padding:6px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); color:var(--ink); font-size:0.85rem; cursor:pointer; }
+    .list-pagination button:hover:not(:disabled) { background:var(--navy); color:#fff; }
+    .list-pagination button.active { background:var(--navy); color:#fff; font-weight:700; border-color:var(--navy); }
+    .list-pagination button:disabled { opacity:0.4; cursor:default; }
+    .list-page-info { font-size:0.82rem; color:var(--ink-light,#6B7280); }
+  </style>
 </head>
 <body>
   <a class="skip-link" href="#main">본문으로 이동</a>
@@ -51,7 +62,12 @@
     </section>
 
     <section class="lab-board">
+      <div class="list-search-bar">
+        <input id="notice-search" type="search" placeholder="공지사항 검색..." aria-label="공지사항 검색" oninput="onNoticeSearch()">
+      </div>
+      <div id="notice-page-info" class="list-page-info"></div>
       <div class="lab-page-list" id="notice-page-list"></div>
+      <div class="list-pagination" id="notice-pagination"></div>
     </section>
   </main>
 
@@ -69,21 +85,75 @@
   <script src="supabase-client.js?v=supabase-v4"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
+    var PAGE_SIZE = 10;
+    var allNotices = [];
+    var filteredNotices = [];
+    var currentPage = 1;
+
     document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
-      await renderNoticePage();
+      await loadNotices();
     });
 
-    async function renderNoticePage() {
-      var notices = await CAPData.getNotices();
-      notices = notices.slice().sort(sortPinnedThenDate);
-      document.getElementById('notice-page-list').innerHTML = notices.length ? notices.map(function (notice) {
-        return '<a class="lab-page-list-card" href="lab-notice-detail.html?id=' + encodeURIComponent(notice.id) + '">' +
-          '<span>' + (notice.is_important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.created_at)) + '</span>' +
-          '<strong>' + escHtml(notice.title) + '</strong>' +
-          '<p>' + escHtml(notice.body || '내용이 없습니다.') + '</p>' +
-        '</a>';
-      }).join('') : '<p class="lab-empty">등록된 공지사항이 없습니다.</p>';
+    async function loadNotices() {
+      allNotices = (await CAPData.getNotices()).slice().sort(sortPinnedThenDate);
+      filteredNotices = allNotices;
+      currentPage = 1;
+      renderList();
+    }
+
+    function onNoticeSearch() {
+      var q = document.getElementById('notice-search').value.trim().toLowerCase();
+      filteredNotices = q
+        ? allNotices.filter(function (n) {
+            return (n.title || '').toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q);
+          })
+        : allNotices;
+      currentPage = 1;
+      renderList();
+    }
+
+    function renderList() {
+      var total = filteredNotices.length;
+      var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      var start = (currentPage - 1) * PAGE_SIZE;
+      var pageItems = filteredNotices.slice(start, start + PAGE_SIZE);
+
+      document.getElementById('notice-page-info').textContent =
+        total > 0 ? '전체 ' + total + '건 중 ' + (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + '번째' : '';
+
+      document.getElementById('notice-page-list').innerHTML = pageItems.length
+        ? pageItems.map(function (notice) {
+            return '<a class="lab-page-list-card" href="lab-notice-detail.html?id=' + encodeURIComponent(notice.id) + '">' +
+              '<span>' + (notice.is_important ? '<b class="important-mark">중요</b> ' : '') + escHtml(formatKoreanDate(notice.created_at)) + '</span>' +
+              '<strong>' + escHtml(notice.title) + '</strong>' +
+              '<p>' + escHtml(notice.body || '내용이 없습니다.') + '</p>' +
+            '</a>';
+          }).join('')
+        : '<p class="lab-empty">검색 결과가 없습니다.</p>';
+
+      renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+      var pg = document.getElementById('notice-pagination');
+      if (totalPages <= 1) { pg.innerHTML = ''; return; }
+      var html = '';
+      html += '<button onclick="gotoPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>이전</button>';
+      for (var i = 1; i <= totalPages; i++) {
+        html += '<button onclick="gotoPage(' + i + ')" class="' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+      }
+      html += '<button onclick="gotoPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>다음</button>';
+      pg.innerHTML = html;
+    }
+
+    function gotoPage(p) {
+      var totalPages = Math.max(1, Math.ceil(filteredNotices.length / PAGE_SIZE));
+      if (p < 1 || p > totalPages) return;
+      currentPage = p;
+      renderList();
+      document.getElementById('notice-page-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function sortPinnedThenDate(a, b) {

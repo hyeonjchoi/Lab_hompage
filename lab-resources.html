@@ -11,7 +11,18 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CAP Lab">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=resource-search-page-v1">
+  <style>
+    .list-search-bar { display:flex; gap:8px; margin-bottom:16px; }
+    .list-search-bar input { flex:1; padding:8px 12px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.92rem; background:var(--card); color:var(--ink); }
+    .list-search-bar input:focus { outline:2px solid var(--navy); outline-offset:2px; }
+    .list-pagination { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:20px; flex-wrap:wrap; }
+    .list-pagination button { padding:6px 12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--card); color:var(--ink); font-size:0.85rem; cursor:pointer; }
+    .list-pagination button:hover:not(:disabled) { background:var(--navy); color:#fff; }
+    .list-pagination button.active { background:var(--navy); color:#fff; font-weight:700; border-color:var(--navy); }
+    .list-pagination button:disabled { opacity:0.4; cursor:default; }
+    .list-page-info { font-size:0.82rem; color:var(--ink-light,#6B7280); }
+  </style>
 </head>
 <body>
   <a class="skip-link" href="#main">본문으로 이동</a>
@@ -51,7 +62,12 @@
     </section>
 
     <section class="lab-board">
+      <div class="list-search-bar">
+        <input id="resource-search" type="search" placeholder="공유소스 검색 (제목, 태그, 설명)..." aria-label="공유소스 검색" oninput="onResourceSearch()">
+      </div>
+      <div id="resource-page-info" class="list-page-info"></div>
       <div class="lab-page-list" id="resource-page-list"></div>
+      <div class="list-pagination" id="resource-pagination"></div>
     </section>
   </main>
 
@@ -69,22 +85,78 @@
   <script src="supabase-client.js?v=supabase-v4"></script>
   <script src="cap-notifications.js?v=nav-alerts"></script>
   <script>
+    var PAGE_SIZE = 10;
+    var allResources = [];
+    var filteredResources = [];
+    var currentPage = 1;
+
     document.addEventListener('DOMContentLoaded', async function () {
       CAPAuth.requireLogin(true);
-      await renderResourcePage();
+      await loadResources();
     });
 
-    async function renderResourcePage() {
-      var resources = await CAPData.getResources();
-      resources = resources.slice().sort(sortPinnedThenDate);
-      document.getElementById('resource-page-list').innerHTML = resources.length ? resources.map(function (resource) {
-        return '<article class="lab-page-list-card">' +
-          '<span>' + (resource.is_important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
-          '<strong>' + escHtml(resource.title) + '</strong>' +
-          '<p>' + escHtml(resource.description || resource.desc || '설명이 없습니다.') + '</p>' +
-          (resource.url ? '<a class="pub-link" href="' + escHtml(resource.url) + '" target="_blank" rel="noopener">자료 열기</a>' : '') +
-        '</article>';
-      }).join('') : '<p class="lab-empty">등록된 공유 소스가 없습니다.</p>';
+    async function loadResources() {
+      allResources = (await CAPData.getResources()).slice().sort(sortPinnedThenDate);
+      filteredResources = allResources;
+      currentPage = 1;
+      renderList();
+    }
+
+    function onResourceSearch() {
+      var q = document.getElementById('resource-search').value.trim().toLowerCase();
+      filteredResources = q
+        ? allResources.filter(function (r) {
+            return (r.title || '').toLowerCase().includes(q) ||
+              (r.tags || '').toLowerCase().includes(q) ||
+              (r.description || r.desc || '').toLowerCase().includes(q);
+          })
+        : allResources;
+      currentPage = 1;
+      renderList();
+    }
+
+    function renderList() {
+      var total = filteredResources.length;
+      var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      var start = (currentPage - 1) * PAGE_SIZE;
+      var pageItems = filteredResources.slice(start, start + PAGE_SIZE);
+
+      document.getElementById('resource-page-info').textContent =
+        total > 0 ? '전체 ' + total + '건 중 ' + (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + '번째' : '';
+
+      document.getElementById('resource-page-list').innerHTML = pageItems.length
+        ? pageItems.map(function (resource) {
+            return '<article class="lab-page-list-card">' +
+              '<span>' + (resource.is_important ? '<b class="important-mark">중요</b> ' : '') + escHtml(resource.tags || '참고 자료') + '</span>' +
+              '<strong>' + escHtml(resource.title) + '</strong>' +
+              '<p>' + escHtml(resource.description || resource.desc || '설명이 없습니다.') + '</p>' +
+              (resource.url ? '<a class="pub-link" href="' + escHtml(resource.url) + '" target="_blank" rel="noopener">자료 열기</a>' : '') +
+            '</article>';
+          }).join('')
+        : '<p class="lab-empty">검색 결과가 없습니다.</p>';
+
+      renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+      var pg = document.getElementById('resource-pagination');
+      if (totalPages <= 1) { pg.innerHTML = ''; return; }
+      var html = '';
+      html += '<button onclick="gotoPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>이전</button>';
+      for (var i = 1; i <= totalPages; i++) {
+        html += '<button onclick="gotoPage(' + i + ')" class="' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+      }
+      html += '<button onclick="gotoPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>다음</button>';
+      pg.innerHTML = html;
+    }
+
+    function gotoPage(p) {
+      var totalPages = Math.max(1, Math.ceil(filteredResources.length / PAGE_SIZE));
+      if (p < 1 || p > totalPages) return;
+      currentPage = p;
+      renderList();
+      document.getElementById('resource-page-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function sortPinnedThenDate(a, b) {

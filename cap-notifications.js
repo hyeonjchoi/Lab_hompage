@@ -42,7 +42,7 @@ function formatKSTDatetime(dateStr, timeStr) {
 // 서버(push-reminders) 창과 일치: [low, high) 구간이 겹치지 않음.
 // label: 설정 화면 체크박스 표시용, bodyLabel: 알림 본문 표시용 (서버 label과 동일)
 const TIMING_DEFS = {
-  day1:     { label: '1일 전',       bodyLabel: '내일 일정',    low: 1380, high: 1500 },
+  day1:     { label: '1일 전',       bodyLabel: '내일 일정',    low: 1410, high: 1470 },
   morning9: { label: '당일 오전 9시', bodyLabel: '오늘의 일정', special: 'morning9' },
   min30:    { label: '30분 전',       bodyLabel: '30분 후 시작', low: 27,   high: 33 },
   min15:    { label: '15분 전',       bodyLabel: '15분 후 시작', low: 12,   high: 18 },

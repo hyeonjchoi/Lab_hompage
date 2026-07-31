@@ -15,7 +15,7 @@ const TYPE_LABEL: Record<string, string> = {
 // settingsKey: 사용자 notification_settings.timings 배열과 대응하는 키.
 // 창은 비중첩 [low, high) 구간 — 각 이벤트가 최대 1개 창에만 해당.
 const TIMING_WINDOWS = [
-  { kind: 'event-day1',    settingsKey: 'day1',    low: 1380, high: 1500, label: '내일 일정' },    // 23~25h
+  { kind: 'event-day1',    settingsKey: 'day1',    low: 1410, high: 1470, label: '내일 일정' },    // 23.5~24.5h
   { kind: 'event-min30',   settingsKey: 'min30',   low: 27,   high: 33,   label: '30분 후 시작' }, // ±3분 / 30분
   { kind: 'event-min15',   settingsKey: 'min15',   low: 12,   high: 18,   label: '15분 후 시작' }, // ±3분 / 15분
   { kind: 'event-atStart', settingsKey: 'atStart', low: 0,    high: 5,    label: '지금 시작' },    // 0~5분

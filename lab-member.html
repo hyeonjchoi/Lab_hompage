@@ -214,9 +214,12 @@
     var currentSession = null;
     var isAdminView = false;
     var activeGoalView = 'list';
+    var goalSortMode = 'start';
     var editingGoalId = null;
     var goalPage = 1;
     var GOAL_PAGE_SIZE = 5;
+    var calendarYear = new Date().getFullYear();
+    var calendarMonth = new Date().getMonth();
     var draggingGoalId = null;
     var resizingGoal = null;
     var memberMeetingsPage = 1;
@@ -312,7 +315,7 @@
         '<strong>' + escHtml(currentMember.name) + '</strong>' +
         '<span>' + escHtml(currentMember.profile.position || '직위 추가 예정') + '</span>' +
         '<p>' + escHtml(progress ? progress.status : '진행상황 추가 예정') + '</p>' +
-        '<p>' + escHtml(progress ? progress.memo : (isAdminView ? '아직 등록된 진행상황이 없습니다.' : '우측 상단 버튼으로 진행상황을 업데이트할 수 있습니다.')) + '</p>';
+        '<p style="white-space:pre-wrap">' + escHtml(progress ? progress.memo : (isAdminView ? '아직 등록된 진행상황이 없습니다.' : '우측 상단 버튼으로 진행상황을 업데이트할 수 있습니다.')) + '</p>';
       renderGoalPermissions();
       renderNoteForm();
       renderGoals();
@@ -393,7 +396,21 @@
 
     function setGoalView(view) {
       activeGoalView = view === 'calendar' ? 'calendar' : 'list';
+      goalPage = 1;
       renderGoals();
+    }
+
+    function setGoalSort(mode) {
+      goalSortMode = mode;
+      goalPage = 1;
+      renderGoalList();
+    }
+
+    function moveCalendarMonth(delta) {
+      calendarMonth += delta;
+      if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+      if (calendarMonth < 0)  { calendarMonth = 11; calendarYear--; }
+      renderGoalCalendar();
     }
 
     function renderGoals() {
@@ -415,42 +432,102 @@
     }
 
     function getAllMemberGoals() {
-      return labData.memberGoals
+      var goals = labData.memberGoals
         .filter(function(g) { return g.memberId === currentMember.id; })
-        .map(function(g) { return Object.assign({}, g, { _source: 'personal' }); })
-        .sort(function(a, b) {
+        .map(function(g) { return Object.assign({}, g, { _source: 'personal' }); });
+      return sortGoals(goals, goalSortMode);
+    }
+
+    var STATUS_ORDER = { doing: 0, todo: 1, hold: 2, done: 3 };
+
+    function sortGoals(goals, mode) {
+      return goals.slice().sort(function(a, b) {
+        if (mode === 'end') {
+          return String(a.endDate || a.targetDate || '').localeCompare(String(b.endDate || b.targetDate || ''));
+        }
+        if (mode === 'status') {
+          var sa = STATUS_ORDER[a.status] !== undefined ? STATUS_ORDER[a.status] : 4;
+          var sb = STATUS_ORDER[b.status] !== undefined ? STATUS_ORDER[b.status] : 4;
+          if (sa !== sb) return sa - sb;
           return String(a.startDate || '').localeCompare(String(b.startDate || ''));
-        });
+        }
+        return String(a.startDate || '').localeCompare(String(b.startDate || ''));
+      });
+    }
+
+    var SORT_LABEL = { start: '시작날짜순', end: '마감날짜순', status: '상태별' };
+
+    function renderGoalSortBar() {
+      return '<div class="goal-sort-bar">' +
+        '<label style="font-size:0.82rem;color:var(--ink-light,#6B7280)">정렬:</label>' +
+        ['start','end','status'].map(function(m) {
+          return '<button type="button" class="btn-sm' + (goalSortMode === m ? ' primary' : '') + '" onclick="setGoalSort(\'' + m + '\')">' + SORT_LABEL[m] + '</button>';
+        }).join('') +
+      '</div>';
     }
 
     function renderGoalList() {
       var goals = getAllMemberGoals();
-      var totalPages = Math.max(1, Math.ceil(goals.length / GOAL_PAGE_SIZE));
-      if (goalPage > totalPages) goalPage = totalPages;
-      if (goalPage < 1) goalPage = 1;
-      var start = (goalPage - 1) * GOAL_PAGE_SIZE;
-      var visibleGoals = goals.slice(start, start + GOAL_PAGE_SIZE);
-      document.getElementById('member-goals').innerHTML = goals.length ? '<div class="goal-table-wrap"><table class="goal-table">' +
-        '<thead><tr><th>이름</th><th>상태</th><th>목표 날짜</th><th>메모사항</th><th></th></tr></thead><tbody>' + visibleGoals.map(function (goal) {
-        var isTeamGoal = goal._source === 'project';
-        var statusControl = '<span class="goal-status ' + escHtml(goal.status || 'todo') + '">' + escHtml(goalStatusLabel(goal.status)) + '</span>';
-        var actions = isAdminView ? '' : (isTeamGoal
-          ? '<div class="goal-row-actions"><a class="btn-sm" href="lab-project.html?id=' + escHtml(goal._projectId) + '">프로젝트 방</a></div>'
-          : '<div class="goal-row-actions">' +
-              '<button type="button" class="btn-sm" onclick="event.stopPropagation();editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
-              '<button type="button" class="btn-sm danger" onclick="event.stopPropagation();deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
-            '</div>');
-        return '<tr onclick="selectGoalNotes(\'' + escHtml(goal.id) + '\')" style="cursor:pointer">' +
-          '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong>' +
-            '<span>' + escHtml(goal.category || '목표') + '</span>' +
-            (isTeamGoal ? '<span class="goal-source-badge">팀: ' + escHtml(goal._projectName || '팀 프로젝트') + '</span>' : '') +
-          '</td>' +
-          '<td class="goal-status-cell">' + statusControl + '</td>' +
-          '<td>' + escHtml(formatGoalDateRange(goal)) + '</td>' +
-          '<td>' + escHtml(goal.memo || '-') + '</td>' +
-          '<td>' + actions + '</td>' +
-        '</tr>';
-      }).join('') + '</tbody></table></div>' + renderGoalPagination(totalPages, goals.length) : '<p class="lab-empty">아직 등록된 연구 목표가 없습니다.</p>';
+      if (!goals.length) {
+        document.getElementById('member-goals').innerHTML = '<p class="lab-empty">아직 등록된 연구 목표가 없습니다.</p>';
+        return;
+      }
+
+      var rows;
+      if (goalSortMode === 'status') {
+        // 상태별 그룹: 진행 중 → 예정 → 보류 → 완료
+        var groups = [
+          { key: 'doing', label: '진행 중' },
+          { key: 'todo',  label: '예정' },
+          { key: 'hold',  label: '보류' },
+          { key: 'done',  label: '완료' }
+        ];
+        rows = '';
+        groups.forEach(function(grp) {
+          var grpGoals = goals.filter(function(g) { return (g.status || 'todo') === grp.key; });
+          if (!grpGoals.length) return;
+          rows += '<tr class="goal-group-header"><td colspan="5"><span class="goal-status ' + grp.key + '">' + grp.label + '</span> <span style="font-size:0.8rem;color:var(--ink-light,#6B7280)">' + grpGoals.length + '개</span></td></tr>';
+          rows += grpGoals.map(function(goal) { return renderGoalRow(goal); }).join('');
+        });
+        document.getElementById('member-goals').innerHTML =
+          renderGoalSortBar() +
+          '<div class="goal-table-wrap"><table class="goal-table">' +
+          '<thead><tr><th>이름</th><th>상태</th><th>목표 날짜</th><th>메모사항</th><th></th></tr></thead>' +
+          '<tbody>' + rows + '</tbody></table></div>';
+      } else {
+        var totalPages = Math.max(1, Math.ceil(goals.length / GOAL_PAGE_SIZE));
+        if (goalPage > totalPages) goalPage = totalPages;
+        if (goalPage < 1) goalPage = 1;
+        var start = (goalPage - 1) * GOAL_PAGE_SIZE;
+        var visibleGoals = goals.slice(start, start + GOAL_PAGE_SIZE);
+        document.getElementById('member-goals').innerHTML =
+          renderGoalSortBar() +
+          '<div class="goal-table-wrap"><table class="goal-table">' +
+          '<thead><tr><th>이름</th><th>상태</th><th>목표 날짜</th><th>메모사항</th><th></th></tr></thead>' +
+          '<tbody>' + visibleGoals.map(renderGoalRow).join('') + '</tbody></table></div>' +
+          renderGoalPagination(totalPages, goals.length);
+      }
+    }
+
+    function renderGoalRow(goal) {
+      var isTeamGoal = goal._source === 'project';
+      var statusControl = '<span class="goal-status ' + escHtml(goal.status || 'todo') + '">' + escHtml(goalStatusLabel(goal.status)) + '</span>';
+      var actions = isAdminView ? '' : (isTeamGoal
+        ? '<div class="goal-row-actions"><a class="btn-sm" href="lab-project.html?id=' + escHtml(goal._projectId) + '">프로젝트 방</a></div>'
+        : '<div class="goal-row-actions">' +
+            '<button type="button" class="btn-sm" onclick="event.stopPropagation();editGoal(\'' + escHtml(goal.id) + '\')">수정</button>' +
+            '<button type="button" class="btn-sm danger" onclick="event.stopPropagation();deleteGoal(\'' + escHtml(goal.id) + '\')">삭제</button>' +
+          '</div>');
+      return '<tr onclick="selectGoalNotes(\'' + escHtml(goal.id) + '\')" style="cursor:pointer">' +
+        '<td><strong class="goal-name">' + escHtml(goal.title) + '</strong>' +
+          '<span>' + escHtml(goal.category || '목표') + '</span>' +
+          (isTeamGoal ? '<span class="goal-source-badge">팀: ' + escHtml(goal._projectName || '팀 프로젝트') + '</span>' : '') +
+        '</td>' +
+        '<td class="goal-status-cell">' + statusControl + '</td>' +
+        '<td>' + escHtml(formatGoalDateRange(goal)) + '</td>' +
+        '<td>' + escHtml(goal.memo || '-') + '</td>' +
+        '<td>' + actions + '</td>' +
+      '</tr>';
     }
 
     function assignGoalLanes(goals) {
@@ -475,13 +552,8 @@
 
     function renderGoalCalendar() {
       var goals = getAllMemberGoals();
-      if (!goals.length) {
-        document.getElementById('member-goals').innerHTML = '<p class="lab-empty">일정에 표시할 연구 목표가 없습니다.</p>';
-        return;
-      }
-      var today = new Date();
-      var year = today.getFullYear();
-      var month = today.getMonth();
+      var year = calendarYear;
+      var month = calendarMonth;
       var firstDay = new Date(year, month, 1).getDay();
       var daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -562,12 +634,17 @@
         weeksHTML += whtml;
       }
 
+      var calendarBody = goals.length ? weeksHTML : '<p class="lab-empty" style="padding:20px 0">이 달에 표시할 연구 목표가 없습니다.</p>';
       document.getElementById('member-goals').innerHTML =
         '<div class="goal-calendar-wrap">' +
-        '<div class="goal-calendar-title">' + year + '년 ' + (month + 1) + '월 목표 일정</div>' +
+        '<div class="goal-calendar-nav">' +
+          '<button type="button" class="btn-sm" onclick="moveCalendarMonth(-1)" aria-label="이전 달">&#8249;</button>' +
+          '<span class="goal-calendar-title">' + year + '년 ' + (month + 1) + '월 목표 일정</span>' +
+          '<button type="button" class="btn-sm" onclick="moveCalendarMonth(1)" aria-label="다음 달">&#8250;</button>' +
+        '</div>' +
         '<div class="calendar-weekday-row">' +
         ['일','월','화','수','목','금','토'].map(function(l) { return '<div class="calendar-weekday">' + l + '</div>'; }).join('') +
-        '</div>' + weeksHTML + '</div>';
+        '</div>' + calendarBody + '</div>';
     }
 
     async function saveMemberGoal(e) {

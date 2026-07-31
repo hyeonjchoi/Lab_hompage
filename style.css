@@ -1954,9 +1954,15 @@ a.nav-user-name:hover { color: var(--red); }
 .goal-status-select.hold {
   background-color: var(--red-soft); color: var(--red);
 }
+/* ── Goal list sort bar ── */
+.goal-sort-bar { display: flex; align-items: center; gap: 6px; padding: 8px 0 10px; flex-wrap: wrap; }
+.goal-group-header td { background: var(--bg); padding: 8px 12px 4px; border-top: 1px solid var(--line); }
+
 /* ── Goal calendar — week-grid approach ── */
 .goal-calendar-wrap { border: 1px solid var(--line); background: #fff; overflow: hidden; }
-.goal-calendar-title { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--bg); color: var(--navy); font-weight: 900; }
+.goal-calendar-nav { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--bg); }
+.goal-calendar-nav .btn-sm { font-size: 1.1rem; line-height: 1; padding: 2px 10px; }
+.goal-calendar-title { color: var(--navy); font-weight: 900; flex: 1; text-align: center; }
 .calendar-weekday-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .calendar-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .goal-calendar-cell {

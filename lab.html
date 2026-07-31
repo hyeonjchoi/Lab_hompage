@@ -1122,6 +1122,7 @@
           title: document.getElementById('lab-resource-title').value.trim(),
           url: document.getElementById('lab-resource-url').value.trim(),
           is_important: document.getElementById('lab-resource-important').checked,
+          tags: document.getElementById('lab-resource-tags').value.trim() || '참고 자료',
           description: document.getElementById('lab-resource-desc').value.trim() || null
         };
         if (editingContentId) {
