@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS resources (
   title        TEXT NOT NULL,
   url          TEXT,
   description  TEXT,
+  tags         TEXT NOT NULL DEFAULT '참고 자료',
   is_important BOOLEAN NOT NULL DEFAULT FALSE,
   created_by   UUID REFERENCES members(id),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),

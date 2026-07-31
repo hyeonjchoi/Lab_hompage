@@ -18,9 +18,14 @@
     USING (member_id = current_member_id() OR current_member_role() IN ('professor', 'admin'));
   ```
 
-### 3. 공유소스 태그 저장 누락 버그 수정 (`lab.html`)
+### 3. 공유소스 태그 저장 누락 버그 수정 (`lab.html`, `supabase-schema.sql`)
 - `saveLabForm`의 `resourcePayload`에 `tags` 필드가 빠져 있어 항상 '참고 자료'로만 보이던 문제.
 - `tags: document.getElementById('lab-resource-tags').value.trim() || '참고 자료'` 추가.
+- 추가로 `resources` 테이블에 `tags` 컬럼 자체가 없어 저장 실패가 발생함 (schema 누락).
+- `supabase-schema.sql`에 `tags TEXT NOT NULL DEFAULT '참고 자료'` 컬럼 추가 + 실 DB에 `ALTER TABLE` 반영.
+  ```sql
+  ALTER TABLE resources ADD COLUMN IF NOT EXISTS tags TEXT NOT NULL DEFAULT '참고 자료';
+  ```
 
 ### 4. 공지사항/공유소스 전체보기 검색 + 페이지네이션 (`lab-notices.html`, `lab-resources.html`)
 - 검색창 추가 (제목/내용 실시간 필터; 공유소스는 태그까지 포함).
