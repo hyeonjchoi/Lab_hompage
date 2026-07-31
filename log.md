@@ -4,9 +4,11 @@
 
 ## 2026-07-31 — 알림 창 축소, 메모 done 버그 재수정, 공유소스 태그 저장, 전체보기 검색/페이지네이션, 줄바꿈 반영, 목표 정렬/캘린더 월 이동
 
-### 1. day1 알림 타이밍 창 1시간으로 축소 (`cap-notifications.js`, `push-reminders/index.ts`)
+### 1. day1 알림 타이밍 창 1시간으로 축소 (`cap-notifications.js`, `push-reminders/index.ts`) + Edge Function 배포
 - 기존 `low:1380, high:1500`(2시간 창, 23~25h) → `low:1410, high:1470`(1시간 창, 23.5~24.5h)
 - 24시간 정각을 중심으로 ±30분으로 좁혀 예상보다 일찍 알림이 오는 빈도 감소.
+- 예: 내일 10:00 미팅 → 오늘 **09:30~09:35경** 발송 (수정 전: 09:00~09:05경).
+- 코드 수정 후 `supabase functions deploy push-reminders` 로 서버(Edge Function)에도 배포 완료.
 
 ### 2. 개인 연구페이지 메모 '확인 완료' 체크 저장 안 됨 버그 재수정 (`supabase-schema.sql`, Supabase 대시보드)
 - 원인: `member_notes` 테이블에 UPDATE RLS 정책이 없어 `updateMemberNote()` 호출이 조용히 무시됨.
