@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-09-23 — GitHub 스케줄 워크플로우 60일 비활성 disable 경고 대응
+
+GitHub에서 `hyeonjchoi/Lab_hompage` 저장소의 "Keep Supabase Alive" 워크플로우가 곧 비활성화(disable)된다는 메일을 받고 원인을 진단하고 조치했다.
+
+### 1. 원인 진단
+
+- 저장소 마지막 push가 2026-07-31이었고, 메일을 받은 시점(2026-09-23)까지 54일째 "저장소 비활성" 상태였다.
+- GitHub는 스케줄 워크플로우(`on: schedule`)를 **60일간 push 활동이 없으면 자동 disable**하는데, 이때 "활동"은 오직 실제 커밋 push(또는 릴리스, PR 머지 등)만 인정되고, **워크플로우 실행 자체는 활동으로 인정되지 않는다**.
+- `keep-supabase-alive.yml`은 매일 정상적으로 성공 실행되고 있었지만(Supabase API 호출만 하고 커밋은 하지 않음), 이 때문에 GitHub 기준으로는 계속 "비활성"으로 카운트되어 약 2026-09-29 전후 disable될 상황이었다.
+
+### 2. 해결: 월 1회 커밋하는 keepalive 워크플로우 추가
+
+- `.github/workflows/repo-keepalive.yml` 신설: 매월 1일(`0 0 1 * *`) `.github/keepalive.txt`에 타임스탬프를 기록하고 커밋/push.
+- `permissions: contents: write` 부여, `workflow_dispatch`로 수동 실행도 가능하게 함.
+- 커밋 `603c95e` — "Add monthly repo keepalive workflow to prevent 60-day cron disable" push 완료.
+- 이 push 자체로 저장소 `pushed_at`이 갱신되어(`2026-09-23T05:50:12Z`) 60일 비활성 카운트가 오늘부터 다시 시작됐고, 이후로는 매월 자동 커밋이 발생하므로 앞으로 이 문제가 재발하지 않는다.
+- push 시 "Changes must be made through a pull request" 브랜치 보호 규칙이 있었으나 저장소 소유자 권한으로 자동 bypass되어 main에 직접 반영됨.
+- 검증: `gh api repos/hyeonjchoi/Lab_hompage/actions/workflows`로 `Keep Supabase Alive`, `Repository Keepalive` 두 워크플로우 모두 `state: active` 확인.
+
+---
+
 ## 2026-07-31 — 알림 창 축소, 메모 done 버그 재수정, 공유소스 태그 저장, 전체보기 검색/페이지네이션, 줄바꿈 반영, 목표 정렬/캘린더 월 이동
 
 ### 1. day1 알림 타이밍 창 1시간으로 축소 (`cap-notifications.js`, `push-reminders/index.ts`) + Edge Function 배포
