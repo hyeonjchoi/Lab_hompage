@@ -1,0 +1,40 @@
+name: Repository Keepalive
+
+# GitHub은 저장소에 60일간 push 활동이 없으면 스케줄 워크플로우(cron)를 자동 비활성화한다.
+# (워크플로우가 실행되는 것 자체는 "활동"으로 인정되지 않고, 실제 커밋/push만 인정됨)
+# 이 워크플로우는 매월 1일 타임스탬프 파일을 커밋해 저장소를 계속 "활성" 상태로 유지한다.
+# 참고: https://github.com/efrecon/gh-action-keepalive
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'   # 매월 1일 00:00 UTC
+  workflow_dispatch:        # GitHub Actions 탭에서 수동 실행 가능
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    name: Commit keepalive timestamp
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update keepalive timestamp
+        run: |
+          mkdir -p .github
+          echo "Last keepalive: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" > .github/keepalive.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: keepalive ping ($(date -u +'%Y-%m-%d'))"
+            git push
+          fi
