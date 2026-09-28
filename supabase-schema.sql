@@ -604,6 +604,30 @@ BEGIN
 END $$;
 
 -- ══════════════════════════════════════════════
+-- Data API 권한 (GRANT)
+-- 2026-10-30부터 Supabase는 public 스키마의 새 테이블에 Data API 권한을 자동 부여하지 않음.
+-- 새 프로젝트에 이 파일을 실행할 때 필요. 실제 접근 범위는 위 RLS 정책이 결정함.
+-- 테이블을 새로 추가하면 아래 배열에도 추가할 것.
+-- ══════════════════════════════════════════════
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'members', 'lab_events', 'meeting_minutes', 'notices', 'resources',
+    'member_goals', 'member_notes', 'member_progress',
+    'team_projects', 'team_project_goals', 'team_project_notes',
+    'team_project_note_replies', 'team_project_progress',
+    'publications', 'site_content',
+    'push_subscriptions', 'notification_settings', 'notification_dispatch_log'
+  ]
+  LOOP
+    EXECUTE format('GRANT SELECT ON public.%I TO anon', t);
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON public.%I TO authenticated', t);
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON public.%I TO service_role', t);
+  END LOOP;
+END $$;
+
+-- ══════════════════════════════════════════════
 -- Storage 버킷 (Supabase Storage)
 -- Supabase 대시보드 → Storage → New Bucket 에서 직접 생성하거나 아래 실행
 -- ══════════════════════════════════════════════

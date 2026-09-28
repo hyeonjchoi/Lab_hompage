@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-09-28 — Supabase Data API 기본 권한 정책 변경 대응 (GRANT 추가)
+
+Supabase에서 "2026-10-30부터 public 스키마의 새 테이블에 Data API 권한을 자동 부여하지 않는다"는 안내 메일을 받고 영향 범위를 점검했다.
+
+### 1. 영향 진단
+
+- 기존 테이블 18개는 현재 권한을 그대로 유지하므로 **운영 중인 사이트·관리자 페이지·Edge Function에는 영향 없음**.
+- 이 프로젝트는 `supabase/migrations` 없이 `supabase-schema.sql`을 SQL Editor에서 직접 실행하는 방식이라, 10-30 이후 **이 파일로 새 프로젝트를 만들면 모든 테이블이 "새 테이블"로 취급되어 API 접근이 막힐** 위험이 있었다.
+- 18개 테이블 모두 RLS가 켜져 있어, GRANT를 추가해도 실제 접근 범위는 기존 RLS 정책이 계속 결정한다.
+
+### 2. 조치: `supabase-schema.sql`에 GRANT 블록 추가
+
+- 트리거 섹션 뒤에 18개 테이블을 배열로 돌며 GRANT하는 `DO $$` 블록 추가 (기존 트리거 루프와 같은 방식).
+  - `anon`: `SELECT` (비로그인 페이지는 쓰기 작업이 없음)
+  - `authenticated`, `service_role`: `SELECT, INSERT, UPDATE, DELETE`
+- 모든 테이블 id가 uuid라 시퀀스 권한은 필요 없음.
+- 운영 DB에는 실행하지 않음 (이미 권한 보유, 재실행해도 무해).
+- **앞으로 테이블을 새로 추가하면**: `CREATE TABLE`과 함께 GRANT를 실행하고, 스키마 파일의 GRANT 배열에도 테이블 이름을 추가할 것. 누락 시 API가 `permission denied` 오류와 함께 필요한 GRANT 문을 알려준다.
+
+---
+
 ## 2026-09-23 — GitHub 스케줄 워크플로우 60일 비활성 disable 경고 대응
 
 GitHub에서 `hyeonjchoi/Lab_hompage` 저장소의 "Keep Supabase Alive" 워크플로우가 곧 비활성화(disable)된다는 메일을 받고 원인을 진단하고 조치했다.
