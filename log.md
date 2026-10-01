@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-10-01 — Repository Keepalive 워크플로우 실패(GH006) 수정
+
+"[hyeonjchoi/Lab_hompage] Run failed: Repository Keepalive - main (ad27b9a)" 메일을 받고 원인을 확인해 수정했다.
+
+### 1. 원인
+
+- 2026-10-01 첫 정기 실행에서 커밋까지는 됐지만 `git push` 단계에서 `GH006: Protected branch update failed — Changes must be made through a pull request.`로 거부됐다.
+- `main`에 "PR + 승인 1개 필수" 브랜치 보호 규칙이 있다. 저장소 소유자 push는 bypass되지만(`enforce_admins: false`), 워크플로우의 `GITHUB_TOKEN`(github-actions[bot])은 bypass 대상이 아니라 직접 push가 막힌다.
+
+### 2. 해결: 커밋 대신 워크플로우 enable API 호출
+
+- `repo-keepalive.yml`을 수정해 커밋/push 대신 `PUT /repos/{repo}/actions/workflows/{wf}/enable`을 `keep-supabase-alive.yml`, `repo-keepalive.yml`에 호출하도록 바꿨다(60일 비활성 타이머 리셋, liskin/gh-workflow-keepalive 방식).
+- 권한을 `contents: write` → `actions: write`로 변경. 브랜치 보호 규칙은 그대로 유지했고, `.github/keepalive.txt` 커밋도 더 이상 생기지 않는다.
+- 검증: `workflow_dispatch`로 수동 실행(run 36829692268) 성공, 세 워크플로우 모두 `active` 확인.
+
+---
+
 ## 2026-09-28 — Supabase Data API 기본 권한 정책 변경 대응 (GRANT 추가)
 
 Supabase에서 "2026-10-30부터 public 스키마의 새 테이블에 Data API 권한을 자동 부여하지 않는다"는 안내 메일을 받고 영향 범위를 점검했다.
